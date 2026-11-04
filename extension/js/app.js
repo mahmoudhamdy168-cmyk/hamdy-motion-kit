@@ -298,23 +298,9 @@ function renderGrid(){
     c.innerHTML = '<div class="thumb"></div><div class="nm"><span>' + esc(it.ar) + '</span><em>' + esc(it.en||'') + '</em></div>';
     var th = c.firstChild;
     mountThumb(th, it, false);
-    c.onclick = function(){ S.sel[S.tab] = it.id; save(); Array.prototype.forEach.call(grid.children, function(x){ x.classList.remove('sel'); }); c.classList.add('sel'); if(S.tab==='cap' && S.cap.words.length) rechunk(); renderSide(); if(S.tab==='sfx') playSfx(it); };
+    c.onclick = function(){ if(c._noClick) return; S.sel[S.tab] = it.id; save(); Array.prototype.forEach.call(grid.children, function(x){ x.classList.remove('sel'); }); c.classList.add('sel'); if(S.tab==='cap' && S.cap.words.length) rechunk(); renderSide(); if(S.tab==='sfx') playSfx(it); };
     c.ondblclick = function(){ S.sel[S.tab] = it.id; renderSide(); apply(); };
-    if(S.tab !== 'ed'){
-      c.draggable = true;
-      c.addEventListener('dragstart', function(e){
-        try{ e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData('text/x-hmk', it.id); }catch(x){}
-        c.classList.add('dragging'); document.body.classList.add('dragout');
-      });
-      c.addEventListener('dragend', function(e){
-        c.classList.remove('dragging'); document.body.classList.remove('dragout');
-        var x = e.clientX, y = e.clientY;
-        if(e.screenX === 0 && e.screenY === 0 && x === 0 && y === 0) return;            // cancelled (Esc)
-        var outside = x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight;
-        if(!outside) return;
-        S.sel[S.tab] = it.id; save(); renderSide(); apply();                              // dropped on After Effects
-      });
-    }
+    if(S.tab !== 'ed') dragOut(c, it);
     if(S.tab==='lib' && it.f.type==='video'){
       c.onmouseenter = function(){ var v=th.querySelector('video'); if(v) v.play().catch(function(){}); };
       c.onmouseleave = function(){ var v=th.querySelector('video'); if(v) v.pause(); };
@@ -448,7 +434,7 @@ function renderSide(){
       if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[10,'10'],[14,'14'],[18,'18'],[24,'24'],[30,'30'],[40,'40']], S.mp.frames) + '</div>';
       h += '<button class="btn primary" id="go">طبّق على اللايرات المحددة</button>';
       h += '<button class="btn warn" id="clear">شيل حركات الكيت من المحدد</button>';
-      h += '<div class="hint">بتشتغل على أي لاير: تكست، شيب، صورة أو فيديو. بتنزل كإفكت اسمه HAMDY في Effect Controls، فاللاير نفسه وكي فريمز بتوعك مبيتلمسوش.</div>';
+      h += '<div class="hint">بتشتغل على أي لاير: تكست، شيب، صورة أو فيديو. بتنزل كإفكت اسمه HAMDY في Effect Controls، فاللاير نفسه وكي فريمز بتوعك مبيتلمسوش. وفوق اللاير بيتحط ماركر HAMDY IN (آخر الدخول) وHAMDY OUT (أول الخروج): اسحبهم في التايملاين وطول الحركة يتغير.</div>';
       break;
     case 'tx':
       h += '<div class="stage" id="stage"></div>' + head(it, it.loop ? 'لوب على طول اللاير' : '');
@@ -1390,6 +1376,42 @@ function gfRun(it){
   .catch(function(e){ if(e){ setGf('حصل خطأ: ' + (e.message || e), 'badline'); } });
 }
 
+
+/* ============================================================ drag out to AE */
+// HTML drag & drop doesn't leave a CEP panel reliably, so we capture the mouse ourselves: press on a card, drag
+// it outside the panel and let go over After Effects -> applied to the selected layer(s).
+var DRAG = null;
+function dragOut(card, it){
+  card.addEventListener('pointerdown', function(e){
+    if(e.button !== 0) return;
+    DRAG = {card:card, it:it, x:e.clientX, y:e.clientY, id:e.pointerId, on:false};
+    try{ card.setPointerCapture(e.pointerId); }catch(x){}
+  });
+  card.addEventListener('pointermove', function(e){
+    if(!DRAG || DRAG.card !== card) return;
+    if(!DRAG.on && Math.abs(e.clientX - DRAG.x) + Math.abs(e.clientY - DRAG.y) > 8){ DRAG.on = true; card.classList.add('dragging'); document.body.classList.add('dragout'); }
+    if(DRAG.on){
+      var out = e.clientX < 0 || e.clientY < 0 || e.clientX > window.innerWidth || e.clientY > window.innerHeight;
+      document.body.classList.toggle('dragready', out);
+    }
+  });
+  function end(e, cancel){
+    if(!DRAG || DRAG.card !== card) return;
+    var d = DRAG; DRAG = null;
+    try{ card.releasePointerCapture(d.id); }catch(x){}
+    card.classList.remove('dragging'); document.body.classList.remove('dragout'); document.body.classList.remove('dragready');
+    if(!d.on || cancel) return;
+    card._noClick = true; setTimeout(function(){ card._noClick = false; }, 50);
+    var out = e.clientX < 0 || e.clientY < 0 || e.clientX > window.innerWidth || e.clientY > window.innerHeight;
+    if(!out) return;
+    S.sel[S.tab] = d.it.id; save();
+    Array.prototype.forEach.call(card.parentNode ? card.parentNode.children : [], function(x){ x.classList.remove('sel'); }); card.classList.add('sel');
+    renderSide(); apply();
+  }
+  card.addEventListener('pointerup', function(e){ end(e, false); });
+  card.addEventListener('pointercancel', function(e){ end(e, true); });
+  card.addEventListener('lostpointercapture', function(e){ if(DRAG && DRAG.card === card && !DRAG.on){ DRAG = null; } });
+}
 /* ============================================================ language */
 // Arabic is the source language; English comes from js/i18n_en.js. Every rendered text node / placeholder / title
 // is translated by exact match, so new UI only needs a dictionary line.

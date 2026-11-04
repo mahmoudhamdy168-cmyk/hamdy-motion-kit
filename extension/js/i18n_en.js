@@ -1,5 +1,9 @@
 /* English UI dictionary (Arabic text -> English). Add a line for any new UI text. */
 var I18N_EN = {
+"بتشتغل على أي لاير: تكست، شيب، صورة أو فيديو. بتنزل كإفكت اسمه HAMDY في Effect Controls، فاللاير نفسه وكي فريمز بتوعك مبيتلمسوش. وفوق اللاير بيتحط ماركر HAMDY IN (آخر الدخول) وHAMDY OUT (أول الخروج): اسحبهم في التايملاين وطول الحركة يتغير.":"Works on any layer: text, shape, image or video. Added as an effect named HAMDY in Effect Controls, so the layer itself and your keyframes are untouched. HAMDY IN (end of the in-animation) and HAMDY OUT (start of the out-animation) markers are added on the layer: drag them in the timeline to change the animation length.",
+"بتشتغل على أي لاير: تكست، شيب، صورة أو فيديو. بتنزل كإفكت اسمه HAMDY في Effect Controls، فاللاير نفسه وكي فريمز بتوعك مبيتلمسوش. وبيتحط فوق اللاير ماركر HAMDY IN وHAMDY OUT: اسحبهم في التايملاين وطول الحركة يتغير.":"Works on any layer: text, shape, image or video. Added as an effect named HAMDY in Effect Controls, so the layer and your keyframes are untouched. HAMDY IN and HAMDY OUT markers are added on the layer: drag them in the timeline to change the animation length.",
+"اسحب الكارت لبرة البانل على After Effects وسيبه":"Drag the card out of the panel onto After Effects and let go",
+"سيبه دلوقتي ✓ هيتطبق على اللاير المحدد":"Release now ✓ it will apply to the selected layer",
 "2) رجّعه من فوتوشوب":"2) Bring it back from Photoshop",
 "تصدير SRT":"Export SRT",
 "حط الكابشن في الكومب":"Add captions to the comp",

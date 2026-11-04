@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.1.1";
+    var VER = "1.2.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -362,7 +362,7 @@ var NABD = (function () {
     }
     // text & shape layers are NOT "instanceof AVLayer" in ExtendScript, so go by matchName
     // helper layers (sounds, style copies, mattes, guide lines) are tucked away as "shy"
-    var TUCK = true;
+    var TUCK = true, TIMING = true;
     function tuck(c, L) {
         if (!TUCK) { return; }
         try { L.shy = true; c.hideShyLayers = true; } catch (e) {}
@@ -1058,6 +1058,53 @@ var NABD = (function () {
     }
     function linIn(prop, k) { try { prop.setInterpolationTypeAtKey(k, KeyframeInterpolationType.LINEAR, KeyframeInterpolationType.BEZIER); } catch (e) {} }
 
+    // ===================================================== timing markers
+    // Like Animation Composer: a layer marker "HAMDY IN" (end of the in-animation) and "HAMDY OUT" (start of the
+    // out-animation). Drag them on the layer bar and the animation stretches to match — keys stay where they are,
+    // an expression re-times them.
+    function setMarker(L, label, t) {
+        var M = L.property("ADBE Marker"), k;
+        for (k = M.numKeys; k >= 1; k--) { try { if (M.keyValue(k).comment === label) { M.removeKey(k); } } catch (e) {} }
+        try { M.setValueAtTime(t, new MarkerValue(label)); } catch (e2) {}
+    }
+    function timingHead(dir, ref) {
+        if (dir === "in") {
+            return "// HAMDY TIMING: drag the \"HAMDY IN\" marker on the layer to change where the animation ends\n" +
+                "var mL = " + ref + ", T = time, mk = null;\ntry { mk = mL.marker.key(\"HAMDY IN\"); } catch (err) { mk = null; }\n" +
+                "if (mk && numKeys > 1) { var ka = key(1).time, kb = key(numKeys).time, me = Math.max(ka + thisComp.frameDuration, mk.time);\n" +
+                "  if (time > ka) { T = (time < me) ? ka + (time - ka) * (kb - ka) / (me - ka) : kb + (time - me); } }\n";
+        }
+        return "// HAMDY TIMING: drag the \"HAMDY OUT\" marker on the layer to change where the animation starts\n" +
+            "var mL = " + ref + ", T = time, mk = null;\ntry { mk = mL.marker.key(\"HAMDY OUT\"); } catch (err) { mk = null; }\n" +
+            "if (mk && numKeys > 1) { var ka = key(1).time, kb = key(numKeys).time, ms = Math.min(mk.time, mL.outPoint - thisComp.frameDuration), oe = Math.max(ms + thisComp.frameDuration, mL.outPoint);\n" +
+            "  T = (time < ms) ? ka - (ms - time) : ka + (time - ms) * (kb - ka) / (oe - ms); }\n";
+    }
+    function timingWrap(pr, dir, ref) {
+        var old = "";
+        try { old = pr.expression || ""; } catch (e) {}
+        if (/HAMDY TIMING/.test(old)) { return; }
+        var body = old ? "var vT = valueAtTime(T);\n" + old.replace(/\.time\b/g, ".__KT__").replace(/\btime\b/g, "T").replace(/\.__KT__/g, ".time").replace(/\.value\b/g, ".__KV__").replace(/\bvalue\b/g, "vT").replace(/\.__KV__/g, ".value") : "valueAtTime(T)";
+        try { pr.expression = timingHead(dir, ref) + body; } catch (e2) {}
+    }
+    function timingWalk(P, dir, ref) {
+        var i, pr;
+        for (i = 1; i <= P.numProperties; i++) {
+            pr = P.property(i);
+            if (pr.propertyType === PropertyType.PROPERTY) { try { if (pr.numKeys > 1 && pr.canSetExpression) { timingWrap(pr, dir, ref); } } catch (e) {} }
+            else { timingWalk(pr, dir, ref); }
+        }
+    }
+    function markTiming(L, tag, dir, t0, t1, kid) {
+        if (!TIMING) { return; }
+        var ref = kid ? "parent" : "thisLayer", p = parade(L), i;
+        for (i = 1; i <= p.numProperties; i++) { if (p.property(i).name.indexOf(tag) === 0) { timingWalk(p.property(i), dir, ref); } }
+        try {
+            var an = L.property("ADBE Text Properties").property("ADBE Text Animators");
+            for (i = 1; i <= an.numProperties; i++) { if (an.property(i).name.indexOf(tag) === 0) { timingWalk(an.property(i), dir, ref); } }
+        } catch (e) {}
+        if (!kid) { setMarker(L, dir === "in" ? "HAMDY IN" : "HAMDY OUT", dir === "in" ? t1 : t0); }
+    }
+
     function mpApply(c, L, sp, dir, t0, t1, kid) {
         var CR = (kid && L.parent) ? L.parent : L;
         var K = c.height / 1080, ls = layerScale(CR), tr = sp.tr || {}, ez = sp.ease || "cubic";
@@ -1201,10 +1248,12 @@ var NABD = (function () {
                     if (a.dir === "in" || a.dir === "both") {
                         var s0 = a.at === "playhead" ? t : L.inPoint;
                         mpApply(c, G, sp, "in", s0, Math.min(L.outPoint, s0 + d), g > 0);
+                        markTiming(G, "HAMDY IN " + sp.id, "in", s0, Math.min(L.outPoint, s0 + d), g > 0);
                     }
                     if (a.dir === "out" || a.dir === "both") {
                         var e1 = (a.at === "playhead" && a.dir === "out") ? t : L.outPoint;
                         mpApply(c, G, sp, "out", Math.max(L.inPoint, e1 - d), e1, g > 0);
+                        markTiming(G, "HAMDY OUT " + sp.id, "out", Math.max(L.inPoint, e1 - d), e1, g > 0);
                     }
                 }
             }
@@ -1322,8 +1371,10 @@ var NABD = (function () {
         try { L.property("ADBE Text Properties").property("ADBE Text More Options").property("ADBE Text Anchor Point Align").setValue([0, -50]); } catch (e) {}
         if (sp.loop) { addTextAnim(L, sp, false, 0, 0, based); return; }
         if (sp.src || sp.tw) { typeApply(L, c, sp, a); return; }
-        if (a.doIn) { addTextAnim(L, sp, false, L.inPoint, Math.min(L.outPoint, L.inPoint + d), based); }
-        if (a.doOut) { addTextAnim(L, sp, true, Math.max(L.inPoint, L.outPoint - d), L.outPoint, based); }
+        var kidT = false;
+        try { kidT = /^(?:NABD|HAMDY) STYLE/.test(L.name) && !!L.parent; } catch (ek) {}
+        if (a.doIn) { addTextAnim(L, sp, false, L.inPoint, Math.min(L.outPoint, L.inPoint + d), based); markTiming(L, "HAMDY IN " + sp.id, "in", L.inPoint, Math.min(L.outPoint, L.inPoint + d), kidT); }
+        if (a.doOut) { addTextAnim(L, sp, true, Math.max(L.inPoint, L.outPoint - d), L.outPoint, based); markTiming(L, "HAMDY OUT " + sp.id, "out", Math.max(L.inPoint, L.outPoint - d), L.outPoint, kidT); }
     }
     function makeText(c, str, size, col, just, font, trk) {
         var L = c.layers.addText(String(str).replace(/\r\n|\n/g, "\r"));
@@ -4077,6 +4128,7 @@ var NABD = (function () {
             a = eval("(" + s + ")");
             if (!CMDS[a.cmd]) { return J({ ok: false, code: "UNKNOWN" }); }
             TUCK = a.tuck !== false;
+            TIMING = a.timing !== false;
             if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("Hamdy: " + a.cmd); undo = true; }
             res = CMDS[a.cmd](a);
             if (undo) { app.endUndoGroup(); }

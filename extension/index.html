@@ -188,12 +188,15 @@ input[type=color]{height:32px;padding:2px}
 /* language */
 body.en .card .nm em{display:none}
 body.en #side h2 .en{display:none}
-body.en.dragout::after{content:'Drop the card on After Effects to apply it to the selected layer'}
+body.en.dragout::after{content:'Drag the card out of the panel onto After Effects and let go'}
 #hideBtn.on{color:var(--acc)}
 /* drag & drop */
-.card[draggable=true]{cursor:grab}
+.card{touch-action:none}
+body.dragout,body.dragout *{cursor:grabbing!important;user-select:none}
+body.dragready::after{background:#3ddc84!important;content:'سيبه دلوقتي ✓ هيتطبق على اللاير المحدد'!important}
+body.en.dragready::after{content:'Release now ✓ it will apply to the selected layer'!important}
 .card.dragging{opacity:.45;outline:2px dashed var(--acc)}
-body.dragout::after{content:'سيب الكارت على After Effects يتطبّق على اللاير المحدد';position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:var(--acc);color:#111;font-weight:700;padding:8px 14px;border-radius:10px;font-size:12px;z-index:50;pointer-events:none}
+body.dragout::after{content:'اسحب الكارت لبرة البانل على After Effects وسيبه';position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:var(--acc);color:#111;font-weight:700;padding:8px 14px;border-radius:10px;font-size:12px;z-index:50;pointer-events:none}
 /* carousel */
 .car3d{position:absolute;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#2b2e3b,#121216 70%)}
 .carw{position:absolute;inset:0;transform-style:preserve-3d}
