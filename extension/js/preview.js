@@ -804,7 +804,7 @@ var CAP_SAMPLE_EN = 'THIS IS HOW YOUR CAPTIONS MOVE';
 function mountCap(box, style, opt){
   box.innerHTML = '<div class="capstage"><div class="capbox"><div class="captxt" dir="auto"></div></div></div>';
   var tx = box.querySelector('.captxt'), bx = box.querySelector('.capbox');
-  var words = (opt.text || CAP_SAMPLE_AR).split(/\s+/).filter(Boolean);
+  var words = (opt.text || (window.HMK_LANG === 'en' ? CAP_SAMPLE_EN : CAP_SAMPLE_AR)).split(/\s+/).filter(Boolean);
   var per = style.maxWords || opt.maxWords || 3, chunks = [];
   for(var i=0;i<words.length;i+=per) chunks.push(words.slice(i, i+per));
   return {box:box, tx:tx, bx:bx, chunks:chunks, style:style, opt:opt, cur:-1, spans:[]};

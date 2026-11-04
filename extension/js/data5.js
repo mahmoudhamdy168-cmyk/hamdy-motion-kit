@@ -18,13 +18,13 @@ var NABD_TOOLS2 = {
     {id:'tBake',   ar:'حوّل لكي فريمز',       en:'Bake to Keyframes',  g:'3) خلّص', d:'حدد النل (أو أي لاير عليه إكسبريشن حركة) وحوّله لكي فريمز عادية تعدلها بإيدك.'}
   ],
   GF: [
-    {id:'gErase',   ar:'امسح حاجة',          en:'Erase Object',      g:'بالذكاء الاصطناعي', op:'erase',   mask:true,  d:'ارسم ماسك على الحاجة اللي عايز تشيلها (على لاير الفيديو) ودوس. الفريم بيتبعت ويرجع مكانه فاضي وبيتحط كرقعة على المكان بس.'},
-    {id:'gFill',    ar:'حط حاجة مكانها',     en:'Generative Fill',   g:'بالذكاء الاصطناعي', op:'fill',    mask:true,  prompt:true, d:'ارسم ماسك واكتب عايز إيه يظهر فيه (بالإنجليزي أحسن).'},
-    {id:'gReplace', ar:'ابحث وبدّل',          en:'Search & Replace',  g:'بالذكاء الاصطناعي', op:'replace', mask:false, prompt:true, search:true, d:'من غير ماسك: اكتب الحاجة اللي في الصورة والحاجة اللي عايزها مكانها.'},
-    {id:'gOut',     ar:'وسّع الكادر',         en:'Generative Expand', g:'بالذكاء الاصطناعي', op:'outpaint',mask:false, prompt:true, d:'بيكمّل الصورة برة الكادر (مثلاً تحوّل لقطة عرض لـ 9:16) وبيعمل كومب جديد بالمقاس.'},
-    {id:'gBg',      ar:'شيل الخلفية',         en:'Remove Background', g:'بالذكاء الاصطناعي', op:'removebg',mask:false, d:'بيشيل خلفية الفريم الحالي ويرجعه PNG شفاف.'},
-    {id:'gPS',      ar:'فوتوشوب Generative Fill', en:'Photoshop Round-trip', g:'من غير مفتاح', op:'photoshop', mask:false, d:'بيصوّر الفريم ويفتحه في فوتوشوب. اعمل Generative Fill هناك واحفظ (Ctrl+S)، وارجع دوس "رجّعه من فوتوشوب". بيتحط فوق الفيديو ولو في ماسك بيتقص عليه.'},
-    {id:'gCAF',     ar:'Content-Aware Fill للفيديو', en:'Video Content-Aware Fill', g:'من غير مفتاح', op:'caf', mask:true, d:'لمسح حاجة من فيديو كامل: ارسم ماسك (واعمله تراك لو بيتحرك)، دوس، وهيتظبط الماسك Subtract ويفتحلك بانل Content-Aware Fill تدوس فيه Generate.'}
+    {id:'gCAF',     ar:'امسح من الفيديو كله', en:'Video Content-Aware Fill', g:'مجاني', op:'caf', mask:true, d:'مجاني جوه After Effects ومن غير نت. ارسم ماسك حوالين الحاجة على لاير الفيديو وحدده، وبعدين: 1) "جهّز وتراك" بيظبط الماسك ويفتح تراكر الماسك (دوس ▶) 2) "املا" بيفتح Content-Aware Fill (دوس Generate Fill Layer).'},
+    {id:'gPS',      ar:'فوتوشوب Generative Fill', en:'Photoshop Generative Fill', g:'مجاني', op:'photoshop', mask:false, prompt:true, d:'مجاني مع اشتراك أدوبي. ارسم ماسك على الحاجة (اختياري) واكتب عايز إيه (أو سيبه فاضي عشان يمسحها). بيفتح الفريم في فوتوشوب ويعمل التحديد ويحاول يعمل Generative Fill لوحده. لما يعجبك دوس "رجّعه" وبيرجع مكانه.'},
+    {id:'gErase',   ar:'امسح حاجة',          en:'Erase Object',      g:'بمفتاح', op:'erase',   mask:true,  d:'ارسم ماسك على الحاجة اللي عايز تشيلها (على لاير الفيديو) ودوس. الفريم بيتبعت ويرجع مكانه فاضي وبيتحط كرقعة على المكان بس.'},
+    {id:'gFill',    ar:'حط حاجة مكانها',     en:'Generative Fill',   g:'بمفتاح', op:'fill',    mask:true,  prompt:true, d:'ارسم ماسك واكتب عايز إيه يظهر فيه (بالإنجليزي أحسن).'},
+    {id:'gReplace', ar:'ابحث وبدّل',          en:'Search & Replace',  g:'بمفتاح', op:'replace', mask:false, prompt:true, search:true, d:'من غير ماسك: اكتب الحاجة اللي في الصورة والحاجة اللي عايزها مكانها.'},
+    {id:'gOut',     ar:'وسّع الكادر',         en:'Generative Expand', g:'بمفتاح', op:'outpaint',mask:false, prompt:true, d:'بيكمّل الصورة برة الكادر (مثلاً تحوّل لقطة عرض لـ 9:16) وبيعمل كومب جديد بالمقاس.'},
+    {id:'gBg',      ar:'شيل الخلفية',         en:'Remove Background', g:'بمفتاح', op:'removebg',mask:false, d:'بيشيل خلفية الفريم الحالي ويرجعه PNG شفاف.'}
   ],
   TRIM: [
     {id:'mDraw',   ar:'يترسم',             en:'Draw On',          g:'أساسي',   style:'draw'},

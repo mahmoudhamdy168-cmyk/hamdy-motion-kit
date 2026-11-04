@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.0.0";
+    var VER = "1.1.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -360,8 +360,21 @@ var NABD = (function () {
             return [Math.abs(s[0]) / 100 || 1, Math.abs(s[1]) / 100 || 1];
         } catch (e) { return [1, 1]; }
     }
+    // text & shape layers are NOT "instanceof AVLayer" in ExtendScript, so go by matchName
+    // helper layers (sounds, style copies, mattes, guide lines) are tucked away as "shy"
+    var TUCK = true;
+    function tuck(c, L) {
+        if (!TUCK) { return; }
+        try { L.shy = true; c.hideShyLayers = true; } catch (e) {}
+    }
+    function isAV(L) {
+        var mn = "";
+        try { mn = L.matchName; } catch (e) {}
+        if (mn) { return mn === "ADBE AV Layer" || mn === "ADBE Text Layer" || mn === "ADBE Vector Layer"; }
+        return (L instanceof AVLayer) || (L instanceof TextLayer) || (L instanceof ShapeLayer);
+    }
     function animatable(L) {
-        if (!(L instanceof AVLayer)) { return false; }
+        if (!isAV(L)) { return false; }
         try { if (L.nullLayer) { return false; } } catch (e) {}
         return true;
     }
@@ -604,7 +617,8 @@ var NABD = (function () {
         var acc = rgb(a.acc, [1, 0.42, 0.24]);
         var L, gi, j, n, li, ei, ti2;
         function slide(dx, dy) { return [[cx, cy], [cx + dx, cy + dy], [cx - dx, cy - dy], [cx, cy]]; }
-        function place(lay) { lay.label = 9; if (top) { lay.moveBefore(top); } }
+        var made = [];
+        function place(lay) { lay.label = 9; made.push(lay); if (top) { lay.moveBefore(top); } }
         function adj(name) {
             var A = c.layers.addSolid([1, 1, 1], "NABD TR | " + name, W, H, c.pixelAspect, t1 - t0);
             A.startTime = t0;
@@ -985,6 +999,14 @@ var NABD = (function () {
                         break;
                     default: L.remove(); throw Err("UNKNOWN");
                 }
+        }
+        // every layer this transition made lives only around the cut (never the whole comp)
+        for (i = 0; i < made.length; i++) {
+            try {
+                var lo = Math.max(0, t0 - half * 0.5), hi = Math.min(c.duration, t1 + half * 0.5);
+                if (made[i].outPoint > hi + fd / 2) { made[i].outPoint = Math.max(made[i].inPoint + fd, t1); }
+                if (made[i].inPoint < lo - fd / 2) { made[i].inPoint = Math.min(made[i].outPoint - fd, t0); }
+            } catch (espan) {}
         }
         if (a.sfx) {
             var wf = findWhoosh(a.libPaths);
@@ -2278,6 +2300,7 @@ var NABD = (function () {
         }
         if (st.box) {
             var B = shapeLayer(c, "NABD STYLE BOX | " + L.name, [0, 0]);
+            tuck(c, B);
             try { B.inPoint = L.inPoint; B.outPoint = L.outPoint; } catch (eio) {}
             var gb = addGroup(B, "box"), rb = sRect(B, gb, 100, 100, [0, 0], (st.box.r || 8) * k);
             sFill(B, gb, st.box.c, st.box.op === undefined ? 100 : st.box.op);
@@ -2347,6 +2370,7 @@ var NABD = (function () {
         if (!f.exists || dur <= 0) { return null; }
         var it = importFile(f), A = c.layers.add(it);
         A.name = "NABD SFX | typing";
+        tuck(c, A);
         A.startTime = t0;
         if (it.duration < dur) {
             try {
@@ -2449,6 +2473,7 @@ var NABD = (function () {
             D = L.duplicate();
             cleanCopy(D);
             D.name = "NABD STYLE LYR " + (i + 1) + " | " + L.name;
+            tuck(c, D);
             try { D.property("ADBE Text Properties").property("ADBE Text Document").expression = "\"\" + parent.text.sourceText"; } catch (es) {}
             var tdp = D.property("ADBE Text Properties").property("ADBE Text Document"), doc = tdp.value;
             try {
@@ -2503,6 +2528,7 @@ var NABD = (function () {
     function matteLayer(c, file, t0, dur, above, t1) {
         var it = importFile(file), M = c.layers.add(it), sd = it.duration || 1;
         M.name = "NABD MATTE | " + it.name;
+        tuck(c, M);
         M.startTime = t0;
         try { M.audioEnabled = false; } catch (e1) {}
         try {
@@ -2924,6 +2950,7 @@ var NABD = (function () {
             var r = layerRect(T, T.inPoint) || { width: 200, height: 100 };
             var rtl = /[؀-ۿ]/.test(layerText(T));
             var L = shapeLayer(c, "NABD STYLE LINE | " + a.kind + " | " + T.name, [0, 0]);
+            tuck(c, L);
             L.parent = T;
             L.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
             try { L.inPoint = T.inPoint; L.outPoint = T.outPoint; } catch (eio) {}
@@ -2997,6 +3024,7 @@ var NABD = (function () {
             }
             if (a.guide) {
                 var G = shapeLayer(c, "NABD STYLE PATHLINE | " + L.name, [0, 0]);
+                tuck(c, G);
                 G.parent = L;
                 G.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
                 try { G.inPoint = L.inPoint; G.outPoint = L.outPoint; } catch (eio) {}
@@ -3271,7 +3299,7 @@ var NABD = (function () {
     }
     function footageSel(c) {
         var sel = needSel(c), i;
-        for (i = 0; i < sel.length; i++) { if (sel[i] instanceof AVLayer && sel[i].source && !(sel[i].source.mainSource instanceof SolidSource) && !/^NABD /.test(sel[i].name)) { return sel[i]; } }
+        for (i = 0; i < sel.length; i++) { if (isAV(sel[i]) && sel[i].source && !(sel[i].source.mainSource instanceof SolidSource) && !/^NABD /.test(sel[i].name)) { return sel[i]; } }
         throw Err("NO_FOOTAGE");
     }
     function trkStart(a) {
@@ -3320,7 +3348,7 @@ var NABD = (function () {
         var c = comp(), sel = c.selectedLayers, i, nulls = [];
         for (i = 1; i <= c.numLayers; i++) { if (/^NABD TRACK \|/.test(c.layer(i).name)) { nulls.push(c.layer(i).name); } }
         for (i = 0; i < sel.length; i++) {
-            if (sel[i] instanceof AVLayer && sel[i].source) {
+            if (isAV(sel[i]) && sel[i].source) {
                 var t = trackers(sel[i]);
                 if (t.length) { return { layer: sel[i].name, trackers: t, nulls: nulls }; }
             }
@@ -3329,7 +3357,7 @@ var NABD = (function () {
     }
     function pickTracker(c, a, minPts) {
         var sel = c.selectedLayers, i, j, L = null, T = [];
-        for (i = 0; i < sel.length && !L; i++) { if (sel[i] instanceof AVLayer && sel[i].source) { T = trackers(sel[i]); if (T.length) { L = sel[i]; } } }
+        for (i = 0; i < sel.length && !L; i++) { if (isAV(sel[i]) && sel[i].source) { T = trackers(sel[i]); if (T.length) { L = sel[i]; } } }
         if (!L) { throw Err("NO_TRACK"); }
         for (j = T.length - 1; j >= 0; j--) {
             if (a.tracker && T[j].name !== a.tracker) { continue; }
@@ -3387,7 +3415,7 @@ var NABD = (function () {
         var c = comp(), N = findTrackNull(c, a.nullName), sel = c.selectedLayers, n = 0, j;
         if (!N) { throw Err("NO_TRACK_NULL"); }
         for (j = 0; j < sel.length; j++) {
-            if (sel[j] === N || (sel[j] instanceof AVLayer && sel[j].source && trackers(sel[j]).length)) { continue; }
+            if (sel[j] === N || (isAV(sel[j]) && sel[j].source && trackers(sel[j]).length)) { continue; }
             sel[j].parent = N; n++;
         }
         if (!n) { throw Err("NO_LAYERS"); }
@@ -3471,7 +3499,7 @@ var NABD = (function () {
         var order = a.swap ? [0, 1, 3, 2] : [0, 1, 2, 3];
         for (j = 0; j < sel.length; j++) {
             var X = sel[j];
-            if (X === L || !(X instanceof AVLayer)) { continue; }
+            if (X === L || !isAV(X)) { continue; }
             var p = parade(X);
             for (k = p.numProperties; k >= 1; k--) { if (p.property(k).name === "NABD TRACK PIN") { p.property(k).remove(); } }
             var fi = addEffect(X, "ADBE Corner Pin", "NABD TRACK PIN").propertyIndex;
@@ -3632,21 +3660,51 @@ var NABD = (function () {
         L.label = 11;
         return "OK";
     }
+    function psSend(body) {
+        var spec = null;
+        try { spec = BridgeTalk.getSpecifier("photoshop"); } catch (e) {}
+        if (!spec) { return false; }
+        var bt = new BridgeTalk();
+        bt.target = spec;
+        bt.body = body;
+        bt.send();
+        try { BridgeTalk.bringToFront(spec); } catch (e2) {}
+        return true;
+    }
+    function psPath(f) { return q2(f.fsName.replace(/\\/g, "/")); }
+    // opens the frame in Photoshop, turns the AE mask into a selection and tries Generative Fill right away
     function gfPhotoshop(a) {
         var f = new File(a.path || "");
         if (!f.exists) { throw Err("NO_FILE"); }
-        var spec = null;
-        try { spec = BridgeTalk.getSpecifier("photoshop"); } catch (e) {}
-        if (spec) {
-            var bt = new BridgeTalk();
-            bt.target = spec;
-            bt.body = "app.open(File(" + q2(f.fsName.replace(/\\/g, "/")) + ")); app.bringToFront();";
-            bt.send();
-            try { BridgeTalk.bringToFront(spec); } catch (e2) {}
-            return "OK_PS";
-        }
+        var m = a.mask ? new File(a.mask) : null, P = q2(a.prompt || "");
+        var body = "(function(){\n" +
+            "var doc = app.open(File(" + psPath(f) + "));\n" +
+            (m && m.exists ?
+                "try {\n" +
+                " var mk = app.open(File(" + psPath(m) + ")); mk.selection.selectAll(); mk.selection.copy(); mk.close(SaveOptions.DONOTSAVECHANGES);\n" +
+                " app.activeDocument = doc; var ch = doc.channels.add(); ch.name = 'HMK mask'; doc.activeChannels = [ch]; doc.paste();\n" +
+                " doc.activeChannels = doc.componentChannels; doc.selection.deselect(); doc.selection.load(ch); ch.remove();\n" +
+                " try {\n" +
+                "  var d = new ActionDescriptor(), r = new ActionReference(); r.putEnumerated(charIDToTypeID('Dcmn'), charIDToTypeID('Ordn'), charIDToTypeID('Trgt'));\n" +
+                "  d.putReference(charIDToTypeID('null'), r); d.putString(stringIDToTypeID('prompt'), " + P + "); d.putString(stringIDToTypeID('serviceID'), 'clio');\n" +
+                "  d.putEnumerated(stringIDToTypeID('mode'), stringIDToTypeID('syntheticFillMode'), stringIDToTypeID('inpaint'));\n" +
+                "  var sd = new ActionDescriptor(); sd.putString(stringIDToTypeID('gi_PROMPT'), " + P + "); sd.putString(stringIDToTypeID('gi_MODE'), 'ginp');\n" +
+                "  sd.putInteger(stringIDToTypeID('gi_SEED'), -1); sd.putInteger(stringIDToTypeID('gi_NUM_STEPS'), -1); sd.putInteger(stringIDToTypeID('gi_GUIDANCE'), 6); sd.putBoolean(stringIDToTypeID('gi_ADVANCED'), false);\n" +
+                "  d.putObject(stringIDToTypeID('serviceOptionsList'), stringIDToTypeID('clio'), sd);\n" +
+                "  executeAction(stringIDToTypeID('syntheticFill'), d, DialogModes.NO);\n" +
+                " } catch (eg) {}\n" +
+                "} catch (e) {}\n" : "") +
+            "app.bringToFront();\n})();";
+        if (psSend(body)) { return "OK_PS"; }
         f.execute();
         return "OK_PS_OPEN";
+    }
+    // asks Photoshop to save the current result (all layers merged) as a PNG next to the frame
+    function gfPSBack(a) {
+        var out = new File(a.out || "");
+        var body = "(function(){ try { var d = app.activeDocument, dup = d.duplicate('hmk_out', true); dup.saveAs(File(" + psPath(out) + "), new PNGSaveOptions(), true, Extension.LOWERCASE); dup.close(SaveOptions.DONOTSAVECHANGES); } catch (e) {} })();";
+        if (!psSend(body)) { throw Err("NO_PS"); }
+        return "OK";
     }
     function gfCAF(a) {
         var c = comp(), sel = needSel(c), L = sel[0], mp = L.property("ADBE Mask Parade"), i;
@@ -3656,6 +3714,11 @@ var NABD = (function () {
             try { mp.property(i).property("ADBE Mask Expansion").setValue(a.grow === undefined ? 10 : a.grow); } catch (e2) {}
         }
         selectOnly(c, L);
+        if (a.step === "track") {
+            try { mp.property(mp.numProperties).selected = true; } catch (es) {}
+            if (!menuCmd(["Track Mask"])) { throw Err("MENU_MISSING"); }
+            return "OK_CAF_TRACK";
+        }
         menuCmd(["Content-Aware Fill"]);
         return "OK_CAF";
     }
@@ -3674,7 +3737,7 @@ var NABD = (function () {
         for (j = 0; j < sel.length; j++) {
             var L = sel[j];
             if (L instanceof ShapeLayer) { out.push(L); continue; }
-            if ((L instanceof TextLayer) || (L instanceof AVLayer && L.source && /\.(ai|eps|pdf|svg)$/i.test(L.source.name))) {
+            if ((L instanceof TextLayer) || (isAV(L) && L.source && /\.(ai|eps|pdf|svg)$/i.test(L.source.name))) {
                 var before = c.numLayers, idx = L.index;
                 selectOnly(c, L);
                 var ok = menuCmd(L instanceof TextLayer ? ["Create Shapes from Text"] : ["Create Shapes from Vector Layer"]);
@@ -3747,12 +3810,121 @@ var NABD = (function () {
         return "OK";
     }
 
+    // ======================================================= the user's own path
+    function findPathRef(L) {
+        var root = null, i, j, out = null;
+        try { if (L.matchName === "ADBE Vector Layer") { root = L.property("ADBE Root Vectors Group"); } } catch (e) {}
+        function scan(P, chain) {
+            var k, pr;
+            for (k = 1; k <= P.numProperties && !out; k++) {
+                pr = P.property(k);
+                if (pr.matchName === "ADBE Vector Shape - Group") { out = chain + ".content(" + k + ").path"; return; }
+                if (pr.matchName === "ADBE Vector Group") { scan(pr.property("ADBE Vectors Group"), chain + ".content(" + k + ")"); }
+            }
+        }
+        if (root) { scan(root, ""); if (out) { return { kind: "shape", ref: "thisComp.layer(" + q2(L.name) + ")" + out }; } }
+        var mp = null;
+        try { mp = L.property("ADBE Mask Parade"); } catch (e2) {}
+        if (mp && mp.numProperties) { return { kind: "mask", ref: "thisComp.layer(" + q2(L.name) + ").mask(" + mp.numProperties + ").maskPath", mask: mp.numProperties }; }
+        return null;
+    }
+    function pickUserPath(c) {
+        var sel = c.selectedLayers, i, r;
+        for (i = 0; i < sel.length; i++) { r = findPathRef(sel[i]); if (r) { r.L = sel[i]; return r; } }
+        throw Err("NO_USER_PATH");
+    }
+    function pathToHere(src, ref) {
+        return "var S = thisComp.layer(" + q2(src) + "), P = " + ref + ", v = P.points(), it = P.inTangents(), ot = P.outTangents(), a = [], b = [], cc = [], i, q;\n" +
+            "for (i = 0; i < v.length; i++) { q = fromComp(S.toComp(v[i])); a.push(q); b.push(fromComp(S.toComp(v[i] + it[i])) - q); cc.push(fromComp(S.toComp(v[i] + ot[i])) - q); }\n" +
+            "createPath(a, b, cc, P.isClosed())";
+    }
+    function myPathText(a) {
+        var c = comp(), U = pickUserPath(c), fd = c.frameDuration;
+        var T = makeText(c, a.text || "اكتب هنا", a.size || 80, [1, 1, 1], "l", a.font, 0);
+        T.name = "NABD PATH TEXT | " + (a.text || "text");
+        T.inPoint = snap(c, c.time); T.outPoint = Math.min(c.duration, T.inPoint + Math.max(0.5, a.secs || 4));
+        T.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
+        T.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
+        var tw = 300;
+        try { var r = layerRect(T, T.inPoint); if (r) { tw = r.width; } } catch (er) {}
+        T.property("ADBE Mask Parade").addProperty("ADBE Mask Atom");
+        var M = T.property("ADBE Mask Parade").property(1);
+        M.name = "NABD PATH";
+        M.property("ADBE Mask Shape").expression = pathToHere(U.L.name, U.ref);
+        try { M.maskMode = MaskMode.NONE; } catch (em) {}
+        T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Path").setValue(1);
+        try { T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Reverse Path").setValue(a.reverse ? 1 : 0); } catch (erv) {}
+        var ppi = addSlider(T, "NABD PATH Progress", 50);
+        addSlider(T, "NABD PATH Speed", a.speed || 160);
+        addSlider(T, "NABD PATH Text Width", Math.round(tw));
+        var lenExpr = "var P = mask(\"NABD PATH\").maskPath, Lp = 0, q0 = P.pointOnPath(0), q1, i;\nfor (i = 1; i <= 64; i++) { q1 = P.pointOnPath(i / 64); Lp += length(q0, q1); q0 = q1; }\n";
+        var fm = T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text First Margin");
+        if (a.flow === "loop") { fm.expression = "// NABD PATH loop\n" + lenExpr + "var v = (time - inPoint) * effect(\"NABD PATH Speed\")(1);\n((v % Lp) + Lp) % Lp"; }
+        else {
+            fm.expression = "// NABD PATH\n" + lenExpr + "effect(\"NABD PATH Progress\")(1) / 100 * Math.max(0, Lp - effect(\"NABD PATH Text Width\")(1))";
+            if (a.flow === "travel") { var pr = FX(T, ppi).property(1); pr.setValueAtTime(T.inPoint, 0); pr.setValueAtTime(T.outPoint, 100); setEase(pr, 1, 33, 45); setEase(pr, 2, 45, 33); }
+        }
+        T.moveBefore(U.L);
+        return "OK";
+    }
+    function myPathFollow(a) {
+        var c = comp(), U = pickUserPath(c), sel = c.selectedLayers, n = 0, j, k;
+        for (j = 0; j < sel.length; j++) {
+            var X = sel[j];
+            if (X === U.L || !animatable(X)) { continue; }
+            var p = parade(X);
+            for (k = p.numProperties; k >= 1; k--) { if (/^NABD FOLLOW/.test(p.property(k).name)) { p.property(k).remove(); } }
+            var pi = addSlider(X, "NABD FOLLOW Progress", 0);
+            addCheck(X, "NABD FOLLOW Orient", a.orient !== false);
+            addSlider(X, "NABD FOLLOW Angle", 0);
+            addSlider(X, "NABD FOLLOW Speed", a.speed || 25);
+            var d = Math.max(0.2, (X.outPoint - X.inPoint)), t0 = a.at === "playhead" ? snap(c, c.time) : X.inPoint;
+            var pr = FX(X, pi).property(1);
+            if (a.flow === "loop") { pr.expression = "((time - inPoint) * effect(\"NABD FOLLOW Speed\")(1)) % 100"; }
+            else { pr.setValueAtTime(t0, 0); pr.setValueAtTime(Math.min(X.outPoint, t0 + (a.secs || d)), 100); setEase(pr, 1, 33, 60); setEase(pr, 2, 60, 33); }
+            var src = "thisComp.layer(" + q2(U.L.name) + ")";
+            var head = "var S = " + src + ", P = " + U.ref + ", u = clamp(effect(\"NABD FOLLOW Progress\")(1) / 100, 0, 1);\n";
+            var tg = X.property("ADBE Transform Group");
+            tg.property("ADBE Position").expression = "// NABD FOLLOW\n" + head + "var q = S.toComp(P.pointOnPath(u));\n" + (X.parent ? "q = parent.fromComp(q);\n" : "") + (X.threeDLayer ? "[q[0], q[1], value[2]]" : "q");
+            tg.property("ADBE Rotate Z").expression = head + "if (effect(\"NABD FOLLOW Orient\")(1) > 0) { var p0 = P.pointOnPath(u), t = P.tangentOnPath(u), w = S.toComp(p0 + t) - S.toComp(p0); value + radiansToDegrees(Math.atan2(w[1], w[0])) + effect(\"NABD FOLLOW Angle\")(1); } else { value; }";
+            n++;
+        }
+        if (!n) { throw Err("NEED_FOLLOWER"); }
+        return "OK";
+    }
+    function myPathDraw(a) {
+        var c = comp(), U = pickUserPath(c), fd = c.frameDuration, L = U.L;
+        if (U.kind === "shape") {
+            var args = {}, k;
+            for (k in a) { if (a.hasOwnProperty(k)) { args[k] = a[k]; } }
+            selectOnly(c, L);
+            return trimApply(args);
+        }
+        // a mask on any layer: draw it with the Stroke effect
+        var p = parade(L), i;
+        for (i = p.numProperties; i >= 1; i--) { if (p.property(i).name === "NABD MASK DRAW") { p.property(i).remove(); } }
+        var si = addEffect(L, "ADBE Stroke", "NABD MASK DRAW").propertyIndex;
+        try { FX(L, si).property(1).setValue(U.mask); } catch (e1) {}
+        try { FX(L, si).property(4).setValue((a.strokeColor || [1, 1, 1, 1])); } catch (e2) {}
+        try { FX(L, si).property(5).setValue(a.width || 6); FX(L, si).property(6).setValue(100); } catch (e3) {}
+        var t0 = a.at === "playhead" ? snap(c, c.time) : L.inPoint, d = Math.max(4, a.frames || 24) * fd;
+        if (a.style === "travel") {
+            FX(L, si).property(8).expression = "((time - inPoint) * 50) % 100";
+            FX(L, si).property(9).expression = "Math.min(100, effect(\"NABD MASK DRAW\")(8) + " + (a.seg || 25) + ")";
+        } else {
+            var E = FX(L, si).property(9);
+            E.setValueAtTime(t0, 0); E.setValueAtTime(t0 + d, 100); setEase(E, 1, 33, 70); setEase(E, 2, 70, 33);
+        }
+        try { FX(L, si).property(11).setValue(a.onTransparent ? 3 : 1); } catch (e4) {}
+        return "OK";
+    }
+
     // ============================================================ captions
     function capSource() {
         var c = comp(), sel = c.selectedLayers, L, i;
         for (i = 0; i < sel.length; i++) {
             L = sel[i];
-            if (L instanceof AVLayer && L.source && L.source.file && L.hasAudio) {
+            if (isAV(L) && L.source && L.source.file && L.hasAudio) {
                 return { path: L.source.file.fsName, start: L.startTime, inPoint: L.inPoint, outPoint: L.outPoint, stretch: L.stretch, name: L.name };
             }
         }
@@ -3876,7 +4048,7 @@ var NABD = (function () {
     }
 
     // ============================================================ dispatch
-    var NO_UNDO = { ping: 1, inspect: 1, carPick: 1, trkInfo: 1, gfPhotoshop: 1, libPick: 1, libList: 1, libOpen: 1, capSource: 1, saveText: 1, openText: 1 };
+    var NO_UNDO = { ping: 1, inspect: 1, carPick: 1, trkInfo: 1, gfPhotoshop: 1, gfPSBack: 1, libPick: 1, libList: 1, libOpen: 1, capSource: 1, saveText: 1, openText: 1 };
     var CMDS = {
         ping: function () {
             var c = null;
@@ -3895,7 +4067,8 @@ var NABD = (function () {
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,
-        gfFrame: gfFrame, gfCleanup: gfCleanup, gfImport: gfImport, gfPhotoshop: gfPhotoshop, gfCAF: gfCAF, trimApply: trimApply
+        gfFrame: gfFrame, gfCleanup: gfCleanup, gfImport: gfImport, gfPhotoshop: gfPhotoshop, gfPSBack: gfPSBack, gfCAF: gfCAF, trimApply: trimApply,
+        myPathText: myPathText, myPathFollow: myPathFollow, myPathDraw: myPathDraw
     };
 
     function run(s) {
@@ -3903,6 +4076,7 @@ var NABD = (function () {
         try {
             a = eval("(" + s + ")");
             if (!CMDS[a.cmd]) { return J({ ok: false, code: "UNKNOWN" }); }
+            TUCK = a.tuck !== false;
             if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("NABD: " + a.cmd); undo = true; }
             res = CMDS[a.cmd](a);
             if (undo) { app.endUndoGroup(); }
