@@ -1,4 +1,4 @@
-/* NABD Motion Kit v0.6 — typewriter family, layered text styles, extra motions, rendered asset items */
+/* HAMDY Motion Kit v0.6 — typewriter family, layered text styles, extra motions, rendered asset items */
 (function(D){
 function add(list, items){ items.forEach(function(x){ list.push(x); }); }
 

@@ -1,4 +1,4 @@
-/* NABD v0.9 — tracking, generative fill, trim paths tool lists */
+/* HAMDY v0.9 — tracking, generative fill, trim paths tool lists */
 var NABD_TOOLS2 = {
   TRK: [
     {id:'tPoint',  ar:'تراك نقطة',          en:'Track a Point',      g:'1) اعمل التراك', d:'بيفتح التراكر على الفيديو المحدد ومعاه نقطة جاهزة. حط المربع على حاجة واضحة في الكادر ودوس ▶ Analyze في بانل Tracker.', kind:'point'},

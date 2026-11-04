@@ -1,4 +1,4 @@
-/* NABD Motion Kit v0.3 — panel UI */
+/* HAMDY Motion Kit v0.3 — panel UI */
 (function(){
 "use strict";
 var D = NABD_DATA, P = NABD_PREVIEW;
@@ -44,7 +44,7 @@ var MSG = {
   NO_SAVEFRAME:'نسخة After Effects دي مش بتسمح تصوير فريم من السكريبت. حدّث البرنامج أو استخدم Content-Aware Fill.',
   NO_KEY:'حط مفتاح الخدمة الأول.',
   NEED_PERSON:'حدد لاير الشخص المقصوص الأول (اللي الكاروسيل هيلف حواليه).',
-  NO_CARD:'حدد كارت من كروت الكاروسيل (لاير اسمه NABD CAROUSEL … | card).',
+  NO_CARD:'حدد كارت من كروت الكاروسيل (لاير اسمه HAMDY CAROUSEL … | card).',
   COLOR_CARD:'الكارت ده لون مش صورة. اعمل الكاروسيل بـ "صور" أو "صور + ألوان" وحط صورة في الخانة دي.',
   NO_COMP:'افتح كومبوزيشن الأول.',
   NO_KEYS:'حدد كي فريمز في التايملاين الأول.',
@@ -429,7 +429,7 @@ function renderSide(){
         h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('tr.mframes', [[12,'12'],[16,'16'],[20,'20'],[26,'26'],[34,'34'],[45,'45']], S.tr.mframes) + '</div>';
         h += '<div class="row">' + chk('tr.flip', 'اقلب الماسك', S.tr.flip) + chk('tr.sfx', 'صوت ووش', S.tr.sfx) + '</div>';
         h += '<button class="btn primary" id="go">حط الترانزيشن</button>';
-        h += '<div class="hint">حدد كليبين (القديم والجديد) والماسك هيتحط على القطع. لو حددت لاير واحد بس، بيعمله ظهور بالماسك ده من أول اللاير. الماسك لاير فيديو حقيقي اسمه NABD MATTE فتقدر تكبّره أو تحركه.</div>';
+        h += '<div class="hint">حدد كليبين (القديم والجديد) والماسك هيتحط على القطع. لو حددت لاير واحد بس، بيعمله ظهور بالماسك ده من أول اللاير. الماسك لاير فيديو حقيقي اسمه HAMDY MATTE فتقدر تكبّره أو تحركه.</div>';
         break;
       }
       h += '<div class="stage" id="stage"></div>' + head(it, it.d);
@@ -448,7 +448,7 @@ function renderSide(){
       if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[10,'10'],[14,'14'],[18,'18'],[24,'24'],[30,'30'],[40,'40']], S.mp.frames) + '</div>';
       h += '<button class="btn primary" id="go">طبّق على اللايرات المحددة</button>';
       h += '<button class="btn warn" id="clear">شيل حركات الكيت من المحدد</button>';
-      h += '<div class="hint">بتشتغل على أي لاير: تكست، شيب، صورة أو فيديو. بتنزل كإفكت اسمه NABD في Effect Controls، فاللاير نفسه وكي فريمز بتوعك مبيتلمسوش.</div>';
+      h += '<div class="hint">بتشتغل على أي لاير: تكست، شيب، صورة أو فيديو. بتنزل كإفكت اسمه HAMDY في Effect Controls، فاللاير نفسه وكي فريمز بتوعك مبيتلمسوش.</div>';
       break;
     case 'tx':
       h += '<div class="stage" id="stage"></div>' + head(it, it.loop ? 'لوب على طول اللاير' : '');
@@ -465,8 +465,8 @@ function renderSide(){
       if(!it.loop && !it.src) h += '<div class="row">' + chk('tx.doIn', 'دخول', S.tx.doIn) + chk('tx.doOut', 'خروج', S.tx.doOut) + '</div>';
       h += '<button class="btn primary" id="go">اعمل نص جديد بالحركة دي</button>';
       h += '<div class="row"><button class="btn" id="go2">طبّق على المحدد</button><button class="btn warn" id="clear">شيل الحركات</button></div>';
-      if(it.src) h += '<div class="hint">الكتابة دي حقيقية من Source Text، فالحروف العربي بتتوصل وانت بتكتب. السرعة والمؤشر بيتعدلوا بعدين من صفحة التعديل أو من Effect Controls (NABD TYPE).</div>';
-      else if(it.tw) h += '<div class="hint">كل حرف بيظهر بالحركة دي على حسب سرعة الكتابة. تقدر تغيّر السرعة بعدين من NABD TYPE Speed.</div>';
+      if(it.src) h += '<div class="hint">الكتابة دي حقيقية من Source Text، فالحروف العربي بتتوصل وانت بتكتب. السرعة والمؤشر بيتعدلوا بعدين من صفحة التعديل أو من Effect Controls (HAMDY TYPE).</div>';
+      else if(it.tw) h += '<div class="hint">كل حرف بيظهر بالحركة دي على حسب سرعة الكتابة. تقدر تغيّر السرعة بعدين من HAMDY TYPE Speed.</div>';
       else h += '<div class="hint">' + (it.latin ? 'الحركة دي معمولة للإنجليزي (بتبدّل الحروف).' : 'في التلقائي: العربي بيتحرك كلمة كلمة علشان الحروف متتقطعش، والإنجليزي حرف حرف.') + '</div>';
       break;
     case 'ti':
@@ -476,7 +476,7 @@ function renderSide(){
       if(it.place==='lower') h += '<div class="field"><span class="lbl">الناحية</span>' + seg('ti.side', [['r','يمين'],['c','نص'],['l','شمال']], S.ti.side) + '</div>';
       h += '<div class="row">' + num('ti.secs','المدة (ثواني)',S.ti.secs) + '<div class="field"><label>الخط (PostScript)</label><input type="text" data-k="ti.font" dir="ltr" placeholder="Cairo-Bold" value="' + esc(S.ti.font) + '"></div></div>';
       h += '<button class="btn primary" id="go">ضيف العنوان عند البلاي هيد</button>';
-      h += '<div class="hint">العنوان بينزل لايرات مربوطة بـ Null اسمه NABD TITLE، فتحرّكه أو تكبّره كله مرة واحدة، وتعدّل الكلام من اللاير نفسه. البوكسات بتكبر مع الكلام لوحدها.</div>';
+      h += '<div class="hint">العنوان بينزل لايرات مربوطة بـ Null اسمه HAMDY TITLE، فتحرّكه أو تكبّره كله مرة واحدة، وتعدّل الكلام من اللاير نفسه. البوكسات بتكبر مع الكلام لوحدها.</div>';
       break;
     case 'el':
       if(it.ov){
@@ -499,7 +499,7 @@ function renderSide(){
       h += '<div class="field"><label>النص (للمعاينة وللنص الجديد)</label><input type="text" id="tsText" dir="auto" value="' + esc(S.tx.text) + '"></div>';
       h += '<button class="btn primary" id="go">طبّق على التكست المحدد</button>';
       h += '<button class="btn" id="goNew">اعمل نص جديد بالستايل ده</button>';
-      h += '<div class="hint">الستايل بيغيّر لون النص والإطار وبيضيف إفكتات اسمها NABD STYLE (ظل، توهج، جرادينت، لمعة، بوكس). لو طبّقت ستايل تاني بيحل مكان القديم. وتقدر تحط عليه أي حركة من تاب حركة النص.</div>';
+      h += '<div class="hint">الستايل بيغيّر لون النص والإطار وبيضيف إفكتات اسمها HAMDY STYLE (ظل، توهج، جرادينت، لمعة، بوكس). لو طبّقت ستايل تاني بيحل مكان القديم. وتقدر تحط عليه أي حركة من تاب حركة النص.</div>';
       break;
     case 'fx':
       h += '<div class="stage" id="stage"></div>' + head(it, {look:'فلتر ألوان', vfx:'إفكت فيديو', afx:'إفكت صوت'}[it.kind] + ' · ' + it.g);
@@ -508,7 +508,7 @@ function renderSide(){
         if(S.fx.mode !== 'selected') h += '<div class="field"><span class="lbl">القوة</span>' + seg('fx.amount', [[25,'25%'],[50,'50%'],[75,'75%'],[100,'100%']], S.fx.amount) + '</div>';
       }
       h += '<button class="btn primary" id="go">' + (it.kind==='afx' ? 'طبّق على لايرات الصوت المحددة' : 'طبّق') + '</button>';
-      h += '<div class="hint">' + (it.kind==='afx' ? 'حدد لاير فيه صوت (فيديو أو أوديو). الإفكتات بتنزل باسم NABD AUDIO وتقدر تظبطها من Effect Controls.' : 'الفلتر بيتعمل من إفكتات After Effects الأصلية، فكل حاجة فيه تتعدّل من Effect Controls. المعاينة تقريبية، وفي الكبيرة اسحب عينك على الخط: شمال قبل ويمين بعد.') + '</div>';
+      h += '<div class="hint">' + (it.kind==='afx' ? 'حدد لاير فيه صوت (فيديو أو أوديو). الإفكتات بتنزل باسم HAMDY AUDIO وتقدر تظبطها من Effect Controls.' : 'الفلتر بيتعمل من إفكتات After Effects الأصلية، فكل حاجة فيه تتعدّل من Effect Controls. المعاينة تقريبية، وفي الكبيرة اسحب عينك على الخط: شمال قبل ويمين بعد.') + '</div>';
       break;
     case 'sfx': h += sfxSide(it); break;
     case 'ez':
@@ -576,7 +576,7 @@ function toolControls(it){
     case 'newComp':
       h += '<div class="field"><label>المقاس</label><select data-k="tl.size">' + D.COMP_SIZES.map(function(c,i){ return '<option value="' + i + '"' + (+S.tl.size===i?' selected':'') + '>' + c.ar + ' — ' + c.w + '×' + c.h + '</option>'; }).join('') + '</select></div>';
       h += '<div class="field"><span class="lbl">FPS</span>' + seg('tl.fps', [[24,'24'],[25,'25'],[30,'30'],[50,'50'],[60,'60']], S.tl.fps) + '</div>';
-      h += '<div class="row">' + num('tl.secs','ثواني',S.tl.secs) + '<div class="field"><label>الاسم</label><input type="text" data-k="tl.name" value="' + esc(S.tl.name) + '" placeholder="NABD Comp"></div></div>';
+      h += '<div class="row">' + num('tl.secs','ثواني',S.tl.secs) + '<div class="field"><label>الاسم</label><input type="text" data-k="tl.name" value="' + esc(S.tl.name) + '" placeholder="HAMDY Comp"></div></div>';
       break;
     case 'organize': h += chk('tl.deep', 'رتّب كمان الحاجات اللي جوه فولدرات', S.tl.deep); break;
     case 'guides':
@@ -684,7 +684,7 @@ function apply(){
         case 'trimIn': p = host('trim', {side:'in'}); break;
         case 'trimOut': p = host('trim', {side:'out'}); break;
         case 'guides': p = host('guides', {plat:S.tl.plat, zones:S.tl.zones, safe:S.tl.safe, thirds:S.tl.thirds, center:S.tl.center}); break;
-        case 'newComp': var c = D.COMP_SIZES[+S.tl.size||0]; p = host('newComp', {w:c.w, h:c.h, fps:S.tl.fps, secs:S.tl.secs, name:S.tl.name || ('NABD ' + c.ar)}); break;
+        case 'newComp': var c = D.COMP_SIZES[+S.tl.size||0]; p = host('newComp', {w:c.w, h:c.h, fps:S.tl.fps, secs:S.tl.secs, name:S.tl.name || ('HAMDY ' + c.ar)}); break;
         case 'organize':
           if(Date.now() - orgArm > 4000){ orgArm = Date.now(); var t=$('toast'); t.className='toast info'; t.textContent='دوس تاني للتأكيد. هيتنقل كل حاجة لفولدرات ومش هيتمسح حاجة.'; return; }
           orgArm = 0; p = host('organize', {deep:S.tl.deep}); break;
@@ -886,7 +886,7 @@ function capSide(it){
     h += '<div class="row"><button class="btn" id="capRe">قسّم تاني</button><button class="btn warn" id="capClear">امسح</button></div>';
   } else h += '<div class="pathline">لسه مفيش كابشن. المعاينة فوق بتوريك شكل الستايل.</div>';
   h += '<button class="btn primary" id="go"' + (S.cap.caps.length?'':' disabled') + '>حط الكابشن في الكومب</button>';
-  h += '<div class="hint">كل كابشن بيبقى لاير تكست لوحده، كلهم مربوطين بـ Null اسمه NABD CAPTIONS، فتحرّكهم أو تكبّرهم مرة واحدة. Deepgram بيدعم 17 لهجة عربي منهم المصري، وGroq مجاني بس توقيت الكلمات فيه تقريبي.</div>';
+  h += '<div class="hint">كل كابشن بيبقى لاير تكست لوحده، كلهم مربوطين بـ Null اسمه HAMDY CAPTIONS، فتحرّكهم أو تكبّرهم مرة واحدة. Deepgram بيدعم 17 لهجة عربي منهم المصري، وGroq مجاني بس توقيت الكلمات فيه تقريبي.</div>';
   return h;
 }
 function openURL(u){ try{ if(window.cep && window.cep.util) window.cep.util.openURLInDefaultBrowser(u); else window.open(u); }catch(e){ window.open(u); } }
@@ -946,7 +946,7 @@ function genSfx(){
   var body = JSON.stringify({text:S.sfx.prompt, duration_seconds:S.sfx.dur, prompt_influence:0.4});
   httpsReq('POST', 'https://api.elevenlabs.io/v1/sound-generation', {'xi-api-key':S.sfx.key.trim(), 'Content-Type':'application/json', 'Accept':'audio/mpeg', 'Content-Length':NODE('buffer').Buffer.byteLength(body)}, body).then(function(r){
     if(r.status >= 300){ var m = r.body.toString('utf8'); throw new Error(m.slice(0,160)); }
-    var fs = NODE('fs'), path = NODE('path'), dir = S.lib.paths[0] || path.join(NODE('os').homedir(), 'Documents', 'NABD SFX');
+    var fs = NODE('fs'), path = NODE('path'), dir = S.lib.paths[0] || path.join(NODE('os').homedir(), 'Documents', 'HAMDY SFX');
     try{ fs.mkdirSync(dir, {recursive:true}); }catch(e){}
     var name = S.sfx.prompt.replace(/[^\w\- ]+/g,'').trim().slice(0,40).replace(/\s+/g,'_') || 'sfx';
     var file = path.join(dir, 'NABD_' + name + '_' + Date.now().toString(36) + '.mp3');
@@ -1011,7 +1011,7 @@ function lineSide(it){
     h += '<div class="field"><span class="lbl">لون الخط</span>' + seg('ln.col', LN_COLS, S.ln.col) + '</div>';
     h += '<button class="btn primary" id="go">اعمل نص جديد على المسار</button>';
     h += '<button class="btn" id="lnSel">حط التكست المحدد على المسار</button>';
-    h += '<div class="hint">المسار بينزل كماسك اسمه NABD PATH على لاير النص: تقدر تسحب نقطه وتعدّل شكله براحتك والكلام والخط المرسوم بيمشوا عليه. السرعة ومكان النص من صفحة التعديل (NABD PATH).</div>';
+    h += '<div class="hint">المسار بينزل كماسك اسمه HAMDY PATH على لاير النص: تقدر تسحب نقطه وتعدّل شكله براحتك والكلام والخط المرسوم بيمشوا عليه. السرعة ومكان النص من صفحة التعديل (HAMDY PATH).</div>';
     return h;
   }
   if(m==='cover') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('ln.frames', [[14,'14'],[18,'18'],[20,'20'],[24,'24'],[30,'30'],[40,'40']], S.ln.frames) + '</div>';
@@ -1026,7 +1026,7 @@ function lineSide(it){
   h += '<button class="btn primary" id="go">' + ({cover:'حط الترانزيشن', draw:'ضيف عند البلاي هيد', travel:'ضيف عند البلاي هيد', attach:'طبّق على اللايرات المحددة'})[m] + '</button>';
   h += '<div class="hint">' + ({
     cover:'حط البلاي هيد على القطع أو حدد الكليبين. الخطوط بتغطي الكادر وتكشف المشهد الجديد.',
-    draw:'الخطوط شيب لاير حقيقي، والألوان والتخانة والتوقيت كلهم يتعدلوا من صفحة التعديل (NABD LINE).',
+    draw:'الخطوط شيب لاير حقيقي، والألوان والتخانة والتوقيت كلهم يتعدلوا من صفحة التعديل (HAMDY LINE).',
     travel:'لوب بيلف على طول اللاير. السرعة وطول الخط يتعدلوا من صفحة التعديل.',
     attach:'الخط بيتربط باللاير وبيكبر ويصغر مع الكلام لوحده، ولو حطيت حركة على اللاير بيتحرك معاه.'
   })[m] + '</div>';
@@ -1094,7 +1094,7 @@ function carSide(it){
   h += chk('car.person', 'يلف حوالين اللاير المحدد (شخص مقصوص)', c.person);
   h += '<button class="btn primary" id="go">اعمل الكاروسيل</button>';
   h += '<button class="btn" id="carSwap">بدّل صورة الكارت المحدد في After Effects</button>';
-  h += '<div class="hint">كل حاجة بتتعدل بعدين من صفحة التعديل (NABD CAROUSEL): الشكل نفسه (Shape من 0 لـ 16)، الحركة، السرعة، نص القطر، المسافات، الميل، الأركان، الإطار، الألوان، والخطوط. ولو عايز الكروت تلف حوالين شخص: اقطعه في لاير لوحده (Roto Brush)، حدده، وعلّم على الاختيار اللي فوق.</div>';
+  h += '<div class="hint">كل حاجة بتتعدل بعدين من صفحة التعديل (HAMDY CAROUSEL): الشكل نفسه (Shape من 0 لـ 16)، الحركة، السرعة، نص القطر، المسافات، الميل، الأركان، الإطار، الألوان، والخطوط. ولو عايز الكروت تلف حوالين شخص: اقطعه في لاير لوحده (Roto Brush)، حدده، وعلّم على الاختيار اللي فوق.</div>';
   return h;
 }
 function renderCarSlots(){
@@ -1167,7 +1167,7 @@ function trkSide(it){
       h += '<div class="row">' + num('trk.size','الحجم',t.size) + (it.id==='tCall' ? '<div class="field"><span class="lbl">الناحية</span>' + seg('trk.side', [['r','يمين'],['l','شمال']], t.side) + '</div>' : '') + '</div>'; break;
     case 'tBlur': case 'tPixel': case 'tDark':
       h += '<div class="field"><span class="lbl">القوة</span>' + seg('trk.amount', [[20,'خفيف'],[40,'متوسط'],[70,'قوي'],[100,'قوي جداً']], t.amount) + '</div>';
-      h += '<div class="hint">المقاس والقوة بيتعدلوا بعدين من صفحة التعديل (NABD TRK Width / Height / Amount).</div>'; break;
+      h += '<div class="hint">المقاس والقوة بيتعدلوا بعدين من صفحة التعديل (HAMDY TRK Width / Height / Amount).</div>'; break;
     case 'tPin': h += chk('trk.swap', 'الصورة مقلوبة؟ بدّل الركنين اللي تحت', t.swap); break;
     case 'tStabUse':
       h += chk('trk.stabRot', 'ثبّت اللف كمان (لو التراك بنقطتين)', t.stabRot);
@@ -1213,7 +1213,7 @@ function trimSide(it){
   h += '<div class="row">' + chk('trim.snappy', 'سريع وحاد', t.snappy) + '</div>';
   h += '<div class="field"><span class="lbl">يبدأ</span>' + seg('trim.at', [['layer','مع أول اللاير'],['playhead','عند البلاي هيد']], t.at) + '</div>';
   h += '<button class="btn primary" id="go">طبّق على المحدد</button>';
-  h += '<div class="hint">حدد شيب لاير أو أكتر، أو نص (بيتحوّل لشيب لوحده)، أو ملف Illustrator/SVG. بيتحط Trim Paths واحد على اللاير كله، والتحكم في البداية والنهاية والإزاحة من صفحة التعديل (NABD TRIM).</div>';
+  h += '<div class="hint">حدد شيب لاير أو أكتر، أو نص (بيتحوّل لشيب لوحده)، أو ملف Illustrator/SVG. بيتحط Trim Paths واحد على اللاير كله، والتحكم في البداية والنهاية والإزاحة من صفحة التعديل (HAMDY TRIM).</div>';
   return h;
 }
 function trimArgs(it){
@@ -1386,7 +1386,7 @@ function gfRun(it){
     if(op==='removebg'){ args.patch = false; args.hold = 'layer'; }
     if(op==='outpaint'){ args.ext = res.ex; args.patch = false; args.below = true; }
     return host('gfImport', args);
-  }).then(function(r){ if(r){ say(r); if(r.ok) setGf('خلص ✓ اللاير اسمه NABD FILL، والصورة متخزنة في Documents/NABD Fill.', 'okline'); } })
+  }).then(function(r){ if(r){ say(r); if(r.ok) setGf('خلص ✓ اللاير اسمه HAMDY FILL، والصورة متخزنة في Documents/HAMDY Fill.', 'okline'); } })
   .catch(function(e){ if(e){ setGf('حصل خطأ: ' + (e.message || e), 'badline'); } });
 }
 
@@ -1440,17 +1440,17 @@ function presetName(id){
   return id;
 }
 function edTitle(g){
-  var m = g.match(/^NABD (IN|OUT|FX|LOOP) (.+)$/);
+  var m = g.match(/^(?:NABD|HAMDY) (IN|OUT|FX|LOOP) (.+)$/);
   if(m) return {IN:'دخول', OUT:'خروج', FX:'تأكيد', LOOP:'لوب'}[m[1]] + ' · ' + presetName(m[2]);
-  if(g==='NABD TYPE') return 'آلة كاتبة: السرعة والمؤشر';
-  if(g==='NABD STYLE') return 'ستايل النص';
-  if(g==='NABD PATH') return 'نص على مسار: المكان والسرعة';
-  if(g==='NABD TRIM') return 'تريم باث: البداية والنهاية والإزاحة';
-  if(g==='NABD STAB') return 'تثبيت الكادر: القوة';
-  if(g==='NABD CAR') return 'كارت كاروسيل';
-  if(/^NABD CAROUSEL/.test(ED && ED.layer ? ED.layer.name : '') && g==='LAYER') return 'تحكم الكاروسيل (Shape 0-16 · Motion 0 لف، 1 وقفات، 2 رايح جاي، 3 يدوي، 4 يلف ويقف)';
-  if(g==='NABD LOOK') return 'فلتر ألوان';
-  if(g==='NABD AUDIO') return 'إفكت صوت';
+  if(g==='HAMDY TYPE') return 'آلة كاتبة: السرعة والمؤشر';
+  if(g==='HAMDY STYLE') return 'ستايل النص';
+  if(g==='HAMDY PATH') return 'نص على مسار: المكان والسرعة';
+  if(g==='HAMDY TRIM') return 'تريم باث: البداية والنهاية والإزاحة';
+  if(g==='HAMDY STAB') return 'تثبيت الكادر: القوة';
+  if(g==='HAMDY CAR') return 'كارت كاروسيل';
+  if(/^(?:NABD|HAMDY) CAROUSEL/.test(ED && ED.layer ? ED.layer.name : '') && g==='LAYER') return 'تحكم الكاروسيل (Shape 0-16 · Motion 0 لف، 1 وقفات، 2 رايح جاي، 3 يدوي، 4 يلف ويقف)';
+  if(g==='HAMDY LOOK') return 'فلتر ألوان';
+  if(g==='HAMDY AUDIO') return 'إفكت صوت';
   if(g==='LAYER') return 'إفكتات اللاير ده';
   return g;
 }
@@ -1468,9 +1468,9 @@ function edRefresh(force){
 function renderSideIfEd(){ if(S.tab==='ed'){ var a = document.activeElement; if(!(a && $('side').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) renderSide(); } }
 function edMock(){
   return {layer:{idx:1, name:'حركة النص', inF:0, outF:90, op:100}, fps:30, kids:[], text:{text:'حركة النص', size:110, fill:[1,1,1], stroke:null, sw:0, trk:0, font:'Cairo-Bold'},
-    groups:[{g:'NABD IN overBottom', t0:0, fr:18, items:[{n:'NABD IN overBottom', path:[4,1], kind:'fx', on:true, props:[{n:'Position', path:[4,1,2], t:'2', nk:2, k0:[960,1300], k1:[960,540]}, {n:'Opacity', path:[4,1,9], t:'1', nk:2, k0:0, k1:100}]}]},
-            {g:'NABD TYPE', items:[{n:'NABD TYPE Speed', path:[4,2], kind:'fx', on:true, props:[{n:'Slider', path:[4,2,1], t:'1', nk:0, v:14}]}, {n:'NABD TYPE Cursor', path:[4,3], kind:'fx', on:true, props:[{n:'Checkbox', path:[4,3,1], t:'1', nk:0, v:1}]}]},
-            {g:'NABD STYLE', items:[{n:'NABD STYLE Glow', path:[4,4], kind:'fx', on:true, props:[{n:'Glow Radius', path:[4,4,3], t:'1', nk:0, v:30}, {n:'Color A', path:[4,4,8], t:'c', nk:0, v:[1,0.4,0.2,1]}]}]}]};
+    groups:[{g:'HAMDY IN overBottom', t0:0, fr:18, items:[{n:'HAMDY IN overBottom', path:[4,1], kind:'fx', on:true, props:[{n:'Position', path:[4,1,2], t:'2', nk:2, k0:[960,1300], k1:[960,540]}, {n:'Opacity', path:[4,1,9], t:'1', nk:2, k0:0, k1:100}]}]},
+            {g:'HAMDY TYPE', items:[{n:'HAMDY TYPE Speed', path:[4,2], kind:'fx', on:true, props:[{n:'Slider', path:[4,2,1], t:'1', nk:0, v:14}]}, {n:'HAMDY TYPE Cursor', path:[4,3], kind:'fx', on:true, props:[{n:'Checkbox', path:[4,3,1], t:'1', nk:0, v:1}]}]},
+            {g:'HAMDY STYLE', items:[{n:'HAMDY STYLE Glow', path:[4,4], kind:'fx', on:true, props:[{n:'Glow Radius', path:[4,4,3], t:'1', nk:0, v:30}, {n:'Color A', path:[4,4,8], t:'c', nk:0, v:[1,0.4,0.2,1]}]}]}]};
 }
 function rangeFor(p, v){
   var a = Math.abs(v), span = Math.max(/Opacity|Amount|Completion|Saturation/i.test(p.n) ? 100 : 50, a*2.5);
@@ -1569,14 +1569,14 @@ function editSide(){
     var L = ED.layer;
     h += '<div class="field"><span class="lbl">اللاير</span><div class="pathline">#' + L.idx + ' · ' + esc(L.name) + ' · فريم ' + L.inF + ' ← ' + L.outF + '</div></div>';
     h += '<div class="row"><div class="field"><label>شفافية اللاير</label><input type="number" id="edOp" min="0" max="100" value="' + L.op + '"></div><div class="field"><label>آخر فريم</label><input type="number" id="edOut" value="' + L.outF + '"></div></div>';
-    if(/^NABD (OV|LOOK|TR|FX|MATTE)/.test(L.name)) h += '<div class="field"><span class="lbl">طريقة الدمج</span><div class="seg" id="edBlend">' + [['screen','Screen'],['add','Add'],['overlay','Overlay'],['normal','Normal']].map(function(o){ return '<button data-v="' + o[0] + '" class="' + (L.blend===o[0]?'on':'') + '">' + o[1] + '</button>'; }).join('') + '</div></div>';
+    if(/^(?:NABD|HAMDY) (OV|LOOK|TR|FX|MATTE)/.test(L.name)) h += '<div class="field"><span class="lbl">طريقة الدمج</span><div class="seg" id="edBlend">' + [['screen','Screen'],['add','Add'],['overlay','Overlay'],['normal','Normal']].map(function(o){ return '<button data-v="' + o[0] + '" class="' + (L.blend===o[0]?'on':'') + '">' + o[1] + '</button>'; }).join('') + '</div></div>';
     if(ED.text){
       var T = ED.text;
       h += '<div class="field"><label>الكلام</label><textarea id="edText" dir="auto">' + esc(T.text.replace(/\r/g,'\n')) + '</textarea></div>';
       h += '<div class="row"><div class="field"><label>الحجم</label><input type="number" id="edSize" value="' + Math.round(T.size) + '"></div><div class="field"><label>التراكينج</label><input type="number" id="edTrk" value="' + Math.round(T.trk||0) + '"></div></div>';
       h += '<div class="row"><div class="field"><label>لون الحروف</label><input type="color" id="edFill" value="' + (T.fill ? rgbHex(T.fill) : '#ffffff') + '"></div><div class="field"><label>لون الإطار</label><input type="color" id="edStroke" value="' + (T.stroke ? rgbHex(T.stroke) : '#000000') + '"></div><div class="field"><label>سُمك الإطار</label><input type="number" id="edSw" value="' + Math.round(T.sw||0) + '"></div></div>';
       h += '<div class="field"><label>الخط PostScript</label><input type="text" id="edFont" dir="ltr" value="' + esc(T.font||'') + '"></div>';
-      if(ED.kids && ED.kids.length) h += '<div class="hint">الستايل ده عامل ' + ED.kids.length + ' طبقة مربوطة باللاير (اسمها NABD STYLE). أي حركة أو تعديل بيمشي عليهم كمان.</div>';
+      if(ED.kids && ED.kids.length) h += '<div class="hint">الستايل ده عامل ' + ED.kids.length + ' طبقة مربوطة باللاير (اسمها HAMDY STYLE). أي حركة أو تعديل بيمشي عليهم كمان.</div>';
     }
     h += '<button class="btn warn" id="clear">شيل كل حاجات الكيت من اللاير</button>';
   }

@@ -1,4 +1,4 @@
-/*  NABD Motion Kit v0.3 - After Effects engine (ExtendScript, ES3)
+/*  HAMDY Motion Kit v0.3 - After Effects engine (ExtendScript, ES3)
     The panel calls:  NABD.run('<json string>')  and gets a JSON string back.
     Errors are returned as codes; the panel shows them in Arabic.            */
 
@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.1.0";
+    var VER = "1.1.1";
 
     // ================================================================ JSON
     function J(v) {
@@ -505,7 +505,7 @@ var NABD = (function () {
         return s;
     }
     function rampFx(L, p1, c1, p2, c2, shape) {
-        var e = addEffect(L, "ADBE Ramp", "NABD Ramp"), i = e.propertyIndex;
+        var e = addEffect(L, "ADBE Ramp", "HAMDY Ramp"), i = e.propertyIndex;
         try {
             FX(L, i).property(1).setValue(p1);
             FX(L, i).property(2).setValue([c1[0], c1[1], c1[2], 1]);
@@ -562,7 +562,7 @@ var NABD = (function () {
         var io = new ImportOptions(file);
         if (io.canImportAs(ImportAsType.FOOTAGE)) { io.importAs = ImportAsType.FOOTAGE; }
         it = app.project.importFile(io);
-        try { it.parentFolder = getOrMakeFolder("NABD Library"); } catch (e) {}
+        try { it.parentFolder = getOrMakeFolder("HAMDY Library"); } catch (e) {}
         return it;
     }
 
@@ -570,11 +570,11 @@ var NABD = (function () {
     var TR = { position: 2, uni: 3, scale: 4, sw: 5, rotation: 8, compShutter: 10, shutter: 11 };
 
     function addTile(L) {
-        var e = addEffect(L, "ADBE Tile", "NABD Tile"), i = e.propertyIndex;
+        var e = addEffect(L, "ADBE Tile", "HAMDY Tile"), i = e.propertyIndex;
         try { FX(L, i).property(4).setValue(300); FX(L, i).property(5).setValue(300); FX(L, i).property(6).setValue(1); } catch (x) {}
     }
     function addTransform(L, T, ease, tracks, opts) {
-        var e = addEffect(L, "ADBE Geometry2", "NABD Transform"), i = e.propertyIndex, k;
+        var e = addEffect(L, "ADBE Geometry2", "HAMDY Transform"), i = e.propertyIndex, k;
         try { FX(L, i).property(TR.compShutter).setValue(0); FX(L, i).property(TR.shutter).setValue(200); } catch (x) {}
         if (opts && opts.nonUniform) { try { FX(L, i).property(TR.uni).setValue(0); } catch (x2) {} }
         for (k in tracks) { if (tracks.hasOwnProperty(k)) { animate4(FX(L, i).property(TR[k]), T, tracks[k], ease); } }
@@ -620,7 +620,7 @@ var NABD = (function () {
         var made = [];
         function place(lay) { lay.label = 9; made.push(lay); if (top) { lay.moveBefore(top); } }
         function adj(name) {
-            var A = c.layers.addSolid([1, 1, 1], "NABD TR | " + name, W, H, c.pixelAspect, t1 - t0);
+            var A = c.layers.addSolid([1, 1, 1], "HAMDY TR | " + name, W, H, c.pixelAspect, t1 - t0);
             A.startTime = t0;
             A.adjustmentLayer = true;
             place(A);
@@ -631,24 +631,24 @@ var NABD = (function () {
             // ---------- solids / light
             case "flash":
             case "dip":
-                L = c.layers.addSolid(type === "dip" ? [0, 0, 0] : [1, 1, 1], "NABD TR | " + type, W, H, c.pixelAspect, t1 - t0);
+                L = c.layers.addSolid(type === "dip" ? [0, 0, 0] : [1, 1, 1], "HAMDY TR | " + type, W, H, c.pixelAspect, t1 - t0);
                 L.startTime = t0; place(L);
                 animate4(L.property("ADBE Transform Group").property("ADBE Opacity"), T, [0, 100, 100, 0], ease);
                 break;
             case "lightLeak":
                 var cols = [[1, 0.55, 0.15], [1, 0.25, 0.45]];
                 for (j = 0; j < 2; j++) {
-                    L = c.layers.addSolid([0, 0, 0], "NABD TR | leak " + (j + 1), W, H, c.pixelAspect, t1 - t0 + half);
+                    L = c.layers.addSolid([0, 0, 0], "HAMDY TR | leak " + (j + 1), W, H, c.pixelAspect, t1 - t0 + half);
                     L.startTime = t0 - half * 0.25; place(L);
                     L.blendingMode = BlendingMode.ADD;
                     li = rampFx(L, [W * 0.2, H * 0.5], cols[j], [W * 0.2 + H * 0.9, H * 0.5], [0, 0, 0], 2);
                     keysAt(FX(L, li).property(1), [t0, t1], [[j ? W * 1.1 : -W * 0.2, H * (j ? 0.3 : 0.7)], [j ? -W * 0.1 : W * 1.1, H * (j ? 0.7 : 0.3)]], 33, 33);
-                    FX(L, li).property(3).expression = "effect(\"NABD Ramp\")(1) + [" + (H * 0.9) + ", 0]";
+                    FX(L, li).property(3).expression = "effect(\"HAMDY Ramp\")(1) + [" + (H * 0.9) + ", 0]";
                     animate4(L.property("ADBE Transform Group").property("ADBE Opacity"), T, [0, 100, 100, 0], 60);
                 }
                 break;
             case "lensFlash":
-                L = c.layers.addSolid([0, 0, 0], "NABD TR | lens flash", W, H, c.pixelAspect, t1 - t0);
+                L = c.layers.addSolid([0, 0, 0], "HAMDY TR | lens flash", W, H, c.pixelAspect, t1 - t0);
                 L.startTime = t0; place(L);
                 L.blendingMode = BlendingMode.ADD;
                 li = rampFx(L, [cx, cy], [1, 0.95, 0.85], [cx + H * 0.1, cy], [0, 0, 0], 2);
@@ -657,7 +657,7 @@ var NABD = (function () {
                 break;
             // ---------- shapes
             case "shapeLeft": case "shapeRight": case "shapeUp": case "shapeDown":
-                L = shapeLayer(c, "NABD TR | " + type);
+                L = shapeLayer(c, "HAMDY TR | " + type);
                 span(L, t0, t1); place(L);
                 gi = addGroup(L, "wipe");
                 sRect(L, gi, W + 40, H + 40);
@@ -666,7 +666,7 @@ var NABD = (function () {
                 animate4(GT(L, gi).property("ADBE Vector Position"), T, [dv, [0, 0], [0, 0], [-dv[0], -dv[1]]], ease);
                 break;
             case "circle":
-                L = shapeLayer(c, "NABD TR | circle");
+                L = shapeLayer(c, "HAMDY TR | circle");
                 span(L, t0, t1); place(L);
                 gi = addGroup(L, "circle");
                 var D = Math.sqrt(W * W + H * H) * 1.05;
@@ -675,7 +675,7 @@ var NABD = (function () {
                 animate4(GP(L, gi, ei).property("ADBE Vector Ellipse Size"), T, [[0, 0], [D, D], [D, D], [0, 0]], ease);
                 break;
             case "bars":
-                L = shapeLayer(c, "NABD TR | bars");
+                L = shapeLayer(c, "HAMDY TR | bars");
                 span(L, t0, t1); place(L);
                 n = 5;
                 var bw = W / n, sft = (cut - t0) * 0.12;
@@ -691,7 +691,7 @@ var NABD = (function () {
                 }
                 break;
             case "split":
-                L = shapeLayer(c, "NABD TR | split");
+                L = shapeLayer(c, "HAMDY TR | split");
                 span(L, t0, t1); place(L);
                 for (j = 0; j < 2; j++) {
                     gi = addGroup(L, j ? "bottom" : "top");
@@ -702,7 +702,7 @@ var NABD = (function () {
                 }
                 break;
             case "diagonal":
-                L = shapeLayer(c, "NABD TR | diagonal");
+                L = shapeLayer(c, "HAMDY TR | diagonal");
                 span(L, t0, t1); place(L);
                 gi = addGroup(L, "bar");
                 sRect(L, gi, W * 1.7, H * 2.6);
@@ -711,14 +711,14 @@ var NABD = (function () {
                 animate4(GT(L, gi).property("ADBE Vector Position"), T, [[W * 1.5, 0], [0, 0], [0, 0], [-W * 1.5, 0]], ease);
                 break;
             case "strobe":
-                L = c.layers.addSolid([1, 1, 1], "NABD TR | strobe", W, H, c.pixelAspect, t1 - t0);
+                L = c.layers.addSolid([1, 1, 1], "HAMDY TR | strobe", W, H, c.pixelAspect, t1 - t0);
                 L.startTime = t0; place(L);
                 var sop = L.property("ADBE Transform Group").property("ADBE Opacity"), sv2 = [0, 100, 0, 100, 0, 100, 0], sj;
                 for (sj = 0; sj < sv2.length; sj++) { sop.setValueAtTime(t0 + (t1 - t0) * sj / (sv2.length - 1), sv2[sj]); }
                 for (sj = 1; sj <= sop.numKeys; sj++) { setHold(sop, sj); }
                 break;
             case "lightSweep":
-                L = shapeLayer(c, "NABD TR | light sweep");
+                L = shapeLayer(c, "HAMDY TR | light sweep");
                 span(L, t0, t1); place(L);
                 L.blendingMode = BlendingMode.ADD;
                 gi = addGroup(L, "beam");
@@ -726,14 +726,14 @@ var NABD = (function () {
                 sFill(L, gi, [1, 0.97, 0.9]);
                 GT(L, gi).property("ADBE Vector Rotation").setValue(18);
                 keysAt(GT(L, gi).property("ADBE Vector Position"), [t0, t1], [[-W, 0], [W, 0]], 40, 40);
-                li = addEffect(L, "ADBE Gaussian Blur 2", "NABD Soft").propertyIndex;
+                li = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY Soft").propertyIndex;
                 try { FX(L, li).property(1).setValue(W * 0.08); } catch (xs) {}
                 animate4(L.property("ADBE Transform Group").property("ADBE Opacity"), T, [0, 100, 100, 0], 50);
                 break;
             case "filmBurn":
                 var fcol = [[1, 0.45, 0.08], [1, 0.12, 0.05]];
                 for (j = 0; j < 2; j++) {
-                    L = c.layers.addSolid([0, 0, 0], "NABD TR | burn " + (j + 1), W, H, c.pixelAspect, t1 - t0);
+                    L = c.layers.addSolid([0, 0, 0], "HAMDY TR | burn " + (j + 1), W, H, c.pixelAspect, t1 - t0);
                     L.startTime = t0; place(L);
                     L.blendingMode = BlendingMode.ADD;
                     li = rampFx(L, [j ? W * 0.8 : W * 0.15, H * (j ? 0.25 : 0.8)], fcol[j], [j ? W * 0.8 + H : W * 0.15 + H, H * 0.5], [0, 0, 0], 2);
@@ -743,12 +743,12 @@ var NABD = (function () {
                 break;
             case "flare":
                 L = adj("flare");
-                li = addEffect(L, "ADBE Lens Flare", "NABD Flare").propertyIndex;
+                li = addEffect(L, "ADBE Lens Flare", "HAMDY Flare").propertyIndex;
                 keysAt(FX(L, li).property(1), [t0, t1], [[W * 0.1, H * 0.3], [W * 0.9, H * 0.4]], 40, 40);
                 animate4(FX(L, li).property(2), T, [0, 260, 260, 0], 60);
                 break;
             case "circleCorner":
-                L = shapeLayer(c, "NABD TR | corner circle");
+                L = shapeLayer(c, "HAMDY TR | corner circle");
                 span(L, t0, t1); place(L);
                 gi = addGroup(L, "circle");
                 var D2 = Math.sqrt(W * W + H * H) * 2.1;
@@ -757,7 +757,7 @@ var NABD = (function () {
                 animate4(GP(L, gi, ei).property("ADBE Vector Ellipse Size"), T, [[0, 0], [D2, D2], [D2, D2], [0, 0]], ease);
                 break;
             case "stripes":
-                L = shapeLayer(c, "NABD TR | stripes");
+                L = shapeLayer(c, "HAMDY TR | stripes");
                 span(L, t0, t1); place(L);
                 n = 6;
                 var sw2 = (W + H) / n, sst = (cut - t0) * 0.1;
@@ -775,7 +775,7 @@ var NABD = (function () {
                 break;
             case "dots":
             case "squares":
-                L = shapeLayer(c, "NABD TR | " + type);
+                L = shapeLayer(c, "HAMDY TR | " + type);
                 span(L, t0, t1); place(L);
                 var cols2 = 9, cell = W / cols2, rows = Math.ceil(H / cell) + 1;
                 gi = addGroup(L, "grid");
@@ -789,7 +789,7 @@ var NABD = (function () {
                 animate4(GP(L, gi, di).property(type === "dots" ? "ADBE Vector Ellipse Size" : "ADBE Vector Rect Size"), T, [[0, 0], [big, big], [big, big], [0, 0]], ease);
                 break;
             case "brush":
-                L = shapeLayer(c, "NABD TR | brush");
+                L = shapeLayer(c, "HAMDY TR | brush");
                 span(L, t0, t1); place(L);
                 gi = addGroup(L, "stroke");
                 var bwid = H * 0.42;
@@ -800,7 +800,7 @@ var NABD = (function () {
                 keysAt(GP(L, gi, ti2).property("ADBE Vector Trim Start"), [cut, t1], [0, 100], 30, 70);
                 break;
             case "doubleWipe":
-                L = shapeLayer(c, "NABD TR | double wipe");
+                L = shapeLayer(c, "HAMDY TR | double wipe");
                 span(L, t0, t1); place(L);
                 var dcol = [[1, 1, 1], acc];
                 for (j = 0; j < 2; j++) {
@@ -816,7 +816,7 @@ var NABD = (function () {
                 }
                 break;
             case "panels":
-                L = shapeLayer(c, "NABD TR | panels");
+                L = shapeLayer(c, "HAMDY TR | panels");
                 span(L, t0, t1); place(L);
                 for (j = 0; j < 3; j++) {
                     gi = addGroup(L, "panel " + (j + 1));
@@ -827,7 +827,7 @@ var NABD = (function () {
                 }
                 break;
             case "clockWipe":
-                L = shapeLayer(c, "NABD TR | clock");
+                L = shapeLayer(c, "HAMDY TR | clock");
                 span(L, t0, t1); place(L);
                 gi = addGroup(L, "clock");
                 var CD = Math.sqrt(W * W + H * H) * 1.1;
@@ -839,7 +839,7 @@ var NABD = (function () {
                 break;
             case "starIris":
             case "heartIris":
-                L = shapeLayer(c, "NABD TR | " + type);
+                L = shapeLayer(c, "HAMDY TR | " + type);
                 span(L, t0, t1); place(L);
                 gi = addGroup(L, type);
                 if (type === "starIris") {
@@ -864,7 +864,7 @@ var NABD = (function () {
                     case "zoomOut": addTransform(L, T, ease, { scale: [100, 33, 300, 100] }); break;
                     case "crashZoom":
                         addTransform(L, T, 98, { scale: [100, 420, 25, 100] });
-                        li = addEffect(L, "ADBE Gaussian Blur 2", "NABD Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY Blur").propertyIndex;
                         try { FX(L, li).property(3).setValue(1); } catch (x0) {}
                         animate4(FX(L, li).property(1), T, [0, 45, 45, 0], 98);
                         break;
@@ -888,46 +888,46 @@ var NABD = (function () {
                     case "whipLeft": case "whipRight": case "whipUp": case "whipDown":
                         var wv = { whipLeft: [-W, 0], whipRight: [W, 0], whipUp: [0, -H], whipDown: [0, H] }[type];
                         addTransform(L, T, ease, { position: slide(wv[0], wv[1]) });
-                        li = addEffect(L, "ADBE Motion Blur", "NABD Directional Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Motion Blur", "HAMDY Directional Blur").propertyIndex;
                         try { FX(L, li).property(1).setValue(wv[0] !== 0 ? 90 : 0); } catch (x1) {}
                         animate4(FX(L, li).property(2), T, [0, 220, 220, 0], ease);
                         break;
                     case "blurZoom":
                         addTransform(L, T, ease, { scale: [100, 135, 75, 100] });
-                        li = addEffect(L, "ADBE Gaussian Blur 2", "NABD Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY Blur").propertyIndex;
                         try { FX(L, li).property(3).setValue(1); } catch (x2) {}
                         animate4(FX(L, li).property(1), T, [0, 90, 90, 0], ease);
                         break;
                     case "twirl":
-                        li = addEffect(L, "ADBE Twirl", "NABD Twirl").propertyIndex;
+                        li = addEffect(L, "ADBE Twirl", "HAMDY Twirl").propertyIndex;
                         try { FX(L, li).property(2).setValue(75); FX(L, li).property(3).setValue([cx, cy]); } catch (x3) {}
                         animate4(FX(L, li).property(1), T, [0, 720, -720, 0], ease);
-                        li = addEffect(L, "ADBE Gaussian Blur 2", "NABD Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY Blur").propertyIndex;
                         animate4(FX(L, li).property(1), T, [0, 20, 20, 0], ease);
                         break;
                     case "warp":
-                        li = addEffect(L, "ADBE Turbulent Displace", "NABD Warp").propertyIndex;
+                        li = addEffect(L, "ADBE Turbulent Displace", "HAMDY Warp").propertyIndex;
                         try { FX(L, li).property(3).setValue(160); } catch (x4) {}
                         animate4(FX(L, li).property(2), T, [0, 220, 220, 0], 70);
                         try { FX(L, li).property(6).expression = "time * 500"; } catch (x5) {}
                         break;
                     case "pixelate":
-                        li = addEffect(L, "ADBE Mosaic", "NABD Pixelate").propertyIndex;
+                        li = addEffect(L, "ADBE Mosaic", "HAMDY Pixelate").propertyIndex;
                         var vb = Math.max(2, Math.round(14 * H / W));
                         animate4(FX(L, li).property(1), T, [W, 14, 14, W], 90);
                         animate4(FX(L, li).property(2), T, [H, vb, vb, H], 90);
                         try { FX(L, li).property(3).setValue(1); } catch (x6) {}
                         break;
                     case "glitch":
-                        li = addEffect(L, "ADBE Geometry2", "NABD Jitter").propertyIndex;
+                        li = addEffect(L, "ADBE Geometry2", "HAMDY Jitter").propertyIndex;
                         try { FX(L, li).property(TR.compShutter).setValue(0); FX(L, li).property(TR.shutter).setValue(0); } catch (x7) {}
                         FX(L, li).property(TR.position).expression = jitterExpr(W * 0.075);
-                        li = addEffect(L, "ADBE Wave Warp", "NABD Wave").propertyIndex;
+                        li = addEffect(L, "ADBE Wave Warp", "HAMDY Wave").propertyIndex;
                         try { FX(L, li).property(1).setValue(2); FX(L, li).property(3).setValue(60); FX(L, li).property(4).setValue(0); FX(L, li).property(5).setValue(4); } catch (x8) {}
                         animate4(FX(L, li).property(2), T, [0, 70, 70, 0], ease);
                         break;
                     case "blockGlitch":
-                        li = addEffect(L, "ADBE Mosaic", "NABD Blocks").propertyIndex;
+                        li = addEffect(L, "ADBE Mosaic", "HAMDY Blocks").propertyIndex;
                         var steps = [W, 40, W, 18, 60, 24, W], st, sv, k2;
                         for (j = 0; j < steps.length; j++) {
                             st = t0 + (t1 - t0) * j / (steps.length - 1);
@@ -936,64 +936,64 @@ var NABD = (function () {
                             FX(L, li).property(2).setValueAtTime(st, sv === W ? H : Math.max(2, Math.round(sv * H / W)));
                         }
                         for (k2 = 1; k2 <= FX(L, li).property(1).numKeys; k2++) { setHold(FX(L, li).property(1), k2); setHold(FX(L, li).property(2), k2); }
-                        li = addEffect(L, "ADBE Geometry2", "NABD Jitter").propertyIndex;
+                        li = addEffect(L, "ADBE Geometry2", "HAMDY Jitter").propertyIndex;
                         try { FX(L, li).property(TR.compShutter).setValue(0); FX(L, li).property(TR.shutter).setValue(0); } catch (x9) {}
                         FX(L, li).property(TR.position).expression = jitterExpr(W * 0.06, 0.1);
                         break;
                     case "burn":
-                        li = addEffect(L, "ADBE Brightness & Contrast 2", "NABD Burn").propertyIndex;
+                        li = addEffect(L, "ADBE Brightness & Contrast 2", "HAMDY Burn").propertyIndex;
                         animate4(FX(L, li).property(1), T, [0, 150, 150, 0], ease);
-                        li = addEffect(L, "ADBE Gaussian Blur 2", "NABD Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY Blur").propertyIndex;
                         animate4(FX(L, li).property(1), T, [0, 35, 35, 0], ease);
                         break;
                     case "fisheye":
                         addTransform(L, T, ease, { scale: [100, 150, 70, 100] });
-                        li = addEffect(L, "ADBE Optics Compensation", "NABD Fisheye").propertyIndex;
+                        li = addEffect(L, "ADBE Optics Compensation", "HAMDY Fisheye").propertyIndex;
                         animate4(FX(L, li).property(1), T, [0, 120, 120, 0], ease);
                         break;
                     case "polar":
-                        li = addEffect(L, "ADBE Polar Coordinates", "NABD Polar").propertyIndex;
+                        li = addEffect(L, "ADBE Polar Coordinates", "HAMDY Polar").propertyIndex;
                         animate4(FX(L, li).property(1), T, [0, 100, 100, 0], ease);
                         break;
                     case "bulge":
-                        li = addEffect(L, "ADBE Bulge", "NABD Bulge").propertyIndex;
+                        li = addEffect(L, "ADBE Bulge", "HAMDY Bulge").propertyIndex;
                         try { FX(L, li).property(1).setValue(W * 0.45); FX(L, li).property(2).setValue(W * 0.45); FX(L, li).property(3).setValue([cx, cy]); } catch (xb) {}
                         animate4(FX(L, li).property(4), T, [0, 3.5, 3.5, 0], ease);
                         addTransform(L, T, ease, { scale: [100, 125, 125, 100] });
                         break;
                     case "spherize":
-                        li = addEffect(L, "ADBE Spherize", "NABD Spherize").propertyIndex;
+                        li = addEffect(L, "ADBE Spherize", "HAMDY Spherize").propertyIndex;
                         try { FX(L, li).property(2).setValue([cx, cy]); } catch (xsp) {}
                         animate4(FX(L, li).property(1), T, [0, W * 0.7, W * 0.7, 0], ease);
                         break;
                     case "ripple":
-                        li = addEffect(L, "ADBE Ripple", "NABD Ripple").propertyIndex;
+                        li = addEffect(L, "ADBE Ripple", "HAMDY Ripple").propertyIndex;
                         try { FX(L, li).property(2).setValue([cx, cy]); FX(L, li).property(6).setValue(60); } catch (xr) {}
                         animate4(FX(L, li).property(1), T, [0, 100, 100, 0], 60);
                         break;
                     case "zoomRadial":
                         addTransform(L, T, ease, { scale: [100, 180, 55, 100] });
-                        li = addEffect(L, "ADBE Radial Blur", "NABD Radial Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Radial Blur", "HAMDY Radial Blur").propertyIndex;
                         try { FX(L, li).property(2).setValue([cx, cy]); FX(L, li).property(3).setValue(2); } catch (xz) {}
                         animate4(FX(L, li).property(1), T, [0, 80, 80, 0], ease);
                         break;
                     case "spinBlur":
                         addTransform(L, T, ease, { rotation: [0, 90, -90, 0], scale: [100, 130, 130, 100] });
-                        li = addEffect(L, "ADBE Radial Blur", "NABD Spin Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Radial Blur", "HAMDY Spin Blur").propertyIndex;
                         try { FX(L, li).property(2).setValue([cx, cy]); FX(L, li).property(3).setValue(1); } catch (xsb) {}
                         animate4(FX(L, li).property(1), T, [0, 35, 35, 0], ease);
                         break;
                     case "rotate90": addTransform(L, T, ease, { rotation: [0, 90, -90, 0], scale: [100, 140, 140, 100] }); break;
                     case "scrollLeft": case "scrollRight": case "scrollUp": case "scrollDown":
                         var sv = { scrollLeft: [-W, 0], scrollRight: [W, 0], scrollUp: [0, -H], scrollDown: [0, H] }[type];
-                        li = addEffect(L, "ADBE Offset", "NABD Scroll").propertyIndex;
+                        li = addEffect(L, "ADBE Offset", "HAMDY Scroll").propertyIndex;
                         animate4(FX(L, li).property(1), T, [[cx, cy], [cx + sv[0] * 0.999, cy + sv[1] * 0.999], [cx - sv[0] * 0.999, cy - sv[1] * 0.999], [cx, cy]], ease);
-                        li = addEffect(L, "ADBE Motion Blur", "NABD Directional Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Motion Blur", "HAMDY Directional Blur").propertyIndex;
                         try { FX(L, li).property(1).setValue(sv[0] !== 0 ? 90 : 0); } catch (xo) {}
                         animate4(FX(L, li).property(2), T, [0, 160, 160, 0], ease);
                         break;
                     case "blurDissolve":
-                        li = addEffect(L, "ADBE Box Blur2", "NABD Blur").propertyIndex;
+                        li = addEffect(L, "ADBE Box Blur2", "HAMDY Blur").propertyIndex;
                         try { FX(L, li).property(3).setValue(1); } catch (xbd) {}
                         animate4(FX(L, li).property(1), T, [0, 70, 70, 0], 60);
                         break;
@@ -1025,14 +1025,14 @@ var NABD = (function () {
     // ======================================================= motion presets
     var EZ = { smooth: [33, 70], cubic: [20, 80], expo: [5, 95], back: [40, 0], elastic: [40, 0], bounce: [70, 0] };
     function overExpr(amp, freq, decay, minN) {
-        return "// NABD overshoot\nvar amp = " + amp + ", freq = " + freq + ", decay = " + decay + ", n = 0;\n" +
+        return "// HAMDY overshoot\nvar amp = " + amp + ", freq = " + freq + ", decay = " + decay + ", n = 0;\n" +
             "if (numKeys > 0) { n = nearestKey(time).index; if (key(n).time > time) n--; }\n" +
             "var t = (n == 0) ? 0 : time - key(n).time;\n" +
             "if (n > " + (minN === undefined ? 1 : minN) + " && t < 2) { var v = velocityAtTime(key(n).time - thisComp.frameDuration / 10);\n" +
             "  value + v * amp * Math.sin(freq * t * 2 * Math.PI) / Math.exp(decay * t); } else { value; }";
     }
     function bounceExpr(g) {
-        return "// NABD bounce\nvar e = 0.45, g = " + g + ", nMax = 6, n = 0;\n" +
+        return "// HAMDY bounce\nvar e = 0.45, g = " + g + ", nMax = 6, n = 0;\n" +
             "if (numKeys > 0) { n = nearestKey(time).index; if (key(n).time > time) n--; }\n" +
             "if (n > 1) {\n  var t = time - key(n).time;\n  var v = -velocityAtTime(key(n).time - 0.001) * e;\n" +
             "  var vl = length(v), vu;\n" +
@@ -1061,7 +1061,7 @@ var NABD = (function () {
     function mpApply(c, L, sp, dir, t0, t1, kid) {
         var CR = (kid && L.parent) ? L.parent : L;
         var K = c.height / 1080, ls = layerScale(CR), tr = sp.tr || {}, ez = sp.ease || "cubic";
-        var tag = "NABD " + (dir === "in" ? "IN " : "OUT ") + sp.id;
+        var tag = "HAMDY " + (dir === "in" ? "IN " : "OUT ") + sp.id;
         var center = layerCenter(CR, dir === "in" ? t1 : t0);
         function pair(prop, from, rest) {
             if (dir === "in") {
@@ -1150,7 +1150,7 @@ var NABD = (function () {
     function mpEmph(c, L, sp, t0, dur, kid) {
         var CR = (kid && L.parent) ? L.parent : L;
         var K = c.height / 1080, ls = layerScale(CR), keys = sp.keys || {}, center = layerCenter(CR, t0);
-        var i = addEffect(L, "ADBE Geometry2", "NABD FX " + sp.id).propertyIndex;
+        var i = addEffect(L, "ADBE Geometry2", "HAMDY FX " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
         try { FX(L, i).property(10).setValue(0); FX(L, i).property(11).setValue(180); } catch (x) {}
@@ -1172,7 +1172,7 @@ var NABD = (function () {
 
     function mpLoop(c, L, sp, kid) {
         var ex = sp.ex || {}, center = layerCenter((kid && L.parent) ? L.parent : L, c.time);
-        var i = addEffect(L, "ADBE Geometry2", "NABD LOOP " + sp.id).propertyIndex;
+        var i = addEffect(L, "ADBE Geometry2", "HAMDY LOOP " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
         try { FX(L, i).property(10).setValue(0); FX(L, i).property(11).setValue(180); } catch (x) {}
@@ -1219,11 +1219,11 @@ var NABD = (function () {
         for (j = 0; j < sel.length; j++) {
             try {
                 p = parade(sel[j]);
-                for (i = p.numProperties; i >= 1; i--) { if (/^NABD /.test(p.property(i).name)) { p.property(i).remove(); n++; } }
+                for (i = p.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) /.test(p.property(i).name)) { p.property(i).remove(); n++; } }
             } catch (e) {}
             if (sel[j] instanceof TextLayer) {
                 var an = sel[j].property("ADBE Text Properties").property("ADBE Text Animators");
-                for (i = an.numProperties; i >= 1; i--) { if (/^NABD /.test(an.property(i).name)) { an.property(i).remove(); n++; } }
+                for (i = an.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) /.test(an.property(i).name)) { an.property(i).remove(); n++; } }
             }
         }
         return n ? "OK" : "OK_NOTHING";
@@ -1239,7 +1239,7 @@ var NABD = (function () {
         animators.addProperty("ADBE Text Animator");
         var idx = animators.numProperties, i, pr, v;
         function A() { return L.property("ADBE Text Properties").property("ADBE Text Animators").property(idx); }
-        A().name = "NABD " + (sp.loop ? "LOOP " : (isOut ? "OUT " : "IN ")) + sp.id;
+        A().name = "HAMDY " + (sp.loop ? "LOOP " : (isOut ? "OUT " : "IN ")) + sp.id;
         var props = sp.props || [];
         for (i = 0; i < props.length; i++) { A().property("ADBE Text Animator Properties").addProperty(props[i][0]); }
         for (i = 0; i < props.length; i++) {
@@ -1384,7 +1384,7 @@ var NABD = (function () {
         else { origin = [W / 2, H / 2]; }
         if (a.place === "lower" && a.side === "c") { mirror = false; }
         var N = c.layers.addNull();
-        N.name = "NABD TITLE | " + a.name;
+        N.name = "HAMDY TITLE | " + a.name;
         N.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
         N.property("ADBE Transform Group").property("ADBE Position").setValue(origin);
         span(N, t0, t1);
@@ -1416,14 +1416,14 @@ var NABD = (function () {
             if (p.t === "text") {
                 var str = p.raw ? p.raw : (a.texts[String(p.key)] || " ");
                 L = makeText(c, str, (p.size || 80) * K, col, al, a.font, p.trk || 0);
-                L.name = "NABD " + uid + " " + (p.raw ? ("raw" + i) : p.key);
+                L.name = "HAMDY " + uid + " " + (p.raw ? ("raw" + i) : p.key);
                 names[String(p.key)] = L.name;
                 span(L, t0, t1);
                 anchorTo(L, t0, al === "r" ? 1 : (al === "l" ? 0 : 0.5), 0.5);
                 pos(L, x, y);
                 if (p.expr) { L.property("ADBE Text Properties").property("ADBE Text Document").expression = p.expr.replace(/__T0__/g, String((p.exprDelay || 0) / 30)); }
                 if (p.glow) {
-                    var gl = addEffect(L, "ADBE Glo2", "NABD Glow").propertyIndex;
+                    var gl = addEffect(L, "ADBE Glo2", "HAMDY Glow").propertyIndex;
                     try { FX(L, gl).property(3).setValue(40 * K); FX(L, gl).property(4).setValue(1.6); } catch (eg) {}
                 }
                 if (p.ticker) {
@@ -1435,7 +1435,7 @@ var NABD = (function () {
                 anim(L, p);
                 if (p.loopSpec) { mpLoop(c, L, p.loopSpec); }
             } else if (p.t === "rect" || p.t === "bar") {
-                L = shapeLayer(c, "NABD " + uid + " " + p.t + i, [0, 0]);
+                L = shapeLayer(c, "HAMDY " + uid + " " + p.t + i, [0, 0]);
                 span(L, t0, t1);
                 gi = addGroup(L, p.t);
                 var w = p.w * K, h = p.h * K, rx = 0;
@@ -1453,7 +1453,7 @@ var NABD = (function () {
                 pos(L, x, y);
                 anim(L, p);
             } else if (p.t === "circle") {
-                L = shapeLayer(c, "NABD " + uid + " circle" + i, [0, 0]);
+                L = shapeLayer(c, "HAMDY " + uid + " circle" + i, [0, 0]);
                 span(L, t0, t1);
                 gi = addGroup(L, "circle");
                 sEllipse(L, gi, p.d * K);
@@ -1461,12 +1461,12 @@ var NABD = (function () {
                 pos(L, x, y);
                 anim(L, p);
             } else if (p.t === "box") {
-                L = shapeLayer(c, "NABD " + uid + " box" + i, [0, 0]);
+                L = shapeLayer(c, "HAMDY " + uid + " box" + i, [0, 0]);
                 span(L, t0, t1);
                 gi = addGroup(L, "box");
                 si = sRect(L, gi, 100, 100, [0, 0], (p.r || 6) * K);
                 sFill(L, gi, col);
-                var tn = "NABD " + uid + " " + p.fit, px = (p.pad ? p.pad[0] : 30) * K * 2, py = (p.pad ? p.pad[1] : 14) * K * 2;
+                var tn = "HAMDY " + uid + " " + p.fit, px = (p.pad ? p.pad[0] : 30) * K * 2, py = (p.pad ? p.pad[1] : 14) * K * 2;
                 pos(L, x, y);
                 var lref = "thisComp.layer(\"" + q(tn) + "\")";
                 L.property("ADBE Transform Group").property("ADBE Position").expression = lref + ".transform.position";
@@ -1484,7 +1484,7 @@ var NABD = (function () {
         var c = comp(), K = c.height / 1080, W = c.width, H = c.height, cx = W / 2, cy = H / 2;
         var t0 = snap(c, c.time), t1 = Math.min(c.duration, t0 + Math.max(1, a.secs || 4));
         var acc = rgb(a.acc, [1, 0.42, 0.24]), id = a.id, L, gi, ti, i, j, top = topSelected(c);
-        var name = "NABD EL | " + id;
+        var name = "HAMDY EL | " + id;
         function done(lay) { span(lay, t0, t1); if (top) { try { lay.moveBefore(top); } catch (e) {} } return lay; }
         function trimDraw(lay, g, tIdx, inDur, outStart) {
             var tp = GP(lay, g, tIdx);
@@ -1603,7 +1603,7 @@ var NABD = (function () {
                 L.blendingMode = BlendingMode.SCREEN;
                 ti = rampFx(L, [cx, cy], [0.35, 0.25, 0.9], [cx + H * 0.7, cy], [0, 0, 0], 2);
                 FX(L, ti).property(1).expression = "[thisComp.width * (0.5 + 0.35 * Math.sin(time * 0.45)), thisComp.height * (0.5 + 0.3 * Math.cos(time * 0.55))]";
-                FX(L, ti).property(3).expression = "effect(\"NABD Ramp\")(1) + [thisComp.height * 0.7, 0]";
+                FX(L, ti).property(3).expression = "effect(\"HAMDY Ramp\")(1) + [thisComp.height * 0.7, 0]";
                 L.moveToEnd();
                 gBase.moveToEnd();
                 break;
@@ -1630,7 +1630,7 @@ var NABD = (function () {
                 break;
             case "grain":
                 L = solid([0.5, 0.5, 0.5], "");
-                ti = addEffect(L, "ADBE Noise", "NABD Noise").propertyIndex;
+                ti = addEffect(L, "ADBE Noise", "HAMDY Noise").propertyIndex;
                 try { FX(L, ti).property(1).setValue(100); FX(L, ti).property(2).setValue(0); } catch (e2) {}
                 L.blendingMode = BlendingMode.OVERLAY;
                 L.property("ADBE Transform Group").property("ADBE Opacity").setValue(30);
@@ -1650,7 +1650,7 @@ var NABD = (function () {
                     L.blendingMode = BlendingMode.SCREEN;
                     ti = rampFx(L, [cx, cy], lc[j], [cx + H * 0.6, cy], [0, 0, 0], 2);
                     FX(L, ti).property(1).expression = "seedRandom(" + (j + 3) + ", true);\n[thisComp.width * " + (j ? 0.75 : 0.2) + ", thisComp.height * 0.4] + wiggle(0.25, thisComp.width * 0.3) - value";
-                    FX(L, ti).property(3).expression = "effect(\"NABD Ramp\")(1) + [thisComp.height * 0.6, 0]";
+                    FX(L, ti).property(3).expression = "effect(\"HAMDY Ramp\")(1) + [thisComp.height * 0.6, 0]";
                     L.property("ADBE Transform Group").property("ADBE Opacity").setValue(65);
                 }
                 break;
@@ -1803,7 +1803,7 @@ var NABD = (function () {
                     GT(L, gi).property("ADBE Vector Position").expression =
                         "seedRandom(" + (j + 11) + ", true);\nvar b = [random(-thisComp.width, thisComp.width) * 0.5, random(-thisComp.height, thisComp.height) * 0.5];\nb + wiggle(0.2, thisComp.height * 0.08) - value;";
                 }
-                ti = addEffect(L, "ADBE Gaussian Blur 2", "NABD Soft").propertyIndex;
+                ti = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY Soft").propertyIndex;
                 try { FX(L, ti).property(1).setValue(18 * K); } catch (eb2) {}
                 break;
             case "glitchBars":
@@ -1822,7 +1822,7 @@ var NABD = (function () {
                 L.blendingMode = BlendingMode.ADD;
                 ti = rampFx(L, [W * 0.85, H * 0.2], [1, 0.42, 0.08], [W * 0.85 + H * 0.9, H * 0.2], [0, 0, 0], 2);
                 FX(L, ti).property(1).expression = "value + [Math.sin(time * 0.7) * thisComp.width * 0.08, Math.cos(time * 0.5) * thisComp.height * 0.06]";
-                FX(L, ti).property(3).expression = "effect(\"NABD Ramp\")(1) + [thisComp.height * 0.9, 0]";
+                FX(L, ti).property(3).expression = "effect(\"HAMDY Ramp\")(1) + [thisComp.height * 0.9, 0]";
                 L.property("ADBE Transform Group").property("ADBE Opacity").expression = "seedRandom(Math.floor(time * 12), true);\n60 + 25 * Math.sin(time * 3) + random(-15, 15);";
                 break;
             default: throw Err("UNKNOWN");
@@ -1983,7 +1983,7 @@ var NABD = (function () {
         }
         var top = topSelected(c);
         var N = c.layers.addNull();
-        N.name = "NABD Controller";
+        N.name = "HAMDY Controller";
         N.property("ADBE Transform Group").property("ADBE Position").setValue([x / sel.length, y / sel.length]);
         N.moveBefore(top);
         for (i = 0; i < sel.length; i++) { if (!sel[i].parent) { sel[i].parent = N; } }
@@ -1991,7 +1991,7 @@ var NABD = (function () {
     }
     function adjust() {
         var c = comp(), t = snap(c, c.time), top = topSelected(c);
-        var L = c.layers.addSolid([1, 1, 1], "NABD Adjustment", c.width, c.height, c.pixelAspect, c.duration);
+        var L = c.layers.addSolid([1, 1, 1], "HAMDY Adjustment", c.width, c.height, c.pixelAspect, c.duration);
         L.adjustmentLayer = true;
         L.inPoint = t;
         if (top) { L.moveBefore(top); }
@@ -2039,7 +2039,7 @@ var NABD = (function () {
     function precomp() {
         var c = comp(), sel = sortByIndex(needSel(c)), idx = [], j;
         for (j = 0; j < sel.length; j++) { idx.push(sel[j].index); }
-        c.layers.precompose(idx, "NABD Precomp", true);
+        c.layers.precompose(idx, "HAMDY Precomp", true);
         return "OK";
     }
 
@@ -2058,7 +2058,7 @@ var NABD = (function () {
     function guides(a) {
         var c = comp(), W = c.width, H = c.height, z = PLATFORMS[a.plat];
         if (z === undefined) { throw Err("UNKNOWN"); }
-        var L = shapeLayer(c, "NABD GUIDE | " + a.plat);
+        var L = shapeLayer(c, "HAMDY GUIDE | " + a.plat);
         var red = [1, 0.15, 0.15], green = [0.2, 1, 0.45], cyan = [0.2, 0.8, 1], lw = Math.max(2, Math.round(W / 540));
         if (z) {
             var sx = W / 1080, sy = H / 1920;
@@ -2122,7 +2122,7 @@ var NABD = (function () {
         return "OK_MOVED:" + plan.length;
     }
     function newComp(a) {
-        var c = app.project.items.addComp(a.name || "NABD Comp", a.w, a.h, 1, Math.max(1, a.secs || 10), a.fps || 30);
+        var c = app.project.items.addComp(a.name || "HAMDY Comp", a.w, a.h, 1, Math.max(1, a.secs || 10), a.fps || 30);
         try { c.parentFolder = getOrMakeFolder("01 Comps"); } catch (e) {}
         c.openInViewer();
         return "OK";
@@ -2130,7 +2130,7 @@ var NABD = (function () {
 
     // ============================================================= library
     function libPick() {
-        var f = Folder.selectDialog("NABD: choose a resources folder");
+        var f = Folder.selectDialog("Hamdy Motion Kit: choose a resources folder");
         return f ? { path: f.fsName } : { path: null };
     }
     function libList(a) {
@@ -2148,7 +2148,7 @@ var NABD = (function () {
         if (ext === "ffx") {
             var sel = c.selectedLayers;
             if (!sel.length) {
-                var A = c.layers.addSolid([1, 1, 1], "NABD FX | " + file.displayName, c.width, c.height, c.pixelAspect, c.duration);
+                var A = c.layers.addSolid([1, 1, 1], "HAMDY FX | " + file.displayName, c.width, c.height, c.pixelAspect, c.duration);
                 A.adjustmentLayer = true;
                 A.inPoint = snap(c, c.time);
                 sel = [A];
@@ -2189,7 +2189,7 @@ var NABD = (function () {
         return v;
     }
     function look(a) {
-        var c = comp(), ops = a.ops || [], tag = "NABD " + (a.kind === "afx" ? "AUDIO" : (a.kind === "vfx" ? "FX" : "LOOK"));
+        var c = comp(), ops = a.ops || [], tag = "HAMDY " + (a.kind === "afx" ? "AUDIO" : (a.kind === "vfx" ? "FX" : "LOOK"));
         if (a.kind === "afx" || a.mode === "selected") {
             var sel = needSel(c), j, n = 0;
             for (j = 0; j < sel.length; j++) {
@@ -2233,13 +2233,13 @@ var NABD = (function () {
     }
     function styleOne(c, L, st) {
         var i, p = parade(L);
-        for (i = p.numProperties; i >= 1; i--) { if (/^NABD STYLE/.test(p.property(i).name)) { p.property(i).remove(); } }
+        for (i = p.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) STYLE/.test(p.property(i).name)) { p.property(i).remove(); } }
         for (i = c.numLayers; i >= 1; i--) {
             var ol = c.layer(i);
-            if (ol.name === "NABD STYLE BOX | " + L.name) { try { ol.remove(); } catch (er) {} }
+            if (ol.name === "HAMDY STYLE BOX | " + L.name) { try { ol.remove(); } catch (er) {} }
         }
         var oldKids = styleKids(c, L);
-        for (i = oldKids.length - 1; i >= 0; i--) { if (/^NABD STYLE LYR/.test(oldKids[i].name)) { try { oldKids[i].remove(); } catch (erk) {} } }
+        for (i = oldKids.length - 1; i >= 0; i--) { if (/^(?:NABD|HAMDY) STYLE LYR/.test(oldKids[i].name)) { try { oldKids[i].remove(); } catch (erk) {} } }
         var tdp = L.property("ADBE Text Properties").property("ADBE Text Document"), d = tdp.value;
         var fs = d.fontSize || 110, k = fs / 110;
         try {
@@ -2252,7 +2252,7 @@ var NABD = (function () {
         var r = layerRect(L, L.inPoint) || { left: -100, top: -50, width: 200, height: 100 };
         var fi;
         if (st.grad) {
-            fi = addEffect(L, "ADBE Ramp", "NABD STYLE Gradient").propertyIndex;
+            fi = addEffect(L, "ADBE Ramp", "HAMDY STYLE Gradient").propertyIndex;
             try {
                 FX(L, fi).property(1).expression = "var r = sourceRectAtTime(time, false); [r.left + r.width / 2, r.top]";
                 FX(L, fi).property(2).setValue([st.grad[0][0], st.grad[0][1], st.grad[0][2], 1]);
@@ -2261,11 +2261,11 @@ var NABD = (function () {
             } catch (eg) {}
         }
         if (st.bevel) {
-            fi = addEffect(L, "ADBE Bevel Alpha", "NABD STYLE Bevel").propertyIndex;
+            fi = addEffect(L, "ADBE Bevel Alpha", "HAMDY STYLE Bevel").propertyIndex;
             try { FX(L, fi).property(1).setValue((st.bevel.t || 3) * k); FX(L, fi).property(4).setValue(0.6); } catch (eb) {}
         }
         if (st.sweep) {
-            fi = addEffect(L, "CC Light Sweep", "NABD STYLE Shine").propertyIndex;
+            fi = addEffect(L, "CC Light Sweep", "HAMDY STYLE Shine").propertyIndex;
             try { FX(L, fi).property(1).expression = "var r = sourceRectAtTime(time, false);\n[r.left + ((time * 0.6) % 1.6 - 0.3) * r.width, r.top + r.height / 2]"; } catch (es) {}
         }
         var copyL = [], stack = [], q1, px = 0, py = 0;
@@ -2276,30 +2276,30 @@ var NABD = (function () {
         }
         for (q1 = 0; q1 < stack.length; q1++) {
             var sx = (stack[q1].dx || 0) * k, sy = (stack[q1].dy || 0) * k;
-            if (stack[q1].fill) { addHardShadow(L, "NABD STYLE Stack " + (q1 + 1), stack[q1].fill, sx - px, sy - py); }
+            if (stack[q1].fill) { addHardShadow(L, "HAMDY STYLE Stack " + (q1 + 1), stack[q1].fill, sx - px, sy - py); }
             px = sx; py = sy;
         }
         if (st.extrude) {
             var ex = st.extrude, en = Math.max(1, Math.min(16, ex.n || 10)), q3;
             for (q3 = 0; q3 < en; q3++) {
-                addHardShadow(L, "NABD STYLE Extrude " + (q3 + 1), mix(ex.c, ex.c2 || ex.c, en > 1 ? q3 / (en - 1) : 0), (ex.dx || 0) * k, (ex.dy === undefined ? 1.5 : ex.dy) * k);
+                addHardShadow(L, "HAMDY STYLE Extrude " + (q3 + 1), mix(ex.c, ex.c2 || ex.c, en > 1 ? q3 / (en - 1) : 0), (ex.dx || 0) * k, (ex.dy === undefined ? 1.5 : ex.dy) * k);
             }
         }
         if (st.glow) {
-            fi = addEffect(L, "ADBE Glo2", "NABD STYLE Glow").propertyIndex;
+            fi = addEffect(L, "ADBE Glo2", "HAMDY STYLE Glow").propertyIndex;
             try { FX(L, fi).property(2).setValue(st.glow.th || 40); FX(L, fi).property(3).setValue((st.glow.r || 30) * k); FX(L, fi).property(4).setValue(st.glow.i || 1); } catch (egl) {}
         }
         var shs = [st.shadow2, st.shadow], q2;
         for (q2 = 0; q2 < 2; q2++) {
             var sh = shs[q2];
             if (!sh) { continue; }
-            fi = addEffect(L, "ADBE Drop Shadow", "NABD STYLE Shadow " + (q2 + 1)).propertyIndex;
+            fi = addEffect(L, "ADBE Drop Shadow", "HAMDY STYLE Shadow " + (q2 + 1)).propertyIndex;
             try { FX(L, fi).property(1).setValue([sh.c[0], sh.c[1], sh.c[2], 1]); } catch (e1) {}
             try { FX(L, fi).property(2).setValue((sh.op === undefined ? 60 : sh.op) * 2.55); } catch (e2) { try { FX(L, fi).property(2).setValue(sh.op === undefined ? 60 : sh.op); } catch (e2b) {} }
             try { FX(L, fi).property(3).setValue(sh.a === undefined ? 135 : sh.a); FX(L, fi).property(4).setValue((sh.d || 0) * k); FX(L, fi).property(5).setValue((sh.s || 0) * k); } catch (e3) {}
         }
         if (st.box) {
-            var B = shapeLayer(c, "NABD STYLE BOX | " + L.name, [0, 0]);
+            var B = shapeLayer(c, "HAMDY STYLE BOX | " + L.name, [0, 0]);
             tuck(c, B);
             try { B.inPoint = L.inPoint; B.outPoint = L.outPoint; } catch (eio) {}
             var gb = addGroup(B, "box"), rb = sRect(B, gb, 100, 100, [0, 0], (st.box.r || 8) * k);
@@ -2333,9 +2333,9 @@ var NABD = (function () {
     }
     function typeSrcExpr(sp) {
         var m = sp.src.mode || "chars";
-        return "// NABD TYPE\n" +
-            "var spd = Math.max(0.1, effect(\"NABD TYPE Speed\")(1)), d0 = effect(\"NABD TYPE Delay\")(1) * thisComp.frameDuration;\n" +
-            "var showCur = effect(\"NABD TYPE Cursor\")(1) > 0, cur = \"" + q(sp.src.cur || "|") + "\", mode = \"" + m + "\", erase = " + (sp.src.erase ? "true" : "false") + ";\n" +
+        return "// HAMDY TYPE\n" +
+            "var spd = Math.max(0.1, effect(\"HAMDY TYPE Speed\")(1)), d0 = effect(\"HAMDY TYPE Delay\")(1) * thisComp.frameDuration;\n" +
+            "var showCur = effect(\"HAMDY TYPE Cursor\")(1) > 0, cur = \"" + q(sp.src.cur || "|") + "\", mode = \"" + m + "\", erase = " + (sp.src.erase ? "true" : "false") + ";\n" +
             "var s = \"\" + value;\n" +
             "var u = mode == \"words\" ? s.split(\" \") : (mode == \"lines\" ? s.split(/\\r|\\n/) : null);\n" +
             "var total = u ? u.length : s.length, t = time - inPoint - d0;\n" +
@@ -2349,8 +2349,8 @@ var NABD = (function () {
         var ez = sp.twEase === "back" ?
             "var k = u - 1, e = 1 + 2.70158 * k * k * k + 1.70158 * k * k;" :
             "var e = 1 - Math.pow(1 - u, 3);";
-        return "// NABD TYPE letters\n" +
-            "var spd = Math.max(0.1, effect(\"NABD TYPE Speed\")(1)), d = " + dur.toFixed(3) + ", d0 = effect(\"NABD TYPE Delay\")(1) * thisComp.frameDuration;\n" +
+        return "// HAMDY TYPE letters\n" +
+            "var spd = Math.max(0.1, effect(\"HAMDY TYPE Speed\")(1)), d = " + dur.toFixed(3) + ", d0 = effect(\"HAMDY TYPE Delay\")(1) * thisComp.frameDuration;\n" +
             "var n = textTotal, i = textIndex - 1;\n" +
             (sp.twOrder === "random" ? "seedRandom(i + 11, true); i = Math.floor(random() * n);\n" : "") +
             (sp.twOrder === "center" ? "i = Math.round(Math.abs(i - (n - 1) / 2) * 2);\n" : "") +
@@ -2360,8 +2360,8 @@ var NABD = (function () {
             "[v, v, v]";
     }
     function trailExpr(isOut) {
-        return "// NABD TYPE trail\n" +
-            "var spd = Math.max(0.1, effect(\"NABD TYPE Speed\")(1)), d0 = effect(\"NABD TYPE Delay\")(1) * thisComp.frameDuration;\n" +
+        return "// HAMDY TYPE trail\n" +
+            "var spd = Math.max(0.1, effect(\"HAMDY TYPE Speed\")(1)), d0 = effect(\"HAMDY TYPE Delay\")(1) * thisComp.frameDuration;\n" +
             "var i = textIndex - 1, t = time - inPoint - d0 - i / spd;\n" +
             "var v = (t < 0) ? 100 : clamp(1 - t / 0.4, 0, 1) * 100;\n[v, v, v]";
     }
@@ -2369,7 +2369,7 @@ var NABD = (function () {
         var f = new File(path);
         if (!f.exists || dur <= 0) { return null; }
         var it = importFile(f), A = c.layers.add(it);
-        A.name = "NABD SFX | typing";
+        A.name = "HAMDY SFX | typing";
         tuck(c, A);
         A.startTime = t0;
         if (it.duration < dur) {
@@ -2384,17 +2384,17 @@ var NABD = (function () {
     }
     function typeApply(L, c, sp, a) {
         var p = parade(L), i, an;
-        for (i = p.numProperties; i >= 1; i--) { if (/^NABD TYPE/.test(p.property(i).name)) { p.property(i).remove(); } }
+        for (i = p.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) TYPE/.test(p.property(i).name)) { p.property(i).remove(); } }
         an = L.property("ADBE Text Properties").property("ADBE Text Animators");
-        for (i = an.numProperties; i >= 1; i--) { if (/^NABD (IN|OUT) type/.test(an.property(i).name)) { an.property(i).remove(); } }
+        for (i = an.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) (IN|OUT) type/.test(an.property(i).name)) { an.property(i).remove(); } }
         var str = layerText(L), mode = sp.src ? (sp.src.mode || "chars") : "chars";
         var cps = Math.max(1, a.cps || 14);
         var spd = mode === "words" ? Math.max(0.5, cps / 4.5) : (mode === "lines" ? Math.max(0.2, cps / 22) : cps);
-        addSlider(L, "NABD TYPE Speed", spd);
-        addSlider(L, "NABD TYPE Delay", a.delay || 0);
+        addSlider(L, "HAMDY TYPE Speed", spd);
+        addSlider(L, "HAMDY TYPE Delay", a.delay || 0);
         var units = typeUnits(str, mode), typeDur = units / spd;
         if (sp.src) {
-            addCheck(L, "NABD TYPE Cursor", sp.src.cur ? (a.cursor !== false) : false);
+            addCheck(L, "HAMDY TYPE Cursor", sp.src.cur ? (a.cursor !== false) : false);
             var st = L.property("ADBE Text Properties").property("ADBE Text Document");
             st.expression = typeSrcExpr(sp);
         } else {
@@ -2405,7 +2405,7 @@ var NABD = (function () {
             for (k = 0; k < ins.length; k++) {
                 an.addProperty("ADBE Text Animator");
                 var idx = an.numProperties, A = an.property(idx), j, pr;
-                A.name = "NABD " + (ins[k] ? "OUT " : "IN ") + sp.id;
+                A.name = "HAMDY " + (ins[k] ? "OUT " : "IN ") + sp.id;
                 var props = sp.props || [];
                 for (j = 0; j < props.length; j++) { A.property("ADBE Text Animator Properties").addProperty(props[j][0]); }
                 for (j = 0; j < props.length; j++) {
@@ -2420,7 +2420,7 @@ var NABD = (function () {
             if (sp.trail && a.doIn !== false) {
                 an.addProperty("ADBE Text Animator");
                 var ti = an.numProperties;
-                an.property(ti).name = "NABD IN " + sp.id + " trail";
+                an.property(ti).name = "HAMDY IN " + sp.id + " trail";
                 var TP = an.property(ti).property("ADBE Text Animator Properties");
                 if (sp.trail.fill) { TP.addProperty("ADBE Text Fill Color"); try { an.property(ti).property("ADBE Text Animator Properties").property("ADBE Text Fill Color").setValue(rgb(a.acc, [1, 0.42, 0.24]).concat([1])); } catch (ef) {} }
                 if (sp.trail.chOff) {
@@ -2442,7 +2442,7 @@ var NABD = (function () {
         var out = [], i, o;
         for (i = 1; i <= c.numLayers; i++) {
             o = c.layer(i);
-            if (o !== L && /^NABD STYLE/.test(o.name)) { try { if (o.parent === L) { out.push(o); } } catch (e) {} }
+            if (o !== L && /^(?:NABD|HAMDY) STYLE/.test(o.name)) { try { if (o.parent === L) { out.push(o); } } catch (e) {} }
         }
         return out;
     }
@@ -2457,8 +2457,8 @@ var NABD = (function () {
     function cleanCopy(D) {
         var p = parade(D), i, tg = D.property("ADBE Transform Group"), pr;
         for (i = p.numProperties; i >= 1; i--) {
-            if (/^NABD STYLE/.test(p.property(i).name)) { p.property(i).remove(); }
-            else if (/^NABD TYPE/.test(p.property(i).name)) { try { p.property(i).property(1).expression = "parent.effect(\"" + p.property(i).name + "\")(1)"; } catch (et) {} }
+            if (/^(?:NABD|HAMDY) STYLE/.test(p.property(i).name)) { p.property(i).remove(); }
+            else if (/^(?:NABD|HAMDY) TYPE/.test(p.property(i).name)) { try { p.property(i).property(1).expression = "parent.effect(\"" + p.property(i).name + "\")(1)"; } catch (et) {} }
         }
         for (i = 1; i <= tg.numProperties; i++) {
             pr = tg.property(i);
@@ -2472,7 +2472,7 @@ var NABD = (function () {
             var ly = layers[i];
             D = L.duplicate();
             cleanCopy(D);
-            D.name = "NABD STYLE LYR " + (i + 1) + " | " + L.name;
+            D.name = "HAMDY STYLE LYR " + (i + 1) + " | " + L.name;
             tuck(c, D);
             try { D.property("ADBE Text Properties").property("ADBE Text Document").expression = "\"\" + parent.text.sourceText"; } catch (es) {}
             var tdp = D.property("ADBE Text Properties").property("ADBE Text Document"), doc = tdp.value;
@@ -2501,7 +2501,7 @@ var NABD = (function () {
         if (!f.exists) { throw Err("NO_FILE"); }
         var it = importFile(f), top = topSelected(c), t = snap(c, c.time);
         var L = c.layers.add(it), secs = Math.max(0.5, a.secs || it.duration);
-        L.name = "NABD OV | " + (a.label || it.name);
+        L.name = "HAMDY OV | " + (a.label || it.name);
         L.startTime = t;
         if (secs > it.duration + 0.01) {
             try { L.timeRemapEnabled = true; L.property("ADBE Time Remapping").expression = "loopOut(\"cycle\")"; } catch (e) {}
@@ -2527,13 +2527,13 @@ var NABD = (function () {
     }
     function matteLayer(c, file, t0, dur, above, t1) {
         var it = importFile(file), M = c.layers.add(it), sd = it.duration || 1;
-        M.name = "NABD MATTE | " + it.name;
+        M.name = "HAMDY MATTE | " + it.name;
         tuck(c, M);
         M.startTime = t0;
         try { M.audioEnabled = false; } catch (e1) {}
         try {
             M.timeRemapEnabled = true;
-            M.property("ADBE Time Remapping").expression = "// NABD matte timing\nvar D = " + dur.toFixed(4) + ", S = " + sd.toFixed(4) + " - thisComp.frameDuration;\nclamp((time - inPoint) / D, 0, 1) * S";
+            M.property("ADBE Time Remapping").expression = "// HAMDY matte timing\nvar D = " + dur.toFixed(4) + ", S = " + sd.toFixed(4) + " - thisComp.frameDuration;\nclamp((time - inPoint) / D, 0, 1) * S";
         } catch (e) {}
         try { M.inPoint = t0; M.outPoint = Math.min(c.duration, t1); } catch (e3) {}
         fitLayer(M, c);
@@ -2571,7 +2571,7 @@ var NABD = (function () {
         M = matteLayer(c, f, cut, dur, A, want);
         if (a.flip) { flipMatte(M); }
         setMatte(A, M, true);
-        if (a.sfx) { try { var S2 = c.layers.add(importFile(new File(a.sfx))); S2.name = "NABD SFX | matte"; S2.startTime = cut; S2.moveToBeginning(); } catch (es) {} }
+        if (a.sfx) { try { var S2 = c.layers.add(importFile(new File(a.sfx))); S2.name = "HAMDY SFX | matte"; S2.startTime = cut; S2.moveToBeginning(); } catch (es) {} }
         return "OK";
     }
 
@@ -2611,16 +2611,16 @@ var NABD = (function () {
         return o;
     }
     function groupOf(name) {
-        var m = String(name).match(/^NABD (IN|OUT|FX|LOOP|TYPE|STYLE) ([^ ]+)/);
-        if (m) { return m[1] === "TYPE" ? "NABD TYPE" : (m[1] === "STYLE" ? "NABD STYLE" : "NABD " + m[1] + " " + m[2]); }
-        m = String(name).match(/^(NABD [A-Z]+)/);
-        return m ? m[1] : String(name);
+        var m = String(name).match(/^(?:NABD|HAMDY) (IN|OUT|FX|LOOP|TYPE|STYLE) ([^ ]+)/);
+        if (m) { return m[1] === "TYPE" ? "HAMDY TYPE" : (m[1] === "STYLE" ? "HAMDY STYLE" : "HAMDY " + m[1] + " " + m[2]); }
+        m = String(name).match(/^(?:NABD|HAMDY) ([A-Z]+)/);
+        return m ? "HAMDY " + m[1] : String(name);
     }
     function collectFx(L, groups, order, all) {
         var p = parade(L), i, e, j, pr, info;
         for (i = 1; i <= p.numProperties; i++) {
             e = p.property(i);
-            if (!all && !/^NABD /.test(e.name)) { continue; }
+            if (!all && !/^(?:NABD|HAMDY) /.test(e.name)) { continue; }
             var g = all ? "LAYER" : groupOf(e.name);
             if (!groups[g]) { groups[g] = { g: g, items: [] }; order.push(g); }
             var it = { n: e.name, path: propPath(e), kind: "fx", on: e.enabled, props: [] };
@@ -2637,7 +2637,7 @@ var NABD = (function () {
         var an = L.property("ADBE Text Properties").property("ADBE Text Animators"), i, A, j, pr, info, s, k;
         for (i = 1; i <= an.numProperties; i++) {
             A = an.property(i);
-            if (!/^NABD /.test(A.name)) { continue; }
+            if (!/^(?:NABD|HAMDY) /.test(A.name)) { continue; }
             var g = groupOf(A.name);
             if (!groups[g]) { groups[g] = { g: g, items: [] }; order.push(g); }
             var it = { n: A.name, path: propPath(A), kind: "anim", on: A.enabled, props: [] };
@@ -2658,7 +2658,7 @@ var NABD = (function () {
     function inspect() {
         var c = comp(), sel = c.selectedLayers;
         if (!sel.length) { return { layer: null }; }
-        var L = sel[0], groups = {}, order = [], nabdLayer = /^NABD /.test(L.name), out = [], i;
+        var L = sel[0], groups = {}, order = [], nabdLayer = /^(?:NABD|HAMDY) /.test(L.name), out = [], i;
         try { collectFx(L, groups, order, nabdLayer); } catch (e) {}
         var txt = null;
         if (L instanceof TextLayer) {
@@ -2762,12 +2762,12 @@ var NABD = (function () {
         var c = comp(), L = editLayer(c, a), targets = [L].concat(styleKids(c, L)), j;
         if (a.g === "LAYER") { L.remove(); return "OK"; }
         for (j = 0; j < targets.length; j++) { eachGroupProp(targets[j], a.g, function (e) { e.remove(); }); }
-        if (a.g === "NABD TYPE" && L instanceof TextLayer) {
+        if (a.g === "HAMDY TYPE" && L instanceof TextLayer) {
             try { L.property("ADBE Text Properties").property("ADBE Text Document").expression = ""; } catch (e) {}
             var an = L.property("ADBE Text Properties").property("ADBE Text Animators"), i;
-            for (i = an.numProperties; i >= 1; i--) { if (/^NABD (IN|OUT) type/.test(an.property(i).name)) { an.property(i).remove(); } }
+            for (i = an.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) (IN|OUT) type/.test(an.property(i).name)) { an.property(i).remove(); } }
         }
-        if (a.g === "NABD STYLE") {
+        if (a.g === "HAMDY STYLE") {
             var kids = styleKids(c, L), q2;
             for (q2 = kids.length - 1; q2 >= 0; q2--) { kids[q2].remove(); }
         }
@@ -2821,12 +2821,12 @@ var NABD = (function () {
         return i;
     }
     function lineCtl(L, a, travel) {
-        var pi = addSlider(L, "NABD LINE Progress", travel ? 100 : 0);
-        addSlider(L, "NABD LINE Width", a.width || 100);
+        var pi = addSlider(L, "HAMDY LINE Progress", travel ? 100 : 0);
+        addSlider(L, "HAMDY LINE Width", a.width || 100);
         var cols = a.colors || [[1, 0.42, 0.24], [1, 1, 1]];
-        addColorCtl(L, "NABD LINE Color 1", cols[0]);
-        addColorCtl(L, "NABD LINE Color 2", cols[1] || cols[0]);
-        if (travel) { addSlider(L, "NABD LINE Speed", a.speed || 100); addSlider(L, "NABD LINE Length", 100); }
+        addColorCtl(L, "HAMDY LINE Color 1", cols[0]);
+        addColorCtl(L, "HAMDY LINE Color 2", cols[1] || cols[0]);
+        if (travel) { addSlider(L, "HAMDY LINE Speed", a.speed || 100); addSlider(L, "HAMDY LINE Length", 100); }
         return pi;
     }
     function trimExpr(k, s, start, ctl) {
@@ -2835,12 +2835,12 @@ var NABD = (function () {
     }
     // one stroke per path: path -> trim -> stroke (trim must sit above the stroke)
     function buildLinePaths(L, paths, baseW, mode, opt) {
-        var i, p, gi, ti, si, ctl = opt.ctl || "effect(\"NABD LINE Progress\")(1)", fx = opt.fxRef || "effect";
+        var i, p, gi, ti, si, ctl = opt.ctl || "effect(\"HAMDY LINE Progress\")(1)", fx = opt.fxRef || "effect";
         var spread = 0;
         for (i = 0; i < paths.length; i++) { if (paths[i].d > 0) { spread = 0.6; } }
         for (i = 0; i < paths.length; i++) {
             p = paths[i];
-            gi = addGroup(L, "NABD line " + (i + 1));
+            gi = addGroup(L, "HAMDY line " + (i + 1));
             var pi = addIn(L, gi, "ADBE Vector Shape - Group");
             if (opt.pathExpr) { GP(L, gi, pi).property("ADBE Vector Shape").expression = opt.pathExpr(i); }
             else { GP(L, gi, pi).property("ADBE Vector Shape").setValue(mkShape(p)); }
@@ -2849,16 +2849,16 @@ var NABD = (function () {
                 var tr = GP(L, gi, ti);
                 if (mode === "travel") {
                     tr.property("ADBE Vector Trim Start").setValue(0);
-                    GP(L, gi, ti).property("ADBE Vector Trim End").expression = (p.seg || 30) + " * " + fx + "(\"NABD LINE Length\")(1) / 100";
-                    GP(L, gi, ti).property("ADBE Vector Trim Offset").expression = "(time - inPoint) * " + fx + "(\"NABD LINE Speed\")(1) * 1.8 * " + (p.rev ? -1 : 1) + " + " + (p.d * 360).toFixed(1);
+                    GP(L, gi, ti).property("ADBE Vector Trim End").expression = (p.seg || 30) + " * " + fx + "(\"HAMDY LINE Length\")(1) / 100";
+                    GP(L, gi, ti).property("ADBE Vector Trim Offset").expression = "(time - inPoint) * " + fx + "(\"HAMDY LINE Speed\")(1) * 1.8 * " + (p.rev ? -1 : 1) + " + " + (p.d * 360).toFixed(1);
                 } else {
                     tr.property("ADBE Vector Trim End").expression = trimExpr(p.d, spread, false, ctl);
                     GP(L, gi, ti).property("ADBE Vector Trim Start").expression = trimExpr(p.d, spread, true, ctl);
                 }
             }
             si = sStroke(L, gi, [1, 1, 1], 4, opt.cap !== "butt", p.op);
-            GP(L, gi, si).property("ADBE Vector Stroke Color").expression = fx + "(\"NABD LINE Color " + (p.c + 1) + "\")(1)";
-            GP(L, gi, si).property("ADBE Vector Stroke Width").expression = (baseW * p.w).toFixed(2) + " * " + fx + "(\"NABD LINE Width\")(1) / 100";
+            GP(L, gi, si).property("ADBE Vector Stroke Color").expression = fx + "(\"HAMDY LINE Color " + (p.c + 1) + "\")(1)";
+            GP(L, gi, si).property("ADBE Vector Stroke Width").expression = (baseW * p.w).toFixed(2) + " * " + fx + "(\"HAMDY LINE Width\")(1) / 100";
             if (p.dash) {
                 try {
                     var ds = GP(L, gi, si).property("ADBE Vector Stroke Dashes");
@@ -2866,7 +2866,7 @@ var NABD = (function () {
                     GP(L, gi, si).property("ADBE Vector Stroke Dashes").addProperty("ADBE Vector Stroke Gap 1");
                     GP(L, gi, si).property("ADBE Vector Stroke Dashes").property("ADBE Vector Stroke Dash 1").setValue(baseW * 2.2);
                     GP(L, gi, si).property("ADBE Vector Stroke Dashes").property("ADBE Vector Stroke Gap 1").setValue(baseW * 1.6);
-                    GP(L, gi, si).property("ADBE Vector Stroke Dashes").property("ADBE Vector Stroke Offset").expression = "(time - inPoint) * " + fx + "(\"NABD LINE Speed\")(1) * " + (p.rev ? -0.8 : 0.8);
+                    GP(L, gi, si).property("ADBE Vector Stroke Dashes").property("ADBE Vector Stroke Offset").expression = "(time - inPoint) * " + fx + "(\"HAMDY LINE Speed\")(1) * " + (p.rev ? -0.8 : 0.8);
                 } catch (ed) {}
             }
         }
@@ -2899,7 +2899,7 @@ var NABD = (function () {
         } else {
             t0 = snap(c, c.time); t1 = Math.min(c.duration, t0 + Math.max(0.5, a.secs || 3));
         }
-        L = shapeLayer(c, "NABD LINE | " + (a.label || a.kind), [W / 2, H / 2]);
+        L = shapeLayer(c, "HAMDY LINE | " + (a.label || a.kind), [W / 2, H / 2]);
         L.label = 9;
         L.inPoint = t0; L.outPoint = t1;
         if (top && top !== L) { L.moveBefore(top); }
@@ -2908,7 +2908,7 @@ var NABD = (function () {
         buildLinePaths(L, paths, baseW, mode, {});
         if (mode === "cover") {
             progressKeys(L, pidx, [[t0, 0], [cut, 50], [t1, 100]], a.snappy);
-            if (a.sfx) { try { var S2 = c.layers.add(importFile(new File(a.sfx))); S2.name = "NABD SFX | lines"; S2.startTime = Math.max(0, t0); S2.moveToBeginning(); } catch (es) {} }
+            if (a.sfx) { try { var S2 = c.layers.add(importFile(new File(a.sfx))); S2.name = "HAMDY SFX | lines"; S2.startTime = Math.max(0, t0); S2.moveToBeginning(); } catch (es) {} }
         } else if (mode === "draw") {
             var d = Math.max(4, a.frames || 20) * fd, ks = [[t0, 0], [Math.min(t1, t0 + d), 50]];
             if (a.erase !== false && t1 - d > t0 + d) { ks.push([t1 - d, 50]); ks.push([t1, 100]); }
@@ -2919,7 +2919,7 @@ var NABD = (function () {
 
     // ---------------------------------------------------- lines attached to a layer
     function attachExpr(kind, idx, rtl) {
-        var head = "// NABD LINE attach\nvar r = parent.sourceRectAtTime(time, false), p = effect(\"NABD LINE Pad\")(1);\n" +
+        var head = "// HAMDY LINE attach\nvar r = parent.sourceRectAtTime(time, false), p = effect(\"HAMDY LINE Pad\")(1);\n" +
             "var l = r.left - p, t = r.top - p, R = r.left + r.width + p, b = r.top + r.height + p, cx = r.left + r.width / 2, cy = r.top + r.height / 2;\n" +
             "var a = Math.min(R - l, b - t) * 0.28;\n";
         var body;
@@ -2946,17 +2946,17 @@ var NABD = (function () {
         var count = { atCorners: 4, atBrackets: 2, atDouble: 2 }[a.kind] || 1;
         for (j = 0; j < sel.length; j++) {
             var T = sel[j];
-            if (!animatable(T) || /^NABD /.test(T.name)) { continue; }
+            if (!animatable(T) || /^(?:NABD|HAMDY) /.test(T.name)) { continue; }
             var r = layerRect(T, T.inPoint) || { width: 200, height: 100 };
             var rtl = /[؀-ۿ]/.test(layerText(T));
-            var L = shapeLayer(c, "NABD STYLE LINE | " + a.kind + " | " + T.name, [0, 0]);
+            var L = shapeLayer(c, "HAMDY STYLE LINE | " + a.kind + " | " + T.name, [0, 0]);
             tuck(c, L);
             L.parent = T;
             L.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
             try { L.inPoint = T.inPoint; L.outPoint = T.outPoint; } catch (eio) {}
             L.label = 9;
             var pidx2 = lineCtl(L, a, false);
-            addSlider(L, "NABD LINE Pad", Math.max(6, r.height * 0.16));
+            addSlider(L, "HAMDY LINE Pad", Math.max(6, r.height * 0.16));
             var paths = [];
             for (i = 0; i < count; i++) { paths.push({ v: [[0, 0], [1, 0]], it: [[0, 0], [0, 0]], ot: [[0, 0], [0, 0]], cl: false, w: i && a.kind === "atDouble" ? 0.6 : 1, c: i && a.kind === "atDouble" ? 1 : 0, d: a.kind === "atCorners" ? i * 0.15 : 0 }); }
             buildLinePaths(L, paths, Math.max(3, r.height * 0.07), "draw", { pathExpr: function (k) { return attachExpr(a.kind, k, rtl); } });
@@ -2990,10 +2990,10 @@ var NABD = (function () {
         }
         for (j = 0; j < targets.length; j++) {
             var L = targets[j], mp = L.property("ADBE Mask Parade"), p = parade(L);
-            for (i = mp.numProperties; i >= 1; i--) { if (mp.property(i).name === "NABD PATH") { mp.property(i).remove(); } }
-            for (i = p.numProperties; i >= 1; i--) { if (/^NABD PATH/.test(p.property(i).name)) { p.property(i).remove(); } }
+            for (i = mp.numProperties; i >= 1; i--) { if (mp.property(i).name === "HAMDY PATH") { mp.property(i).remove(); } }
+            for (i = p.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) PATH/.test(p.property(i).name)) { p.property(i).remove(); } }
             var oldK = styleKids(c, L);
-            for (i = oldK.length - 1; i >= 0; i--) { if (/^NABD STYLE PATHLINE/.test(oldK[i].name)) { oldK[i].remove(); } }
+            for (i = oldK.length - 1; i >= 0; i--) { if (/^(?:NABD|HAMDY) STYLE PATHLINE/.test(oldK[i].name)) { oldK[i].remove(); } }
             // left-justify so the margin math is predictable; measure the text before it bends
             var tdp = L.property("ADBE Text Properties").property("ADBE Text Document"), d = tdp.value;
             try { d.justification = ParagraphJustification.LEFT_JUSTIFY; tdp.setValue(d); } catch (ej) {}
@@ -3001,21 +3001,21 @@ var NABD = (function () {
             var ox = a.mode === "new" ? 0 : r.left + r.width / 2, oy = a.mode === "new" ? 0 : r.top + r.height / 2;
             mp.addProperty("ADBE Mask Atom");
             var mi = L.property("ADBE Mask Parade").numProperties, M = L.property("ADBE Mask Parade").property(mi);
-            M.name = "NABD PATH";
+            M.name = "HAMDY PATH";
             M.property("ADBE Mask Shape").setValue(mkShape(geo[0], ox, oy));
             try { M.maskMode = MaskMode.NONE; } catch (em) {}
             var po = L.property("ADBE Text Properties").property("ADBE Text Path Options");
             po.property("ADBE Text Path").setValue(mi);
             try { L.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Reverse Path").setValue(a.reverse ? 1 : 0); } catch (er) {}
-            var ppi = addSlider(L, "NABD PATH Progress", 50);
-            addSlider(L, "NABD PATH Speed", a.speed || 160);
-            addSlider(L, "NABD PATH Text Width", Math.round(r.width));
-            var lenExpr = "var P = mask(\"NABD PATH\").maskPath, Lp = 0, q0 = P.pointOnPath(0), q1, i;\nfor (i = 1; i <= 48; i++) { q1 = P.pointOnPath(i / 48); Lp += length(q0, q1); q0 = q1; }\n";
+            var ppi = addSlider(L, "HAMDY PATH Progress", 50);
+            addSlider(L, "HAMDY PATH Speed", a.speed || 160);
+            addSlider(L, "HAMDY PATH Text Width", Math.round(r.width));
+            var lenExpr = "var P = mask(\"HAMDY PATH\").maskPath, Lp = 0, q0 = P.pointOnPath(0), q1, i;\nfor (i = 1; i <= 48; i++) { q1 = P.pointOnPath(i / 48); Lp += length(q0, q1); q0 = q1; }\n";
             var fm = L.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text First Margin");
             if (a.flow === "loop") {
-                fm.expression = "// NABD PATH loop\n" + lenExpr + "var v = (time - inPoint) * effect(\"NABD PATH Speed\")(1);\n((v % Lp) + Lp) % Lp";
+                fm.expression = "// HAMDY PATH loop\n" + lenExpr + "var v = (time - inPoint) * effect(\"HAMDY PATH Speed\")(1);\n((v % Lp) + Lp) % Lp";
             } else {
-                fm.expression = "// NABD PATH\n" + lenExpr + "effect(\"NABD PATH Progress\")(1) / 100 * Math.max(0, Lp - effect(\"NABD PATH Text Width\")(1))";
+                fm.expression = "// HAMDY PATH\n" + lenExpr + "effect(\"HAMDY PATH Progress\")(1) / 100 * Math.max(0, Lp - effect(\"HAMDY PATH Text Width\")(1))";
                 if (a.flow === "travel") {
                     var pr = FX(L, ppi).property(1);
                     pr.setValueAtTime(L.inPoint, 0); pr.setValueAtTime(L.outPoint, 100);
@@ -3023,22 +3023,22 @@ var NABD = (function () {
                 }
             }
             if (a.guide) {
-                var G = shapeLayer(c, "NABD STYLE PATHLINE | " + L.name, [0, 0]);
+                var G = shapeLayer(c, "HAMDY STYLE PATHLINE | " + L.name, [0, 0]);
                 tuck(c, G);
                 G.parent = L;
                 G.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
                 try { G.inPoint = L.inPoint; G.outPoint = L.outPoint; } catch (eio) {}
                 var gcol = (a.colors && a.colors[0]) || [1, 0.42, 0.24];
-                var gpi = addSlider(G, "NABD LINE Progress", 100);
-                addSlider(G, "NABD LINE Width", 100);
-                addColorCtl(G, "NABD LINE Color 1", gcol);
-                addColorCtl(G, "NABD LINE Color 2", gcol);
+                var gpi = addSlider(G, "HAMDY LINE Progress", 100);
+                addSlider(G, "HAMDY LINE Width", 100);
+                addColorCtl(G, "HAMDY LINE Color 1", gcol);
+                addColorCtl(G, "HAMDY LINE Color 2", gcol);
                 var fsz = 90;
                 try { fsz = d.fontSize || 90; } catch (efs) {}
                 buildLinePaths(G, [{ v: geo[0].v, it: geo[0].it, ot: geo[0].ot, cl: geo[0].cl, w: 1, c: 0, d: 0, op: 70 }], Math.max(2, fsz * 0.035), "draw",
-                    { pathExpr: function () { return "parent.mask(\"NABD PATH\").maskPath"; }, ctl: "effect(\"NABD LINE Progress\")(1) * 0.5" });
+                    { pathExpr: function () { return "parent.mask(\"HAMDY PATH\").maskPath"; }, ctl: "effect(\"HAMDY LINE Progress\")(1) * 0.5" });
                 var gp = FX(G, gpi).property(1);
-                if (a.flow === "travel") { gp.expression = "Math.min(100, parent.effect(\"NABD PATH Progress\")(1) * 1.15 + 8)"; }
+                if (a.flow === "travel") { gp.expression = "Math.min(100, parent.effect(\"HAMDY PATH Progress\")(1) * 1.15 + 8)"; }
                 else { gp.setValueAtTime(L.inPoint, 0); gp.setValueAtTime(Math.min(L.outPoint, L.inPoint + 18 * fd), 100); setEase(gp, 1, 33, 70); setEase(gp, 2, 70, 33); }
                 G.moveAfter(L);
             }
@@ -3049,32 +3049,32 @@ var NABD = (function () {
     // ============================================================= carousel
     function q2(s) { return "\"" + q(s) + "\""; }
     function carParams(cref) {
-        return "var C = " + cref + ";\nfunction S(k) { return C.effect(\"NABD CAR \" + k)(1); }\n" +
+        return "var C = " + cref + ";\nfunction S(k) { return C.effect(\"HAMDY CAR \" + k)(1); }\n" +
             "var t = time - C.inPoint, NN = NNN;\n" +
             "var off = nabdCarOff(t, S(\"Motion\"), S(\"Speed\"), S(\"Rotation\"), S(\"Hold\"), NN);\n" +
             "var o = { shp: S(\"Shape\"), R: S(\"Radius\"), H: S(\"Height\"), rows: S(\"Rows\"), gap: S(\"Gap\"), off: off, turns: S(\"Turns\"), t: t };\n" +
             "var sp = S(\"Spread\") / 100;\n";
     }
     function carCore(i, N, tail) {
-        return "// NABD CAROUSEL card\n" + NABD_CAR_SRC + "\n" + carParams("parent").replace("NNN", N) +
+        return "// HAMDY CAROUSEL card\n" + NABD_CAR_SRC + "\n" + carParams("parent").replace("NNN", N) +
             "var q = nabdCar(" + i + ", NN, o);\n" + tail;
     }
     function rrExpr(src) {
         // rounded rectangle centred on the card, sized by Aspect / Round (live)
-        return "var C = parent, asp = Math.max(0.1, C.effect(\"NABD CAR Aspect\")(1)), w = " + src[0] + ", h = " + src[1] + ", mw, mh;\n" +
+        return "var C = parent, asp = Math.max(0.1, C.effect(\"HAMDY CAR Aspect\")(1)), w = " + src[0] + ", h = " + src[1] + ", mw, mh;\n" +
             "if (w / h > asp) { mh = h; mw = h * asp; } else { mw = w; mh = w / asp; }\n" +
-            "var cx = " + src[2] + ", cy = " + src[3] + ", r = Math.min(mw, mh) / 2 * clamp(C.effect(\"NABD CAR Round\")(1), 0, 100) / 100, k = r * 0.5523;\n" +
+            "var cx = " + src[2] + ", cy = " + src[3] + ", r = Math.min(mw, mh) / 2 * clamp(C.effect(\"HAMDY CAR Round\")(1), 0, 100) / 100, k = r * 0.5523;\n" +
             "var l = cx - mw / 2, R = cx + mw / 2, T = cy - mh / 2, B = cy + mh / 2;\n" +
             "createPath([[l + r, T], [R - r, T], [R, T + r], [R, B - r], [R - r, B], [l + r, B], [l, B - r], [l, T + r]],\n" +
             "  [[0, 0], [0, 0], [-k, 0], [0, 0], [0, k], [0, 0], [k, 0], [0, 0]],\n" +
             "  [[0, 0], [k, 0], [0, 0], [0, k], [0, 0], [-k, 0], [0, 0], [0, -k]], true)";
     }
-    function carSlider(L, name, v) { return addSlider(L, "NABD CAR " + name, v); }
-    function carCheck(L, name, v) { return addCheck(L, "NABD CAR " + name, v); }
-    function carColor(L, name, v) { return addColorCtl(L, "NABD CAR " + name, v); }
+    function carSlider(L, name, v) { return addSlider(L, "HAMDY CAR " + name, v); }
+    function carCheck(L, name, v) { return addCheck(L, "HAMDY CAR " + name, v); }
+    function carColor(L, name, v) { return addColorCtl(L, "HAMDY CAR " + name, v); }
     function carCount(c) {
         var i, n = 0;
-        for (i = 1; i <= c.numLayers; i++) { if (/^NABD CAROUSEL \d+$/.test(c.layer(i).name)) { n++; } }
+        for (i = 1; i <= c.numLayers; i++) { if (/^(?:NABD|HAMDY) CAROUSEL \d+$/.test(c.layer(i).name)) { n++; } }
         return n + 1;
     }
     var CAR_OPEN = { 5: 1, 6: 1, 9: 1, 10: 1, 11: 1, 12: 1, 15: 1 };
@@ -3090,7 +3090,7 @@ var NABD = (function () {
             if (pr) { cx = pp[0] + (pr.left + pr.width / 2 - pa[0]) * ps[0]; cy = pp[1] + (pr.top + pr.height * 0.28 - pa[1]) * ps[1]; }
             try { person.threeDLayer = true; } catch (e3) {}
         }
-        var base = "NABD CAROUSEL " + carCount(c);
+        var base = "HAMDY CAROUSEL " + carCount(c);
         var cardW = m * 0.2 * (a.size || 100) / 100;
         // ---- control null
         var C = c.layers.addNull();
@@ -3131,8 +3131,8 @@ var NABD = (function () {
         carCheck(C, "Spokes", !!a.spokes);
         carCheck(C, "Chain", !!a.chain);
         var ldi = carSlider(C, "Line Draw", 100);
-        C.property("ADBE Transform Group").property("ADBE Rotate X").expression = "effect(\"NABD CAR Tilt X\")(1)";
-        C.property("ADBE Transform Group").property("ADBE Rotate Z").expression = "effect(\"NABD CAR Tilt Z\")(1)";
+        C.property("ADBE Transform Group").property("ADBE Rotate X").expression = "effect(\"HAMDY CAR Tilt X\")(1)";
+        C.property("ADBE Transform Group").property("ADBE Rotate Z").expression = "effect(\"HAMDY CAR Tilt Z\")(1)";
         if (a.intro) {
             var spP = FX(C, spi).property(1);
             spP.setValueAtTime(t0, 0); spP.setValueAtTime(Math.min(t1, t0 + 1.1), 100);
@@ -3154,31 +3154,31 @@ var NABD = (function () {
                 try { L.audioEnabled = false; } catch (eau) {}
                 var mp = L.property("ADBE Mask Parade");
                 mp.addProperty("ADBE Mask Atom");
-                L.property("ADBE Mask Parade").property(1).name = "NABD CARD";
+                L.property("ADBE Mask Parade").property(1).name = "HAMDY CARD";
                 L.property("ADBE Mask Parade").property(1).property("ADBE Mask Shape").expression = rrExpr(["width", "height", "width / 2", "height / 2"]);
                 L.property("ADBE Transform Group").property("ADBE Scale").expression =
-                    "var C = parent, asp = Math.max(0.1, C.effect(\"NABD CAR Aspect\")(1)), mw = (width / height > asp) ? height * asp : width;\nvar s = C.effect(\"NABD CAR Card Size\")(1) / mw * 100; [s, s, s]";
+                    "var C = parent, asp = Math.max(0.1, C.effect(\"HAMDY CAR Aspect\")(1)), mw = (width / height > asp) ? height * asp : width;\nvar s = C.effect(\"HAMDY CAR Card Size\")(1) / mw * 100; [s, s, s]";
                 try {
-                    var si = addEffect(L, "ADBE Stroke", "NABD CAR Border").propertyIndex;
+                    var si = addEffect(L, "ADBE Stroke", "HAMDY CAR Border").propertyIndex;
                     FX(L, si).property(1).setValue(1);
-                    FX(L, si).property(4).expression = "parent.effect(\"NABD CAR Border Color\")(1)";
-                    FX(L, si).property(5).expression = "Math.max(0.1, parent.effect(\"NABD CAR Border\")(1) * 2 * 100 / Math.max(1, transform.scale[0]))";
+                    FX(L, si).property(4).expression = "parent.effect(\"HAMDY CAR Border Color\")(1)";
+                    FX(L, si).property(5).expression = "Math.max(0.1, parent.effect(\"HAMDY CAR Border\")(1) * 2 * 100 / Math.max(1, transform.scale[0]))";
                     FX(L, si).property(6).setValue(100);
-                    FX(L, si).property(7).expression = "parent.effect(\"NABD CAR Border\")(1) > 0 ? 100 : 0";
+                    FX(L, si).property(7).expression = "parent.effect(\"HAMDY CAR Border\")(1) > 0 ? 100 : 0";
                 } catch (est) {}
             } else {
                 L = c.layers.addShape();
                 var gi = addGroup(L, "card");
                 var pi = addIn(L, gi, "ADBE Vector Shape - Group");
-                GP(L, gi, pi).property("ADBE Vector Shape").expression = rrExpr(["C.effect(\"NABD CAR Card Size\")(1)", "C.effect(\"NABD CAR Card Size\")(1) / asp", "0", "0"]);
+                GP(L, gi, pi).property("ADBE Vector Shape").expression = rrExpr(["C.effect(\"HAMDY CAR Card Size\")(1)", "C.effect(\"HAMDY CAR Card Size\")(1) / asp", "0", "0"]);
                 var fi = sFill(L, gi, [1, 1, 1]);
                 GP(L, gi, fi).property("ADBE Vector Fill Color").expression =
-                    "var C = parent, pal = Math.round(C.effect(\"NABD CAR Palette\")(1)), A = C.effect(\"NABD CAR Color A\")(1), B = C.effect(\"NABD CAR Color B\")(1), k = " + i + ", n = " + N + ";\n" +
+                    "var C = parent, pal = Math.round(C.effect(\"HAMDY CAR Palette\")(1)), A = C.effect(\"HAMDY CAR Color A\")(1), B = C.effect(\"HAMDY CAR Color B\")(1), k = " + i + ", n = " + N + ";\n" +
                     "if (pal == 1) { (k % 2) ? B : A; } else if (pal == 2) { hslToRgb([k / n, 0.75, 0.58, 1]); } else if (pal == 3) { A; } else { A + (B - A) * (n > 1 ? k / (n - 1) : 0); }";
                 var sti = sStroke(L, gi, [1, 1, 1], 4, true);
-                GP(L, gi, sti).property("ADBE Vector Stroke Color").expression = "parent.effect(\"NABD CAR Border Color\")(1)";
-                GP(L, gi, sti).property("ADBE Vector Stroke Width").expression = "parent.effect(\"NABD CAR Border\")(1) * 2";
-                GP(L, gi, sti).property("ADBE Vector Stroke Opacity").expression = "parent.effect(\"NABD CAR Border\")(1) > 0 ? 100 : 0";
+                GP(L, gi, sti).property("ADBE Vector Stroke Color").expression = "parent.effect(\"HAMDY CAR Border Color\")(1)";
+                GP(L, gi, sti).property("ADBE Vector Stroke Width").expression = "parent.effect(\"HAMDY CAR Border\")(1) * 2";
+                GP(L, gi, sti).property("ADBE Vector Stroke Opacity").expression = "parent.effect(\"HAMDY CAR Border\")(1) > 0 ? 100 : 0";
             }
             L.name = base + " | card " + (i + 1);
             L.threeDLayer = true;
@@ -3186,25 +3186,25 @@ var NABD = (function () {
             L.parent = C;
             var LT = L.property("ADBE Transform Group");
             if (!(f && f.exists)) { LT.property("ADBE Anchor Point").setValue([0, 0, 0]); LT.property("ADBE Scale").setValue([100, 100, 100]); }
-            var Pi = addEffect(L, "ADBE Point3D Control", "NABD CAR P").propertyIndex;
+            var Pi = addEffect(L, "ADBE Point3D Control", "HAMDY CAR P").propertyIndex;
             FX(L, Pi).property(1).expression = carCore(i, N, "[q[0] * sp, q[1] * sp, q[2] * sp]");
-            var Ni = addEffect(L, "ADBE Point3D Control", "NABD CAR N").propertyIndex;
+            var Ni = addEffect(L, "ADBE Point3D Control", "HAMDY CAR N").propertyIndex;
             FX(L, Ni).property(1).expression = carCore(i, N, "var fc = Math.round(S(\"Face\"));\nif (fc == 1) { [0, 0, -1]; } else if (fc == 2) { C.fromWorldVec([0, 0, -1]); } else { [q[3], q[4], q[5]]; }");
-            var Xi = addEffect(L, "ADBE Point3D Control", "NABD CAR X").propertyIndex;
+            var Xi = addEffect(L, "ADBE Point3D Control", "HAMDY CAR X").propertyIndex;
             FX(L, Xi).property(1).expression = carCore(i, N, "[q[6], q[7], 0]");
-            LT.property("ADBE Position").expression = "effect(\"NABD CAR P\")(1)";
-            LT.property("ADBE Orientation").expression = "var P = effect(\"NABD CAR P\")(1), n = effect(\"NABD CAR N\")(1);\nlookAt(P, P - n * 100)";
-            LT.property("ADBE Rotate Z").expression = "effect(\"NABD CAR X\")(1)[0]";
-            var depth = "var C = parent, P = effect(\"NABD CAR P\")(1), w = C.toWorld(P), o0 = C.toWorld([0, 0, 0]);\nvar z = clamp((w[2] - o0[2]) / Math.max(1, C.effect(\"NABD CAR Radius\")(1)), -1, 1), d01 = (z + 1) / 2;\n";
-            LT.property("ADBE Opacity").expression = depth + "effect(\"NABD CAR X\")(1)[1] * 100 * (1 - C.effect(\"NABD CAR Back Fade\")(1) / 100 * d01)";
+            LT.property("ADBE Position").expression = "effect(\"HAMDY CAR P\")(1)";
+            LT.property("ADBE Orientation").expression = "var P = effect(\"HAMDY CAR P\")(1), n = effect(\"HAMDY CAR N\")(1);\nlookAt(P, P - n * 100)";
+            LT.property("ADBE Rotate Z").expression = "effect(\"HAMDY CAR X\")(1)[0]";
+            var depth = "var C = parent, P = effect(\"HAMDY CAR P\")(1), w = C.toWorld(P), o0 = C.toWorld([0, 0, 0]);\nvar z = clamp((w[2] - o0[2]) / Math.max(1, C.effect(\"HAMDY CAR Radius\")(1)), -1, 1), d01 = (z + 1) / 2;\n";
+            LT.property("ADBE Opacity").expression = depth + "effect(\"HAMDY CAR X\")(1)[1] * 100 * (1 - C.effect(\"HAMDY CAR Back Fade\")(1) / 100 * d01)";
             try {
-                var bi = addEffect(L, "ADBE Brightness & Contrast 2", "NABD CAR Dim").propertyIndex;
-                FX(L, bi).property(1).expression = depth + "-C.effect(\"NABD CAR Back Dim\")(1) * d01";
+                var bi = addEffect(L, "ADBE Brightness & Contrast 2", "HAMDY CAR Dim").propertyIndex;
+                FX(L, bi).property(1).expression = depth + "-C.effect(\"HAMDY CAR Back Dim\")(1) * d01";
             } catch (eb) {}
             if (a.blur) {
                 try {
-                    var gbi = addEffect(L, "ADBE Gaussian Blur 2", "NABD CAR Blur").propertyIndex;
-                    FX(L, gbi).property(1).expression = depth + "C.effect(\"NABD CAR Depth Blur\")(1) * d01 * 100 / Math.max(1, transform.scale[0])";
+                    var gbi = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY CAR Blur").propertyIndex;
+                    FX(L, gbi).property(1).expression = depth + "C.effect(\"HAMDY CAR Depth Blur\")(1) * d01 * 100 / Math.max(1, transform.scale[0])";
                 } catch (eg) {}
             }
             L.label = 10;
@@ -3222,10 +3222,10 @@ var NABD = (function () {
         var cref = "thisComp.layer(" + q2(base) + ")", k, gl;
         function lineStroke(gi2, visExpr) {
             var tri = sTrim(LN, gi2);
-            GP(LN, gi2, tri).property("ADBE Vector Trim End").expression = cref + ".effect(\"NABD CAR Line Draw\")(1)";
+            GP(LN, gi2, tri).property("ADBE Vector Trim End").expression = cref + ".effect(\"HAMDY CAR Line Draw\")(1)";
             var s2 = sStroke(LN, gi2, [1, 1, 1], 2, true);
-            GP(LN, gi2, s2).property("ADBE Vector Stroke Color").expression = cref + ".effect(\"NABD CAR Line Color\")(1)";
-            GP(LN, gi2, s2).property("ADBE Vector Stroke Width").expression = cref + ".effect(\"NABD CAR Line Width\")(1)";
+            GP(LN, gi2, s2).property("ADBE Vector Stroke Color").expression = cref + ".effect(\"HAMDY CAR Line Color\")(1)";
+            GP(LN, gi2, s2).property("ADBE Vector Stroke Width").expression = cref + ".effect(\"HAMDY CAR Line Width\")(1)";
             GP(LN, gi2, s2).property("ADBE Vector Stroke Opacity").expression = visExpr;
             if (a.lineStyle === "dashed") {
                 try {
@@ -3237,25 +3237,25 @@ var NABD = (function () {
         for (k = 0; k < 3; k++) {
             gl = addGroup(LN, "orbit " + (k + 1));
             var opi = addIn(LN, gl, "ADBE Vector Shape - Group");
-            GP(LN, gl, opi).property("ADBE Vector Shape").expression = "// NABD CAROUSEL orbit line\n" + NABD_CAR_SRC + "\n" + carParams(cref).replace("NNN", N) +
+            GP(LN, gl, opi).property("ADBE Vector Shape").expression = "// HAMDY CAROUSEL orbit line\n" + NABD_CAR_SRC + "\n" + carParams(cref).replace("NNN", N) +
                 "var sh = Math.round(o.shp), open = " + "{5:1,6:1,9:1,10:1,11:1,12:1,15:1}[sh] ? true : false, K = 72, pts = [], s, q, j;\n" +
                 "for (j = 0; j <= (open ? K : K - 1); j++) { o.su = j / K; q = nabdCar(" + k + ", NN, o); pts.push(C.toComp([q[0] * sp, q[1] * sp, q[2] * sp])); }\n" +
                 "createPath(pts, [], [], !open)";
-            lineStroke(gl, "var C = " + cref + ", sh = Math.round(C.effect(\"NABD CAR Shape\")(1)), r = Math.round(C.effect(\"NABD CAR Rows\")(1));\n" +
-                "var need = (sh == 1 || sh == 2 || sh == 15) ? r : ((sh == 7 || sh == 8) ? 3 : 1);\n(C.effect(\"NABD CAR Orbit Line\")(1) > 0 && " + k + " < need) ? 100 : 0");
+            lineStroke(gl, "var C = " + cref + ", sh = Math.round(C.effect(\"HAMDY CAR Shape\")(1)), r = Math.round(C.effect(\"HAMDY CAR Rows\")(1));\n" +
+                "var need = (sh == 1 || sh == 2 || sh == 15) ? r : ((sh == 7 || sh == 8) ? 3 : 1);\n(C.effect(\"HAMDY CAR Orbit Line\")(1) > 0 && " + k + " < need) ? 100 : 0");
         }
         for (k = 0; k < N; k++) {
             gl = addGroup(LN, "spoke " + (k + 1));
             var spi2 = addIn(LN, gl, "ADBE Vector Shape - Group");
             GP(LN, gl, spi2).property("ADBE Vector Shape").expression = "var C = " + cref + ", L = thisComp.layer(" + q2(base + " | card " + (k + 1)) + ");\ncreatePath([C.toComp([0, 0, 0]), L.toComp(L.anchorPoint)], [], [], false)";
-            lineStroke(gl, cref + ".effect(\"NABD CAR Spokes\")(1) > 0 ? 70 : 0");
+            lineStroke(gl, cref + ".effect(\"HAMDY CAR Spokes\")(1) > 0 ? 70 : 0");
         }
         gl = addGroup(LN, "chain");
         var chi = addIn(LN, gl, "ADBE Vector Shape - Group");
         GP(LN, gl, chi).property("ADBE Vector Shape").expression = "var pts = [], k, L;\nfor (k = 1; k <= " + N + "; k++) { L = thisComp.layer(" + q2(base + " | card ") + " + k); pts.push(L.toComp(L.anchorPoint)); }\ncreatePath(pts, [], [], true)";
-        lineStroke(gl, cref + ".effect(\"NABD CAR Chain\")(1) > 0 ? 80 : 0");
+        lineStroke(gl, cref + ".effect(\"HAMDY CAR Chain\")(1) > 0 ? 80 : 0");
         if (a.lineStyle === "glow") {
-            try { var gli = addEffect(LN, "ADBE Glo2", "NABD CAR Glow").propertyIndex; FX(LN, gli).property(3).setValue(m * 0.02); FX(LN, gli).property(4).setValue(1.5); } catch (egl) {}
+            try { var gli = addEffect(LN, "ADBE Glo2", "HAMDY CAR Glow").propertyIndex; FX(LN, gli).property(3).setValue(m * 0.02); FX(LN, gli).property(4).setValue(1.5); } catch (egl) {}
         }
         LN.label = 10;
         if (person) { LN.moveAfter(person); } else { LN.moveAfter(cards[0]); for (i = 0; i < cards.length; i++) { if (cards[i].index > LN.index) { LN.moveAfter(cards[i]); } } }
@@ -3264,7 +3264,7 @@ var NABD = (function () {
     }
     function carPick(a) {
         var fl = (File.fs === "Windows") ? "Images/Videos:*.png;*.jpg;*.jpeg;*.webp;*.gif;*.psd;*.tif;*.tiff;*.bmp;*.mp4;*.mov;*.m4v" : function (f) { return (f instanceof Folder) || /\.(png|jpe?g|webp|gif|psd|tiff?|bmp|mp4|mov|m4v)$/i.test(f.name); };
-        var r = File.openDialog("NABD: choose images", fl, a.multi !== false), out = [], i;
+        var r = File.openDialog("Hamdy Motion Kit: choose images", fl, a.multi !== false), out = [], i;
         if (!r) { return { paths: [] }; }
         if (!(r instanceof Array)) { r = [r]; }
         for (i = 0; i < r.length; i++) { out.push(r[i].fsName); }
@@ -3274,7 +3274,7 @@ var NABD = (function () {
         var c = comp(), sel = c.selectedLayers, f = new File(a.path || ""), n = 0, j;
         if (!f.exists) { throw Err("NO_FILE"); }
         for (j = 0; j < sel.length; j++) {
-            if (!/^NABD CAROUSEL \d+ \| card \d+$/.test(sel[j].name)) { continue; }
+            if (!/^(?:NABD|HAMDY) CAROUSEL \d+ \| card \d+$/.test(sel[j].name)) { continue; }
             if (!sel[j].source) { throw Err("COLOR_CARD"); }
             sel[j].replaceSource(importFile(f), false);
             n++;
@@ -3299,7 +3299,7 @@ var NABD = (function () {
     }
     function footageSel(c) {
         var sel = needSel(c), i;
-        for (i = 0; i < sel.length; i++) { if (isAV(sel[i]) && sel[i].source && !(sel[i].source.mainSource instanceof SolidSource) && !/^NABD /.test(sel[i].name)) { return sel[i]; } }
+        for (i = 0; i < sel.length; i++) { if (isAV(sel[i]) && sel[i].source && !(sel[i].source.mainSource instanceof SolidSource) && !/^(?:NABD|HAMDY) /.test(sel[i].name)) { return sel[i]; } }
         throw Err("NO_FOOTAGE");
     }
     function trkStart(a) {
@@ -3346,7 +3346,7 @@ var NABD = (function () {
     }
     function trkInfo() {
         var c = comp(), sel = c.selectedLayers, i, nulls = [];
-        for (i = 1; i <= c.numLayers; i++) { if (/^NABD TRACK \|/.test(c.layer(i).name)) { nulls.push(c.layer(i).name); } }
+        for (i = 1; i <= c.numLayers; i++) { if (/^(?:NABD|HAMDY) TRACK \|/.test(c.layer(i).name)) { nulls.push(c.layer(i).name); } }
         for (i = 0; i < sel.length; i++) {
             if (isAV(sel[i]) && sel[i].source) {
                 var t = trackers(sel[i]);
@@ -3372,36 +3372,36 @@ var NABD = (function () {
         var i, best = null;
         for (i = 1; i <= c.numLayers; i++) {
             var l = c.layer(i);
-            if (name ? l.name === name : /^NABD TRACK \|/.test(l.name)) { if (!best || l.index < best.index) { best = l; } }
+            if (name ? l.name === name : /^(?:NABD|HAMDY) TRACK \|/.test(l.name)) { if (!best || l.index < best.index) { best = l; } }
         }
         return best;
     }
     function trkNull(a) {
         var c = comp(), P = pickTracker(c, a, 1), L = P.L, tr = P.tr, pts = tr.points;
         var N = c.layers.addNull();
-        N.name = "NABD TRACK | " + L.name + " | " + tr.name;
+        N.name = "HAMDY TRACK | " + L.name + " | " + tr.name;
         N.inPoint = L.inPoint; N.outPoint = L.outPoint;
         N.label = 2;
-        addSlider(N, "NABD TRK Smooth", a.smooth || 0);
-        var oi = addEffect(N, "ADBE Point Control", "NABD TRK Offset").propertyIndex;
+        addSlider(N, "HAMDY TRK Smooth", a.smooth || 0);
+        var oi = addEffect(N, "ADBE Point Control", "HAMDY TRK Offset").propertyIndex;
         try { FX(N, oi).property(1).setValue([0, 0]); } catch (eo) {}
         var src = "thisComp.layer(" + q2(L.name) + ")", A = apRef(L, tr.name, pts[0].name);
         N.property("ADBE Transform Group").property("ADBE Position").expression =
-            "// NABD TRACK\nvar L = " + src + ", P = " + A + ", n = Math.round(effect(\"NABD TRK Smooth\")(1)), fd = thisComp.frameDuration, s = [0, 0], k, c = 0;\n" +
+            "// HAMDY TRACK\nvar L = " + src + ", P = " + A + ", n = Math.round(effect(\"HAMDY TRK Smooth\")(1)), fd = thisComp.frameDuration, s = [0, 0], k, c = 0;\n" +
             "for (k = -n; k <= n; k++) { s = s + L.toComp(P.valueAtTime(time + k * fd)); c++; }\n" +
-            "s / c + effect(\"NABD TRK Offset\")(1)";
+            "s / c + effect(\"HAMDY TRK Offset\")(1)";
         if (pts.length >= 2 && pts[1].keys > 0) {
             var B = apRef(L, tr.name, pts[1].name);
-            addCheck(N, "NABD TRK Use Rotation", a.rot !== false);
-            addCheck(N, "NABD TRK Use Scale", a.scale !== false);
+            addCheck(N, "HAMDY TRK Use Rotation", a.rot !== false);
+            addCheck(N, "HAMDY TRK Use Scale", a.scale !== false);
             N.property("ADBE Transform Group").property("ADBE Rotate Z").expression =
                 "var A = " + A + ", B = " + B + ", t0 = A.key(1).time;\n" +
                 "function ang(t) { var d = B.valueAtTime(t) - A.valueAtTime(t); return Math.atan2(d[1], d[0]); }\n" +
-                "effect(\"NABD TRK Use Rotation\")(1) > 0 ? radiansToDegrees(ang(time) - ang(t0)) : 0";
+                "effect(\"HAMDY TRK Use Rotation\")(1) > 0 ? radiansToDegrees(ang(time) - ang(t0)) : 0";
             N.property("ADBE Transform Group").property("ADBE Scale").expression =
                 "var A = " + A + ", B = " + B + ", t0 = A.key(1).time;\n" +
                 "function dist(t) { return length(B.valueAtTime(t), A.valueAtTime(t)); }\n" +
-                "var s = effect(\"NABD TRK Use Scale\")(1) > 0 ? dist(time) / Math.max(0.001, dist(t0)) * 100 : 100;\n[s, s]";
+                "var s = effect(\"HAMDY TRK Use Scale\")(1) > 0 ? dist(time) / Math.max(0.001, dist(t0)) * 100 : 100;\n[s, s]";
         }
         N.moveBefore(L);
         var j;
@@ -3427,11 +3427,11 @@ var NABD = (function () {
         if (!N) { throw Err("NO_TRACK_NULL"); }
         var K = c.height / 1080, fd = c.frameDuration, t = snap(c, c.time);
         var T = makeText(c, a.text || "اكتب هنا", (a.size || 60) * K, [1, 1, 1], "c", a.font, 0);
-        T.name = "NABD TRACK TEXT | " + (a.text || "text");
+        T.name = "HAMDY TRACK TEXT | " + (a.text || "text");
         T.inPoint = Math.max(N.inPoint, t); T.outPoint = N.outPoint;
         centerAnchor(T, T.inPoint);
         if (a.style === "callout") {
-            var S = shapeLayer(c, "NABD TRACK CALLOUT | " + (a.text || ""), [0, 0]);
+            var S = shapeLayer(c, "HAMDY TRACK CALLOUT | " + (a.text || ""), [0, 0]);
             S.inPoint = T.inPoint; S.outPoint = T.outPoint;
             S.parent = N;
             var na = nullPt(N);
@@ -3466,30 +3466,30 @@ var NABD = (function () {
     function trkCover(a) {
         var c = comp(), N = findTrackNull(c, a.nullName);
         if (!N) { throw Err("NO_TRACK_NULL"); }
-        var A = c.layers.addSolid([1, 1, 1], "NABD TRACK " + (a.style === "pixel" ? "PIXEL" : "BLUR"), c.width, c.height, c.pixelAspect, c.duration);
+        var A = c.layers.addSolid([1, 1, 1], "HAMDY TRACK " + (a.style === "pixel" ? "PIXEL" : "BLUR"), c.width, c.height, c.pixelAspect, c.duration);
         A.adjustmentLayer = true;
         A.inPoint = N.inPoint; A.outPoint = N.outPoint;
         A.moveBefore(N);
-        addSlider(A, "NABD TRK Width", a.w || Math.round(c.height * 0.16));
-        addSlider(A, "NABD TRK Height", a.h || Math.round(c.height * 0.2));
-        var amt = addSlider(A, "NABD TRK Amount", a.style === "pixel" ? 30 : 40);
+        addSlider(A, "HAMDY TRK Width", a.w || Math.round(c.height * 0.16));
+        addSlider(A, "HAMDY TRK Height", a.h || Math.round(c.height * 0.2));
+        var amt = addSlider(A, "HAMDY TRK Amount", a.style === "pixel" ? 30 : 40);
         A.property("ADBE Mask Parade").addProperty("ADBE Mask Atom");
         var M = A.property("ADBE Mask Parade").property(1);
-        M.name = "NABD TRACK AREA";
+        M.name = "HAMDY TRACK AREA";
         M.property("ADBE Mask Shape").expression =
-            "var N = thisComp.layer(" + q2(N.name) + "), p = fromComp(N.toComp(N.anchorPoint)), rx = effect(\"NABD TRK Width\")(1) / 2, ry = effect(\"NABD TRK Height\")(1) / 2, k = 0.5523;\n" +
+            "var N = thisComp.layer(" + q2(N.name) + "), p = fromComp(N.toComp(N.anchorPoint)), rx = effect(\"HAMDY TRK Width\")(1) / 2, ry = effect(\"HAMDY TRK Height\")(1) / 2, k = 0.5523;\n" +
             "createPath([[p[0], p[1] - ry], [p[0] + rx, p[1]], [p[0], p[1] + ry], [p[0] - rx, p[1]]], [[-rx * k, 0], [0, -ry * k], [rx * k, 0], [0, ry * k]], [[rx * k, 0], [0, ry * k], [-rx * k, 0], [0, -ry * k]], true)";
         M.property("ADBE Mask Feather").setValue([12, 12]);
         if (a.style === "pixel") {
-            var mi = addEffect(A, "ADBE Mosaic", "NABD TRK Mosaic").propertyIndex;
-            FX(A, mi).property(1).expression = "Math.max(4, Math.round(120 - effect(\"NABD TRK Amount\")(1) * 1.1))";
-            FX(A, mi).property(2).expression = "Math.max(4, Math.round((120 - effect(\"NABD TRK Amount\")(1) * 1.1) * thisComp.height / thisComp.width))";
+            var mi = addEffect(A, "ADBE Mosaic", "HAMDY TRK Mosaic").propertyIndex;
+            FX(A, mi).property(1).expression = "Math.max(4, Math.round(120 - effect(\"HAMDY TRK Amount\")(1) * 1.1))";
+            FX(A, mi).property(2).expression = "Math.max(4, Math.round((120 - effect(\"HAMDY TRK Amount\")(1) * 1.1) * thisComp.height / thisComp.width))";
         } else if (a.style === "dark") {
-            var bi = addEffect(A, "ADBE Brightness & Contrast 2", "NABD TRK Dark").propertyIndex;
-            FX(A, bi).property(1).expression = "-effect(\"NABD TRK Amount\")(1) * 2.5";
+            var bi = addEffect(A, "ADBE Brightness & Contrast 2", "HAMDY TRK Dark").propertyIndex;
+            FX(A, bi).property(1).expression = "-effect(\"HAMDY TRK Amount\")(1) * 2.5";
         } else {
-            var gi = addEffect(A, "ADBE Gaussian Blur 2", "NABD TRK Blur").propertyIndex;
-            FX(A, gi).property(1).expression = "effect(\"NABD TRK Amount\")(1) * thisComp.height / 1080";
+            var gi = addEffect(A, "ADBE Gaussian Blur 2", "HAMDY TRK Blur").propertyIndex;
+            FX(A, gi).property(1).expression = "effect(\"HAMDY TRK Amount\")(1) * thisComp.height / 1080";
             try { FX(A, gi).property(3).setValue(1); } catch (er) {}
         }
         return "OK";
@@ -3501,8 +3501,8 @@ var NABD = (function () {
             var X = sel[j];
             if (X === L || !isAV(X)) { continue; }
             var p = parade(X);
-            for (k = p.numProperties; k >= 1; k--) { if (p.property(k).name === "NABD TRACK PIN") { p.property(k).remove(); } }
-            var fi = addEffect(X, "ADBE Corner Pin", "NABD TRACK PIN").propertyIndex;
+            for (k = p.numProperties; k >= 1; k--) { if (p.property(k).name === "HAMDY TRACK PIN") { p.property(k).remove(); } }
+            var fi = addEffect(X, "ADBE Corner Pin", "HAMDY TRACK PIN").propertyIndex;
             for (k = 0; k < 4; k++) {
                 FX(X, fi).property(k + 1).expression = "var L = " + "thisComp.layer(" + q2(L.name) + ");\nfromComp(L.toComp(" + apRef(L, tr.name, tr.points[order[k]].name) + "))";
             }
@@ -3519,11 +3519,11 @@ var NABD = (function () {
         var tg = L.property("ADBE Transform Group");
         if (tg.property("ADBE Anchor Point").numKeys || tg.property("ADBE Position").numKeys) { throw Err("HAS_KEYS"); }
         var pos0 = tg.property("ADBE Position").value;
-        addSlider(L, "NABD STAB Strength", 100);
-        tg.property("ADBE Anchor Point").expression = "// NABD STAB\nvar P = " + A + ", s = effect(\"NABD STAB Strength\")(1) / 100;\nvalue + (P - P.valueAtTime(P.key(1).time)) * s";
+        addSlider(L, "HAMDY STAB Strength", 100);
+        tg.property("ADBE Anchor Point").expression = "// HAMDY STAB\nvar P = " + A + ", s = effect(\"HAMDY STAB Strength\")(1) / 100;\nvalue + (P - P.valueAtTime(P.key(1).time)) * s";
         if (a.rot && tr.points.length >= 2 && tr.points[1].keys) {
             var B = apRef(L, tr.name, tr.points[1].name);
-            tg.property("ADBE Rotate Z").expression = "var A = " + A + ", B = " + B + ", t0 = A.key(1).time, s = effect(\"NABD STAB Strength\")(1) / 100;\n" +
+            tg.property("ADBE Rotate Z").expression = "var A = " + A + ", B = " + B + ", t0 = A.key(1).time, s = effect(\"HAMDY STAB Strength\")(1) / 100;\n" +
                 "function ang(t) { var d = B.valueAtTime(t) - A.valueAtTime(t); return Math.atan2(d[1], d[0]); }\nvalue - radiansToDegrees(ang(time) - ang(t0)) * s";
         }
         if (a.zoom) { var sv = tg.property("ADBE Scale").value; tg.property("ADBE Scale").setValue([sv[0] * (1 + a.zoom / 100), sv[1] * (1 + a.zoom / 100)].concat(sv.length > 2 ? [sv[2]] : [])); }
@@ -3550,7 +3550,7 @@ var NABD = (function () {
 
     // ===================================================== generative fill
     function gfDir() {
-        var f = new Folder(Folder.myDocuments.fsName + "/NABD Fill");
+        var f = new Folder(Folder.myDocuments.fsName + "/HAMDY Fill");
         if (!f.exists) { f.create(); }
         return f;
     }
@@ -3621,9 +3621,9 @@ var NABD = (function () {
         if (!f.exists) { throw Err("NO_FILE"); }
         if (a.ext && (a.ext.l + a.ext.r + a.ext.u + a.ext.d) > 0) {
             var e2 = a.ext, W2 = c.width + e2.l + e2.r, H2 = c.height + e2.u + e2.d;
-            var NC = app.project.items.addComp(c.name + " (NABD expanded)", W2, H2, c.pixelAspect, c.duration, 1 / c.frameDuration);
+            var NC = app.project.items.addComp(c.name + " (HAMDY expanded)", W2, H2, c.pixelAspect, c.duration, 1 / c.frameDuration);
             var BG = NC.layers.add(importFile(f));
-            BG.name = "NABD FILL | expanded background";
+            BG.name = "HAMDY FILL | expanded background";
             BG.property("ADBE Transform Group").property("ADBE Position").setValue([W2 / 2, H2 / 2]);
             BG.outPoint = NC.duration;
             var OR = NC.layers.add(c);
@@ -3632,7 +3632,7 @@ var NABD = (function () {
             return "OK_EXPANDED";
         }
         var it = importFile(f), L = c.layers.add(it), t = a.time === undefined ? c.time : a.time, src = a.src ? c.layer(a.src) : null;
-        L.name = "NABD FILL | " + (a.label || "AI");
+        L.name = "HAMDY FILL | " + (a.label || "AI");
         var ex = a.ext || { l: 0, r: 0, u: 0, d: 0 };
         L.property("ADBE Transform Group").property("ADBE Position").setValue([c.width / 2 + (ex.r - ex.l) / 2, c.height / 2 + (ex.d - ex.u) / 2]);
         L.startTime = 0;
@@ -3753,8 +3753,8 @@ var NABD = (function () {
         var c = comp(), T = trimTargets(c, a), fd = c.frameDuration, d = Math.max(4, a.frames || 24) * fd, j, i;
         for (j = 0; j < T.length; j++) {
             var L = T[j], root = L.property("ADBE Root Vectors Group"), p = parade(L);
-            for (i = p.numProperties; i >= 1; i--) { if (/^NABD TRIM/.test(p.property(i).name)) { p.property(i).remove(); } }
-            for (i = root.numProperties; i >= 1; i--) { if (root.property(i).name === "NABD Trim") { root.property(i).remove(); } }
+            for (i = p.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) TRIM/.test(p.property(i).name)) { p.property(i).remove(); } }
+            for (i = root.numProperties; i >= 1; i--) { if (root.property(i).name === "HAMDY Trim") { root.property(i).remove(); } }
             // strokes where missing (outlines from text / logos usually only have fills)
             if (a.addStroke) {
                 for (i = 1; i <= root.numProperties; i++) {
@@ -3774,20 +3774,20 @@ var NABD = (function () {
                     }
                 }
             }
-            var si = addSlider(L, "NABD TRIM Start", 0), ei = addSlider(L, "NABD TRIM End", 100), oi = addSlider(L, "NABD TRIM Offset", 0);
-            if (a.style === "travel") { addSlider(L, "NABD TRIM Speed", a.speed || 100); }
+            var si = addSlider(L, "HAMDY TRIM Start", 0), ei = addSlider(L, "HAMDY TRIM End", 100), oi = addSlider(L, "HAMDY TRIM Offset", 0);
+            if (a.style === "travel") { addSlider(L, "HAMDY TRIM Speed", a.speed || 100); }
             root.addProperty("ADBE Vector Filter - Trim");
             var tri = root.numProperties;
-            L.property("ADBE Root Vectors Group").property(tri).name = "NABD Trim";
+            L.property("ADBE Root Vectors Group").property(tri).name = "HAMDY Trim";
             var TR = L.property("ADBE Root Vectors Group").property(tri);
             try { TR.property("ADBE Vector Trim Type").setValue(a.individual ? 2 : 1); } catch (et) {}
-            TR.property("ADBE Vector Trim Start").expression = "effect(\"NABD TRIM Start\")(1)";
-            TR.property("ADBE Vector Trim End").expression = "effect(\"NABD TRIM End\")(1)";
+            TR.property("ADBE Vector Trim Start").expression = "effect(\"HAMDY TRIM Start\")(1)";
+            TR.property("ADBE Vector Trim End").expression = "effect(\"HAMDY TRIM End\")(1)";
             L.property("ADBE Root Vectors Group").property(tri).property("ADBE Vector Trim Offset").expression =
-                a.style === "travel" ? "effect(\"NABD TRIM Offset\")(1) + (time - inPoint) * effect(\"NABD TRIM Speed\")(1) * 1.8" : "effect(\"NABD TRIM Offset\")(1)";
+                a.style === "travel" ? "effect(\"HAMDY TRIM Offset\")(1) + (time - inPoint) * effect(\"HAMDY TRIM Speed\")(1) * 1.8" : "effect(\"HAMDY TRIM Offset\")(1)";
             // fills appear once the drawing is done, strokes can fade away after
             if (a.fillAfter) {
-                var prog = "var e = effect(\"NABD TRIM End\")(1), s = effect(\"NABD TRIM Start\")(1), f = clamp((e - s - 92) / 8, 0, 1);\n";
+                var prog = "var e = effect(\"HAMDY TRIM End\")(1), s = effect(\"HAMDY TRIM Start\")(1), f = clamp((e - s - 92) / 8, 0, 1);\n";
                 walkVec(L.property("ADBE Root Vectors Group"), function (pr) {
                     if (pr.matchName === "ADBE Vector Graphic - Fill") { pr.property("ADBE Vector Fill Opacity").expression = prog + "value * f"; }
                     if (pr.matchName === "ADBE Vector Graphic - Stroke" && a.strokeFade) { pr.property("ADBE Vector Stroke Opacity").expression = prog + "value * (1 - f * 0.9)"; }
@@ -3841,7 +3841,7 @@ var NABD = (function () {
     function myPathText(a) {
         var c = comp(), U = pickUserPath(c), fd = c.frameDuration;
         var T = makeText(c, a.text || "اكتب هنا", a.size || 80, [1, 1, 1], "l", a.font, 0);
-        T.name = "NABD PATH TEXT | " + (a.text || "text");
+        T.name = "HAMDY PATH TEXT | " + (a.text || "text");
         T.inPoint = snap(c, c.time); T.outPoint = Math.min(c.duration, T.inPoint + Math.max(0.5, a.secs || 4));
         T.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
         T.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
@@ -3849,19 +3849,19 @@ var NABD = (function () {
         try { var r = layerRect(T, T.inPoint); if (r) { tw = r.width; } } catch (er) {}
         T.property("ADBE Mask Parade").addProperty("ADBE Mask Atom");
         var M = T.property("ADBE Mask Parade").property(1);
-        M.name = "NABD PATH";
+        M.name = "HAMDY PATH";
         M.property("ADBE Mask Shape").expression = pathToHere(U.L.name, U.ref);
         try { M.maskMode = MaskMode.NONE; } catch (em) {}
         T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Path").setValue(1);
         try { T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Reverse Path").setValue(a.reverse ? 1 : 0); } catch (erv) {}
-        var ppi = addSlider(T, "NABD PATH Progress", 50);
-        addSlider(T, "NABD PATH Speed", a.speed || 160);
-        addSlider(T, "NABD PATH Text Width", Math.round(tw));
-        var lenExpr = "var P = mask(\"NABD PATH\").maskPath, Lp = 0, q0 = P.pointOnPath(0), q1, i;\nfor (i = 1; i <= 64; i++) { q1 = P.pointOnPath(i / 64); Lp += length(q0, q1); q0 = q1; }\n";
+        var ppi = addSlider(T, "HAMDY PATH Progress", 50);
+        addSlider(T, "HAMDY PATH Speed", a.speed || 160);
+        addSlider(T, "HAMDY PATH Text Width", Math.round(tw));
+        var lenExpr = "var P = mask(\"HAMDY PATH\").maskPath, Lp = 0, q0 = P.pointOnPath(0), q1, i;\nfor (i = 1; i <= 64; i++) { q1 = P.pointOnPath(i / 64); Lp += length(q0, q1); q0 = q1; }\n";
         var fm = T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text First Margin");
-        if (a.flow === "loop") { fm.expression = "// NABD PATH loop\n" + lenExpr + "var v = (time - inPoint) * effect(\"NABD PATH Speed\")(1);\n((v % Lp) + Lp) % Lp"; }
+        if (a.flow === "loop") { fm.expression = "// HAMDY PATH loop\n" + lenExpr + "var v = (time - inPoint) * effect(\"HAMDY PATH Speed\")(1);\n((v % Lp) + Lp) % Lp"; }
         else {
-            fm.expression = "// NABD PATH\n" + lenExpr + "effect(\"NABD PATH Progress\")(1) / 100 * Math.max(0, Lp - effect(\"NABD PATH Text Width\")(1))";
+            fm.expression = "// HAMDY PATH\n" + lenExpr + "effect(\"HAMDY PATH Progress\")(1) / 100 * Math.max(0, Lp - effect(\"HAMDY PATH Text Width\")(1))";
             if (a.flow === "travel") { var pr = FX(T, ppi).property(1); pr.setValueAtTime(T.inPoint, 0); pr.setValueAtTime(T.outPoint, 100); setEase(pr, 1, 33, 45); setEase(pr, 2, 45, 33); }
         }
         T.moveBefore(U.L);
@@ -3873,20 +3873,20 @@ var NABD = (function () {
             var X = sel[j];
             if (X === U.L || !animatable(X)) { continue; }
             var p = parade(X);
-            for (k = p.numProperties; k >= 1; k--) { if (/^NABD FOLLOW/.test(p.property(k).name)) { p.property(k).remove(); } }
-            var pi = addSlider(X, "NABD FOLLOW Progress", 0);
-            addCheck(X, "NABD FOLLOW Orient", a.orient !== false);
-            addSlider(X, "NABD FOLLOW Angle", 0);
-            addSlider(X, "NABD FOLLOW Speed", a.speed || 25);
+            for (k = p.numProperties; k >= 1; k--) { if (/^(?:NABD|HAMDY) FOLLOW/.test(p.property(k).name)) { p.property(k).remove(); } }
+            var pi = addSlider(X, "HAMDY FOLLOW Progress", 0);
+            addCheck(X, "HAMDY FOLLOW Orient", a.orient !== false);
+            addSlider(X, "HAMDY FOLLOW Angle", 0);
+            addSlider(X, "HAMDY FOLLOW Speed", a.speed || 25);
             var d = Math.max(0.2, (X.outPoint - X.inPoint)), t0 = a.at === "playhead" ? snap(c, c.time) : X.inPoint;
             var pr = FX(X, pi).property(1);
-            if (a.flow === "loop") { pr.expression = "((time - inPoint) * effect(\"NABD FOLLOW Speed\")(1)) % 100"; }
+            if (a.flow === "loop") { pr.expression = "((time - inPoint) * effect(\"HAMDY FOLLOW Speed\")(1)) % 100"; }
             else { pr.setValueAtTime(t0, 0); pr.setValueAtTime(Math.min(X.outPoint, t0 + (a.secs || d)), 100); setEase(pr, 1, 33, 60); setEase(pr, 2, 60, 33); }
             var src = "thisComp.layer(" + q2(U.L.name) + ")";
-            var head = "var S = " + src + ", P = " + U.ref + ", u = clamp(effect(\"NABD FOLLOW Progress\")(1) / 100, 0, 1);\n";
+            var head = "var S = " + src + ", P = " + U.ref + ", u = clamp(effect(\"HAMDY FOLLOW Progress\")(1) / 100, 0, 1);\n";
             var tg = X.property("ADBE Transform Group");
-            tg.property("ADBE Position").expression = "// NABD FOLLOW\n" + head + "var q = S.toComp(P.pointOnPath(u));\n" + (X.parent ? "q = parent.fromComp(q);\n" : "") + (X.threeDLayer ? "[q[0], q[1], value[2]]" : "q");
-            tg.property("ADBE Rotate Z").expression = head + "if (effect(\"NABD FOLLOW Orient\")(1) > 0) { var p0 = P.pointOnPath(u), t = P.tangentOnPath(u), w = S.toComp(p0 + t) - S.toComp(p0); value + radiansToDegrees(Math.atan2(w[1], w[0])) + effect(\"NABD FOLLOW Angle\")(1); } else { value; }";
+            tg.property("ADBE Position").expression = "// HAMDY FOLLOW\n" + head + "var q = S.toComp(P.pointOnPath(u));\n" + (X.parent ? "q = parent.fromComp(q);\n" : "") + (X.threeDLayer ? "[q[0], q[1], value[2]]" : "q");
+            tg.property("ADBE Rotate Z").expression = head + "if (effect(\"HAMDY FOLLOW Orient\")(1) > 0) { var p0 = P.pointOnPath(u), t = P.tangentOnPath(u), w = S.toComp(p0 + t) - S.toComp(p0); value + radiansToDegrees(Math.atan2(w[1], w[0])) + effect(\"HAMDY FOLLOW Angle\")(1); } else { value; }";
             n++;
         }
         if (!n) { throw Err("NEED_FOLLOWER"); }
@@ -3902,15 +3902,15 @@ var NABD = (function () {
         }
         // a mask on any layer: draw it with the Stroke effect
         var p = parade(L), i;
-        for (i = p.numProperties; i >= 1; i--) { if (p.property(i).name === "NABD MASK DRAW") { p.property(i).remove(); } }
-        var si = addEffect(L, "ADBE Stroke", "NABD MASK DRAW").propertyIndex;
+        for (i = p.numProperties; i >= 1; i--) { if (p.property(i).name === "HAMDY MASK DRAW") { p.property(i).remove(); } }
+        var si = addEffect(L, "ADBE Stroke", "HAMDY MASK DRAW").propertyIndex;
         try { FX(L, si).property(1).setValue(U.mask); } catch (e1) {}
         try { FX(L, si).property(4).setValue((a.strokeColor || [1, 1, 1, 1])); } catch (e2) {}
         try { FX(L, si).property(5).setValue(a.width || 6); FX(L, si).property(6).setValue(100); } catch (e3) {}
         var t0 = a.at === "playhead" ? snap(c, c.time) : L.inPoint, d = Math.max(4, a.frames || 24) * fd;
         if (a.style === "travel") {
             FX(L, si).property(8).expression = "((time - inPoint) * 50) % 100";
-            FX(L, si).property(9).expression = "Math.min(100, effect(\"NABD MASK DRAW\")(8) + " + (a.seg || 25) + ")";
+            FX(L, si).property(9).expression = "Math.min(100, effect(\"HAMDY MASK DRAW\")(8) + " + (a.seg || 25) + ")";
         } else {
             var E = FX(L, si).property(9);
             E.setValueAtTime(t0, 0); E.setValueAtTime(t0 + d, 100); setEase(E, 1, 33, 70); setEase(E, 2, 70, 33);
@@ -3936,7 +3936,7 @@ var NABD = (function () {
         if (!caps || !caps.length) { throw Err("NO_CAPS"); }
         var fd = c.frameDuration, acc = rgb(o.acc, [1, 0.42, 0.24]), col = rgb(o.color, [1, 1, 1]), bcol = rgb(o.boxColor, [0, 0, 0]);
         var N = c.layers.addNull();
-        N.name = "NABD CAPTIONS";
+        N.name = "HAMDY CAPTIONS";
         N.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
         N.property("ADBE Transform Group").property("ADBE Position").setValue([W / 2, H * (o.y || 72) / 100]);
         span(N, Math.max(0, caps[0].s), Math.min(c.duration, caps[caps.length - 1].e + 0.1));
@@ -3966,13 +3966,13 @@ var NABD = (function () {
                 d = tdp.value;
                 try { d.applyStroke = true; d.strokeColor = [0, 0, 0]; d.strokeWidth = size * 0.14; d.strokeOverFill = false; tdp.setValue(d); } catch (es) {}
             }
-            L.name = "NABD CAP " + ("000" + (i + 1)).slice(-3);
+            L.name = "HAMDY CAP " + ("000" + (i + 1)).slice(-3);
             span(L, s0, e0);
             anchorTo(L, s0, 0.5, 0.5);
             L.parent = N;
             L.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
             if (o.shadow) {
-                var sh = addEffect(L, "ADBE Drop Shadow", "NABD Shadow").propertyIndex;
+                var sh = addEffect(L, "ADBE Drop Shadow", "HAMDY Shadow").propertyIndex;
                 try { FX(L, sh).property(2).setValue(153); } catch (eo) { try { FX(L, sh).property(2).setValue(60); } catch (eo2) {} }
                 try { FX(L, sh).property(4).setValue(6 * K); FX(L, sh).property(5).setValue(18 * K); } catch (ed) {}
             }
@@ -3986,7 +3986,7 @@ var NABD = (function () {
                 var an = L.property("ADBE Text Properties").property("ADBE Text Animators");
                 an.addProperty("ADBE Text Animator");
                 var ai = an.numProperties, pr = WORD[word], q2;
-                L.property("ADBE Text Properties").property("ADBE Text Animators").property(ai).name = "NABD CAP " + word;
+                L.property("ADBE Text Properties").property("ADBE Text Animators").property(ai).name = "HAMDY CAP " + word;
                 for (q2 = 0; q2 < pr.length; q2++) { L.property("ADBE Text Properties").property("ADBE Text Animators").property(ai).property("ADBE Text Animator Properties").addProperty(pr[q2][0]); }
                 for (q2 = 0; q2 < pr.length; q2++) {
                     var pp = L.property("ADBE Text Properties").property("ADBE Text Animators").property(ai).property("ADBE Text Animator Properties").property(pr[q2][0]);
@@ -4010,7 +4010,7 @@ var NABD = (function () {
                 if (e0 - s0 > fd * 8) { keysAt(op, [e0 - fd * 3, e0], [100, 0], 33, 33); }
             }
             if (st.box || o.box) {
-                B = shapeLayer(c, "NABD CAP BOX " + ("000" + (i + 1)).slice(-3), [0, 0]);
+                B = shapeLayer(c, "HAMDY CAP BOX " + ("000" + (i + 1)).slice(-3), [0, 0]);
                 span(B, s0, e0);
                 var gb = addGroup(B, "box"), rb = sRect(B, gb, 100, 100, [0, 0], 14 * K);
                 sFill(B, gb, bcol, o.boxOp === undefined ? 75 : o.boxOp);
@@ -4028,7 +4028,7 @@ var NABD = (function () {
         return "OK_CAPS:" + mx;
     }
     function saveText(a) {
-        var f = File.saveDialog("NABD: save " + (a.ext || "srt"), "*." + (a.ext || "srt"));
+        var f = File.saveDialog("Hamdy Motion Kit: save " + (a.ext || "srt"), "*." + (a.ext || "srt"));
         if (!f) { return { path: null }; }
         if (!/\.\w+$/.test(f.name)) { f = new File(f.fsName + "." + (a.ext || "srt")); }
         f.encoding = "UTF-8";
@@ -4038,7 +4038,7 @@ var NABD = (function () {
         return { path: f.fsName };
     }
     function openText(a) {
-        var f = File.openDialog("NABD: open " + (a.ext || "srt"));
+        var f = File.openDialog("Hamdy Motion Kit: open " + (a.ext || "srt"));
         if (!f) { return { text: null }; }
         f.encoding = "UTF-8";
         f.open("r");
@@ -4077,7 +4077,7 @@ var NABD = (function () {
             a = eval("(" + s + ")");
             if (!CMDS[a.cmd]) { return J({ ok: false, code: "UNKNOWN" }); }
             TUCK = a.tuck !== false;
-            if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("NABD: " + a.cmd); undo = true; }
+            if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("Hamdy: " + a.cmd); undo = true; }
             res = CMDS[a.cmd](a);
             if (undo) { app.endUndoGroup(); }
             return J({ ok: true, data: res });

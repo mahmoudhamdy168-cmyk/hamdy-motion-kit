@@ -1,4 +1,4 @@
-/* NABD Motion Kit v0.3 — preset library (single source of truth for previews + After Effects)
+/* HAMDY Motion Kit v0.3 — preset library (single source of truth for previews + After Effects)
    Units: x/y offsets in px on a 1080px-tall frame (scaled to the comp height in AE). */
 var NABD_DATA = (function(){
 

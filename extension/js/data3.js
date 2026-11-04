@@ -1,6 +1,6 @@
-/* NABD Motion Kit v0.5 — filters (looks), video FX, audio FX, text styles, CapCut-style text animations
+/* HAMDY Motion Kit v0.5 — filters (looks), video FX, audio FX, text styles, CapCut-style text animations
    Ops: {mn: effect match name, n: short name, p: {paramIndex: value}}  value = number | [r,g,b] color
-   Every name here is an original NABD preset. */
+   Every name here is an original HAMDY preset. */
 (function(D){
 function add(list, items){ items.forEach(function(x){ list.push(x); }); }
 function CB(sr,sg,sb, mr,mg,mb, hr,hg,hb){ return {mn:'ADBE Color Balance 2', n:'Color Balance', p:{1:sr,2:sg,3:sb,4:mr,5:mg,6:mb,7:hr,8:hg,9:hb,10:1}}; }

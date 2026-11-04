@@ -1,4 +1,4 @@
-/* NABD Motion Kit v0.4 — advanced additions to every library */
+/* HAMDY Motion Kit v0.4 — advanced additions to every library */
 (function(D){
 var noise = D.noise;
 function add(list, items){ items.forEach(function(x){ list.push(x); }); }
