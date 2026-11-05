@@ -92,7 +92,7 @@ var DEF = {
   tab:'tr', paused:false, acc:'#ff6b3d', lang:'ar', hide:true, perf:'full', ui:{side:300, nav:0, card:132},
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF'},
   filter:{},
-  tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20},
+  tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
   mp:{dir:'both', frames:18, at:'layer'},
   tx:{text:'حركة النص', based:'auto', frames:20, size:110, secs:3, doIn:true, doOut:true, font:'', pattern:'normal', cps:14, cursor:true, typeSfx:true},
   cap:{provider:'groq', keys:{deepgram:'', groq:'', openai:''}, lang:'ar-EG', maxWords:3, maxChars:26, size:70, y:72, font:'', upper:false, stroke:false, shadow:true, box:false, boxOp:75, color:'#ffffff', words:[], caps:[], src:''},
@@ -225,7 +225,14 @@ function txSpec(tp){
   if(tp.rx) pr.push(['ADBE Text Rotation X', tp.rx]);
   if(tp.ry) pr.push(['ADBE Text Rotation Y', tp.ry]);
   return {id:tp.id, props:pr, random:!!tp.random, square:!!tp.square, overshoot:!!tp.overshoot, loop:tp.loop||null, pattern:(tp.random||tp.overshoot) ? 'normal' : S.tx.pattern,
-          three:!!tp.three, wig:tp.wig||0, amt:tp.amt||null, src:tp.src||null, tw:!!tp.tw, twEase:tp.twEase||null, twOrder:tp.twOrder||null, twDur:tp.twDur||0, trail:tp.trail||null};
+          three:!!tp.three, wig:tp.wig||0, amt:tp.amt||null, src:tp.src||null, tw:!!tp.tw, twEase:tp.twEase||null, twOrder:tp.twOrder||null, twDur:tp.twDur||0, trail:tp.trail||null, fx:tp.fx ? txFxScale(tp.fx, k) : null};
+}
+function txFxScale(fx, k){
+  return fx.map(function(f){
+    var o = {m:f.m, ez:f.ez, s:f.s, x:f.x, once:!!f.once, k:(f.k||[]).map(function(q){ return q[3] ? [q[0], q[1]*k, q[2]*k] : [q[0], q[1], q[2]]; })};
+    if(f.acc) o.s = (o.s||[]).concat([[f.acc, hexRGB(S.acc)]]);
+    return o;
+  });
 }
 function mpSpec(m){ return {id:m.id, kind:m.kind, ease:m.ease, tr:m.tr, keys:m.keys, ex:m.ex, wa:m.wa, feather:m.feather, dbDir:m.dbDir}; }
 var EN_LINES = ['YOUR TITLE', 'Subtitle goes here', 'Third line'];
@@ -370,6 +377,7 @@ function mountThumb(box, it, big){
   switch(S.tab){
     case 'tr':
       if(it.matte){ o = {k:'spr', el:P.mountSprite(box, 'assets/thumbs/p_' + it.matte.id + '.jpg', 'mt')}; break; }
+      if(it.otr){ o = {k:'spr', el:P.mountSprite(box, 'assets/' + it.otr.thumb, 'mt')}; box.classList.add('otrth'); break; }
       o = {k:'tr', it:it, el:P.mountTr(box)}; break;
     case 'mp': o = {k:'mp', it:it, el:P.mountMp(box)}; break;
     case 'tx':
@@ -410,6 +418,21 @@ function renderSide(){
   if(!it && S.tab!=='lib' && S.tab!=='ed'){ side.innerHTML=''; return; }
   switch(S.tab){
     case 'tr':
+      if(it.otr){
+        h += '<div class="stage" id="stage"></div>' + head(it, it.d);
+        h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('tr.oframes', [[16,'16'],[20,'20'],[24,'24'],[30,'30'],[40,'40'],[50,'50']], S.tr.oframes) + '</div>';
+        if(it.otr.kind==='light'){
+          h += '<div class="field"><span class="lbl">طريقة الدمج</span>' + seg('tr.oblend', [['screen','Screen'],['add','Add'],['overlay','Overlay'],['soft','Soft Light']], S.tr.oblend) + '</div>';
+          h += '<div class="field"><span class="lbl">اللون</span>' + seg('tr.ocolor', [['orig','الأصلي'],['acc','لوني']], S.tr.ocolor) + '</div>';
+        } else {
+          h += '<div class="field"><span class="lbl">اللون</span>' + seg('tr.ocolor', [['orig','الأصلي'],['acc','لوني'],['white','أبيض'],['black','أسود']], S.tr.ocolor) + '</div>';
+        }
+        h += '<div class="field"><span class="lbl">الشدة</span>' + seg('tr.oamount', [[60,'60%'],[80,'80%'],[100,'100%']], S.tr.oamount) + '</div>';
+        h += '<div class="row">' + chk('tr.flip', 'اقلبه بالعرض', S.tr.flip) + chk('tr.sfx', 'صوت ووش', S.tr.sfx) + '</div>';
+        h += '<button class="btn primary" id="go">حط الترانزيشن</button>';
+        h += '<div class="hint">' + (it.otr.kind==='light' ? 'ده فيديو أوفرلي بيتحط فوق القطع بالـ Blend Mode اللي تختاره، وأقوى لحظة فيه بتيجي على القطع بالظبط فبتداري النقلة.' : 'ده فيديو بيغطي الشاشة كلها في نصه (معاه ماسك Luma جاهز) فالكليب القديم بيختفي تحته والجديد بيبان.') + ' حط البلاي هيد على القطع أو حدد الكليبين. اللاير اسمه HAMDY OTR وعليه ماركر HAMDY CUT مكان القطع، فتقدر تحركه أو تمطه.</div>';
+        break;
+      }
       if(it.matte){
         h += '<div class="stage" id="stage"></div>' + head(it, it.d);
         h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('tr.mframes', [[12,'12'],[16,'16'],[20,'20'],[26,'26'],[34,'34'],[45,'45']], S.tr.mframes) + '</div>';
@@ -635,6 +658,7 @@ function apply(){
   var p, acc = hexRGB(S.acc);
   switch(S.tab){
     case 'tr':
+      if(it.otr){ p = host('otrApply', otrArgs(it)); break; }
       if(it.matte){ p = host('matteTr', {file:assetPath(it.matte.file), frames:S.tr.mframes, flip:S.tr.flip, sfx:S.tr.sfx ? sfxPath({id:'whoosh_soft'}) : null}); break; }
       p = host('transition', {type:it.id, frames:S.tr.frames, snappy:S.tr.snappy, sfx:S.tr.sfx, libPaths:S.lib.paths, acc:acc}); break;
     case 'mp': p = host('motion', {spec:mpSpec(it), dir:S.mp.dir, frames:S.mp.frames, at:S.mp.at}); break;
@@ -1488,6 +1512,14 @@ function setLang(l){
 }
 /* ============================================================== edit page */
 var ED = null, ED_DIRTY = true, ED_BUSY = false;
+function otrArgs(it){
+  var o = it.otr, c = S.tr.ocolor, col = null;
+  if(c==='acc') col = hexRGB(S.acc); else if(c==='white' && o.kind==='cover') col = [1,1,1]; else if(c==='black' && o.kind==='cover') col = [0.02,0.02,0.02];
+  if(o.kind==='light' && c!=='acc') col = null;
+  if(o.kind==='cover' && c==='acc' && !o.tint) col = hexRGB(S.acc);
+  return {file:assetPath(o.file), matte:o.matte ? assetPath(o.matte) : null, kind:o.kind, mid:o.mid, frames0:o.frames, frames:S.tr.oframes,
+    blend:S.tr.oblend, color:col, amount:S.tr.oamount, flip:S.tr.flip, label:o.en, sfx:S.tr.sfx ? sfxPath({id:/flash|glitch/i.test(o.id) ? 'whoosh_fast' : 'whoosh_soft'}) : null};
+}
 function assetPath(rel){ return CEP ? (extPath() + '/assets/' + rel).replace(/\\/g,'/') : 'assets/' + rel; }
 function rgbHex(c){ return '#' + c.slice(0,3).map(function(v){ var h = Math.round(Math.max(0,Math.min(1,v))*255).toString(16); return h.length<2 ? '0'+h : h; }).join(''); }
 var ED_PROP_AR = {'Opacity':'الشفافية','Scale':'الحجم','Scale Height':'الطول','Scale Width':'العرض','Position':'المكان','Rotation':'اللف','Skew':'الميلان','Anchor Point':'نقطة الارتكاز','Blurriness':'البلور','Color':'اللون','Shadow Color':'لون الظل','Distance':'المسافة','Softness':'النعومة','Direction':'الاتجاه','Glow Radius':'نص قطر التوهج','Glow Intensity':'قوة التوهج','Glow Threshold':'عتبة التوهج','Slider':'القيمة','Checkbox':'تشغيل','Offset':'الإزاحة','Start':'البداية','End':'النهاية','Fill Color':'لون الحروف','Tracking Amount':'المسافة بين الحروف','Character Offset':'إزاحة الحروف','Transition Completion':'نسبة الانتقال','Amount':'الكمية','Saturation':'التشبع','Brightness':'السطوع','Contrast':'التباين','Temporal Frequency':'سرعة الاهتزاز','Edge Thickness':'سُمك الحافة','Light Intensity':'قوة الإضاءة'};

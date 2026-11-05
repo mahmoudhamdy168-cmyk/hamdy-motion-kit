@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.2.2";
+    var VER = "1.3.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -1373,8 +1373,29 @@ var NABD = (function () {
         if (sp.src || sp.tw) { typeApply(L, c, sp, a); return; }
         var kidT = false;
         try { kidT = /^(?:NABD|HAMDY) STYLE/.test(L.name) && !!L.parent; } catch (ek) {}
-        if (a.doIn) { addTextAnim(L, sp, false, L.inPoint, Math.min(L.outPoint, L.inPoint + d), based); markTiming(L, "HAMDY IN " + sp.id, "in", L.inPoint, Math.min(L.outPoint, L.inPoint + d), kidT); }
-        if (a.doOut) { addTextAnim(L, sp, true, Math.max(L.inPoint, L.outPoint - d), L.outPoint, based); markTiming(L, "HAMDY OUT " + sp.id, "out", Math.max(L.inPoint, L.outPoint - d), L.outPoint, kidT); }
+        var hasAnim = !(sp.fx && sp.fx.length && !(sp.props && sp.props.length));
+        if (a.doIn) { if (hasAnim) { addTextAnim(L, sp, false, L.inPoint, Math.min(L.outPoint, L.inPoint + d), based); } textFx(L, sp, "in", L.inPoint, Math.min(L.outPoint, L.inPoint + d)); markTiming(L, "HAMDY IN " + sp.id, "in", L.inPoint, Math.min(L.outPoint, L.inPoint + d), kidT); }
+        if (a.doOut) { if (hasAnim) { addTextAnim(L, sp, true, Math.max(L.inPoint, L.outPoint - d), L.outPoint, based); } textFx(L, sp, "out", Math.max(L.inPoint, L.outPoint - d), L.outPoint, !!a.doIn); markTiming(L, "HAMDY OUT " + sp.id, "out", Math.max(L.inPoint, L.outPoint - d), L.outPoint, kidT); }
+    }
+    // effect-based text animation: sp.fx = [{m: matchName, k: [[idx, from, rest]], s: [[idx, value]], x: [[idx, expr]]}]
+    function textFx(L, sp, dir, t0, t1, hadIn) {
+        if (!sp.fx || !sp.fx.length) { return; }
+        var tag = "HAMDY " + (dir === "in" ? "IN " : "OUT ") + sp.id, i, j, e, ix, f, pr;
+        for (i = 0; i < sp.fx.length; i++) {
+            f = sp.fx[i];
+            if (f.once && dir === "out" && hadIn) { continue; }
+            try { e = addEffect(L, f.m, tag + " fx" + i); } catch (ea) { continue; }
+            ix = e.propertyIndex;
+            for (j = 0; f.s && j < f.s.length; j++) { try { FX(L, ix).property(f.s[j][0]).setValue(f.s[j][1]); } catch (es) {} }
+            for (j = 0; f.x && j < f.x.length; j++) { try { FX(L, ix).property(f.x[j][0]).expression = f.x[j][1]; } catch (ex) {} }
+            for (j = 0; f.k && j < f.k.length; j++) {
+                try {
+                    pr = FX(L, ix).property(f.k[j][0]);
+                    if (dir === "in") { keyPair(pr, t0, f.k[j][1], t1, f.k[j][2], f.ez || "cubic", "in"); }
+                    else { keyPair(pr, t0, f.k[j][2], t1, f.k[j][1], f.ez || "cubic", "out"); }
+                } catch (ek) {}
+            }
+        }
     }
     function makeText(c, str, size, col, just, font, trk) {
         var L = c.layers.addText(String(str).replace(/\r\n|\n/g, "\r"));
@@ -2566,6 +2587,83 @@ var NABD = (function () {
         if (a.audio === false) { try { L.audioEnabled = false; } catch (e4) {} }
         L.label = 11;
         if (top && top !== L) { L.moveBefore(top); }
+        return "OK";
+    }
+
+    // ================================================ overlay transitions (film burn, leaks, spray, ink…)
+    function otrApply(a) {
+        var c = comp(), f = new File(a.file || ""), sel = c.selectedLayers, fd = c.frameDuration, i;
+        if (!f.exists) { throw Err("NO_FILE"); }
+        var cut = c.time;
+        if (sel.length >= 2) { cut = 0; for (i = 0; i < sel.length; i++) { if (sel[i].inPoint > cut) { cut = sel[i].inPoint; } } }
+        cut = snap(c, cut);
+        var top = topSelected(c), it = importFile(f), fr = it.frameRate || 30;
+        var nat = it.duration || ((a.frames0 || 30) / fr), want = Math.max(6, a.frames || 30) * fd;
+        var st = want / nat * 100, midT = (a.mid || 15) / fr * st / 100;
+        var t0 = cut - midT;
+        function put(item, nm) {
+            var L = c.layers.add(item);
+            L.name = nm;
+            try { L.stretch = st; } catch (e0) {}
+            L.startTime = t0;
+            try { L.inPoint = Math.max(0, t0); L.outPoint = Math.min(c.duration, t0 + want); } catch (e1) {}
+            try { L.audioEnabled = false; } catch (e2) {}
+            fitLayer(L, c);
+            try { L.property("ADBE Transform Group").property("ADBE Position").setValue([c.width / 2, c.height / 2]); } catch (e3) {}
+            if (a.flip) { try { var sp = L.property("ADBE Transform Group").property("ADBE Scale"), sv = sp.value; sp.setValue([-sv[0], sv[1]]); } catch (e4) {} }
+            return L;
+        }
+        var nm = "HAMDY OTR | " + (a.label || it.name), L = put(it, nm), M = null;
+        L.label = 9;
+        if (top && top !== L) { L.moveBefore(top); }
+        var bm = { screen: BlendingMode.SCREEN, add: BlendingMode.ADD, overlay: BlendingMode.OVERLAY, soft: BlendingMode.SOFT_LIGHT, normal: BlendingMode.NORMAL };
+        if (a.kind === "cover") {
+            if (a.matte) {
+                var mf = new File(a.matte);
+                if (mf.exists) {
+                    M = put(importFile(mf), "HAMDY MATTE | " + (a.label || it.name));
+                    M.moveBefore(L);
+                    setMatte(L, M, false);
+                    try { M.enabled = false; } catch (e5) {}
+                    tuck(c, M);
+                }
+            }
+            var col = a.color;
+            if (col && col.length === 3) {
+                try {
+                    var tn = L.property("ADBE Effect Parade").addProperty("ADBE Tint");
+                    tn.name = "HAMDY Tint";
+                    tn.property(1).setValue([col[0] * 0.3, col[1] * 0.3, col[2] * 0.3]);
+                    tn.property(2).setValue(col);
+                    tn.property(3).setValue(100);
+                } catch (e6) {}
+            }
+        } else {
+            L.blendingMode = bm[a.blend || "screen"] || BlendingMode.SCREEN;
+            if (a.color && a.color.length === 3) {
+                try {
+                    var tn2 = L.property("ADBE Effect Parade").addProperty("ADBE Tint");
+                    tn2.name = "HAMDY Tint";
+                    tn2.property(1).setValue([0, 0, 0]);
+                    tn2.property(2).setValue(a.color);
+                    tn2.property(3).setValue(100);
+                } catch (e7) {}
+            }
+        }
+        if (a.amount !== undefined && a.amount < 100) { try { L.property("ADBE Transform Group").property("ADBE Opacity").setValue(a.amount); } catch (e8) {} }
+        try {
+            var mk = new MarkerValue("HAMDY CUT");
+            L.property("ADBE Marker").setValueAtTime(cut, mk);
+        } catch (e9) {}
+        if (a.sfx) {
+            try {
+                var S2 = c.layers.add(importFile(new File(a.sfx)));
+                S2.name = "HAMDY SFX | " + (a.label || "otr");
+                S2.startTime = Math.max(0, cut - Math.min(0.35, midT));
+                S2.moveToBeginning();
+                tuck(c, S2);
+            } catch (es) {}
+        }
         return "OK";
     }
 
@@ -4114,7 +4212,7 @@ var NABD = (function () {
         libPick: libPick, libList: libList, libUse: libUse, libOpen: libOpen,
         capSource: capSource, captions: captions, saveText: saveText, openText: openText,
         look: look, textStyle: textStyle,
-        overlay: overlay, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
+        overlay: overlay, otrApply: otrApply, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,

@@ -40,3 +40,46 @@ var NABD_TOOLS2 = {
     {id:'mOutline',ar:'إطار بيلف حوالين',    en:'Outline Chase',    g:'جاهز',    style:'travel', addStroke:true}
   ]
 };
+
+/* overlay transitions (generated clips: film burn, light leaks, flashes, glitch, spray, ink, paper…) */
+if(typeof HMK_OTR !== 'undefined' && typeof NABD_DATA !== 'undefined'){
+  NABD_DATA.OTR = HMK_OTR.map(function(o){
+    return {id:'otr_' + o.id, ar:o.ar, en:o.en, g:o.g, otr:o,
+      d: o.kind==='light' ? 'فيديو أوفرلي بيتحط بين الكليبين بـ Screen، أقوى لحظة فيه على القطع.' : 'فيديو بيغطي الشاشة في نصه ومعاه ماسك Luma، بيخفي القديم ويكشف الجديد.'};
+  });
+  Array.prototype.unshift.apply(NABD_DATA.TRANSITIONS, NABD_DATA.OTR);
+}
+
+/* advanced text animations: per-character combos + effect-based reveals (blur, glitch, wave, blinds, wipe, glow, echo, liquid…).
+   fx: [{m: effect matchName, k: [[param, start, rest, scaleWithSize?]], s: [[param, value]], x: [[param, expression]], once: keep only one copy}]
+   pv: preview hints for the panel (CSS approximations). */
+(function(D){
+  if(!D) return;
+  var CEN = 'var r = sourceRectAtTime(time, false);\n[r.left + r.width / 2, r.top + r.height / 2]';
+  var G1 = 'إفكتات نص', G2 = 'حركات أدفانسد';
+  [
+    {id:'axBlurIn',   ar:'ظهور بلور سينمائي', en:'Cinematic Blur In', g:G1, op:0, sc:112, fx:[{m:'ADBE Gaussian Blur 2', k:[[1, 60, 0, 1]], s:[[3, 1]]}], pv:['blur']},
+    {id:'axZoom',     ar:'انفجار زووم',        en:'Zoom Blast',        g:G1, op:0, sc:180, fx:[{m:'CC Radial Fast Blur', x:[[1, CEN]], k:[[2, 90, 0]]}], pv:['zoom']},
+    {id:'axGlitch',   ar:'دخول جليتش',         en:'Glitch In',         g:G1, op:0, square:true, random:true, fx:[{m:'ADBE Turbulent Displace', s:[[3, 40], [5, 1.5]], x:[[6, 'time * 600']], k:[[2, 140, 0, 1]]}], pv:['rgb', 'turb']},
+    {id:'axSmoke',    ar:'دخان',               en:'Smoke In',          g:G1, op:0, random:true, blur:[40, 40], fx:[{m:'ADBE Turbulent Displace', s:[[3, 80], [5, 3]], x:[[6, 'time * 120']], k:[[2, 120, 0, 1]]}], pv:['turb']},
+    {id:'axWave',     ar:'موجة مية',           en:'Liquid Wave',       g:G1, op:0, pos:[0, 30], fx:[{m:'ADBE Wave Warp', s:[[3, 90], [5, 2]], k:[[2, 40, 0, 1]]}], pv:['wave']},
+    {id:'axLiquid',   ar:'سايل (Liquid)',      en:'Liquid Melt',       g:G1, fx:[{m:'ADBE Gaussian Blur 2', k:[[1, 40, 0, 1]], s:[[3, 1]]}, {m:'ADBE Simple Choker', k:[[2, 25, 0]]}], pv:['liquid']},
+    {id:'axBlinds',   ar:'شيش (Blinds)',       en:'Venetian Blinds',   g:G1, fx:[{m:'ADBE Venetian Blinds', s:[[2, 0], [3, 14], [4, 2]], k:[[1, 100, 0]]}], pv:['blinds']},
+    {id:'axWipeR',    ar:'مسح من اليمين',      en:'Soft Wipe ←',       g:G1, fx:[{m:'ADBE Linear Wipe', s:[[2, 90], [3, 120]], k:[[1, 100, 0]]}], pv:['wipeR']},
+    {id:'axWipeL',    ar:'مسح من الشمال',      en:'Soft Wipe →',       g:G1, fx:[{m:'ADBE Linear Wipe', s:[[2, 270], [3, 120]], k:[[1, 100, 0]]}], pv:['wipe']},
+    {id:'axRadial',   ar:'مسح دائري',          en:'Clock Wipe',        g:G1, fx:[{m:'ADBE Radial Wipe', x:[[3, CEN]], s:[[5, 30]], k:[[1, 100, 0]]}], pv:['radial']},
+    {id:'axDissolve', ar:'ذوبان بكسلات',       en:'Block Dissolve',    g:G1, fx:[{m:'ADBE Block Dissolve', s:[[2, 14], [3, 14], [5, 0]], k:[[1, 100, 0]]}], pv:['dissolve']},
+    {id:'axGlow',     ar:'وهج',                en:'Glow Burst',        g:G1, op:0, sc:120, fx:[{m:'ADBE Glo2', s:[[3, 60]], k:[[4, 4, 0]]}], pv:['glow']},
+    {id:'axNeon',     ar:'نيون بيرعش',         en:'Neon Flicker',      g:G1, op:0, square:true, random:true, fx:[{m:'ADBE Glo2', s:[[3, 25], [4, 1.5]], once:true}], pv:['neon', 'flicker']},
+    {id:'axEcho',     ar:'ذيل حركة (Echo)',    en:'Echo Trail',        g:G1, op:0, pos:[-250, 0], blur:[30, 0], fx:[{m:'ADBE Echo', s:[[1, -0.033], [3, 0.8], [4, 0.7], [5, 5]], k:[[2, 8, 0]]}], pv:['echo']},
+    {id:'axSpeed',    ar:'سرعة ومط',           en:'Speed Stretch',     g:G2, op:0, pos:[-320, 0], scv:[260, 60], blur:[40, 0]},
+    {id:'axCascade',  ar:'شلال 3D',            en:'3D Cascade',        g:G2, three:true, rx:-90, pos:[0, -40], op:0},
+    {id:'axSpin',     ar:'لف 3D',              en:'Spin 3D',           g:G2, three:true, ry:180, op:0, sc:70},
+    {id:'axFlip',     ar:'لوحة مطار',          en:'Flipboard',         g:G2, three:true, rx:90, square:true, chOff:8, latin:true},
+    {id:'axSlot',     ar:'سلوت ماشين',         en:'Slot Roll',         g:G2, chOff:30, pos:[0, -50], blur:[0, 30], op:0, latin:true},
+    {id:'axStretch',  ar:'مطّة وفرقعة',        en:'Rubber Pop',  g:G2, scv:[60, 0], overshoot:true},
+    {id:'axDrop',     ar:'وقعة من فوق',        en:'Sky Drop',       g:G2, pos:[0, -260], op:0, overshoot:true},
+    {id:'axExplode',  ar:'انفجار حروف',        en:'Letter Explode',    g:G2, random:true, rot:-180, sc:0, pos:[0, 80], blur:[20, 20], op:0},
+    {id:'axSkew',     ar:'ميل سريع',           en:'Skew Slide',        g:G2, skew:-40, pos:[200, 0], op:0, blur:[30, 0]}
+  ].forEach(function(t){ D.TEXTS.push(t); });
+})(typeof NABD_DATA !== 'undefined' ? NABD_DATA : null);
