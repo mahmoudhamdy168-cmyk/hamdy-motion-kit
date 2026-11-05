@@ -1,5 +1,6 @@
 /* English UI dictionary (Arabic text -> English). Add a line for any new UI text. */
 var I18N_EN = {
+"وقف / شغّل معاينات الكروت (المعاينة الكبيرة بتفضل شغالة)":"Pause / play the card previews (the big preview keeps playing)",
 "اسحب عشان تكبّر أو تصغّر التابات — دبل كليك يرجّعها":"Drag to resize the tabs — double-click to reset",
 "اسحب عشان تكبّر أو تصغّر الجزء ده — دبل كليك يرجّعه":"Drag to resize this panel — double-click to reset",
 "حجم الكروت":"Card size",

@@ -393,7 +393,7 @@ function mountThumb(box, it, big){
     case 'tl': box.classList.add('svgth'); box.innerHTML = it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id); break;
     case 'lib': box.innerHTML = libThumb(it.f, big) + '<span class="badge">' + TLABEL[it.f.type] + '</span>'; break;
   }
-  if(o){ o.t0 = now - off; o.box = o.box || box; o.heavy = /^(el|trk|gf|sfx)$/.test(o.k); if(big) stageEl = o; else { live.push(o); watchVis(o); } }
+  if(o){ o.t0 = now - off; o.box = o.box || box; o.heavy = /^(el|trk|gf|sfx)$/.test(o.k); if(big) stageEl = o; else { live.push(o); watchVis(o); if(S.paused){ try{ step(o, now + 1100); }catch(e){} } } }
 }
 
 /* side pane */
@@ -1671,9 +1671,9 @@ var IO = ('IntersectionObserver' in window) ? new IntersectionObserver(function(
 function watchVis(o){ if(IO && o.box){ o.vis = false; o.box._o = o; IO.observe(o.box); } }
 var lastGrid = 0;
 function tick(now){
-  if(!S.paused && !document.hidden){
+  if(!document.hidden){
     var light = S.perf === 'light', gap = light ? 1000/12 : 1000/30;
-    if(now - lastGrid >= gap){
+    if(!S.paused && now - lastGrid >= gap){
       lastGrid = now;
       for(var i=0;i<live.length;i++){
         var o = live[i];
