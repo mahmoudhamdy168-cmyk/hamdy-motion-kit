@@ -89,7 +89,7 @@ var OKMSG = {
 
 /* =============================================================== state */
 var DEF = {
-  tab:'tr', paused:false, acc:'#ff6b3d', lang:'ar', hide:true, perf:'full',
+  tab:'tr', paused:false, acc:'#ff6b3d', lang:'ar', hide:true, perf:'full', ui:{side:300, nav:0, card:132},
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20},
@@ -1412,6 +1412,42 @@ function dragOut(card, it){
   card.addEventListener('pointercancel', function(e){ end(e, true); });
   card.addEventListener('lostpointercapture', function(e){ if(DRAG && DRAG.card === card && !DRAG.on){ DRAG = null; } });
 }
+
+/* ============================================================ resizable layout */
+function uiApply(){
+  var u = S.ui || (S.ui = {side:300, nav:0, card:132});
+  var side = $('side'); if(side) side.style.width = Math.max(220, Math.min(700, u.side || 300)) + 'px';
+  var nav = $('tabs'); if(nav) nav.style.flex = u.nav ? ('0 1 ' + u.nav + 'px') : '';
+  document.documentElement.style.setProperty('--card-min', (u.card || 132) + 'px');
+  var cs = $('cardSize'); if(cs) cs.value = u.card || 132;
+}
+function splitter(el, onMove, onReset){
+  if(!el) return;
+  el.addEventListener('pointerdown', function(e){
+    e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add('on'); document.body.classList.add('resizing');
+    function mv(ev){ onMove(ev); }
+    function up(ev){ el.releasePointerCapture(e.pointerId); el.classList.remove('on'); document.body.classList.remove('resizing'); el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); save(); }
+    el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up);
+  });
+  el.addEventListener('dblclick', function(){ onReset(); uiApply(); save(); });
+}
+function initLayout(){
+  var rtl = function(){ return document.documentElement.getAttribute('dir') !== 'ltr'; };
+  splitter($('vsplit'), function(ev){
+    var r = $('side').getBoundingClientRect();
+    S.ui.side = Math.round(Math.max(220, Math.min(700, rtl() ? r.right - ev.clientX : ev.clientX - r.left)));
+    $('side').style.width = S.ui.side + 'px';
+  }, function(){ S.ui.side = 300; });
+  splitter($('hsplit'), function(ev){
+    var r = $('tabs').getBoundingClientRect();
+    S.ui.nav = Math.round(Math.max(160, rtl() ? r.right - ev.clientX : ev.clientX - r.left));
+    $('tabs').style.flex = '0 1 ' + S.ui.nav + 'px';
+  }, function(){ S.ui.nav = 0; });
+  var cs = $('cardSize');
+  if(cs) cs.addEventListener('input', function(){ S.ui.card = +cs.value; document.documentElement.style.setProperty('--card-min', S.ui.card + 'px'); });
+  if(cs) cs.addEventListener('change', save);
+  uiApply();
+}
 /* ============================================================ language */
 // Arabic is the source language; English comes from js/i18n_en.js. Every rendered text node / placeholder / title
 // is translated by exact match, so new UI only needs a dictionary line.
@@ -1687,6 +1723,7 @@ function setStatus(r){
   else { st.className='chip'; st.innerHTML='<i style="background:var(--bad)"></i><span>المحرك مش شغال</span>'; }
 }
 applyLang();
+initLayout();
 renderAll();
 if(S.tab==='ed') edRefresh(true);
 requestAnimationFrame(tick);
