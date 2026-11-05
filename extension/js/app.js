@@ -11,6 +11,7 @@ var TABS = [
   {id:'ts',  ar:'ستايلات النص'},
   {id:'ln',  ar:'〰 خطوط'},
   {id:'car', ar:'🎠 كاروسيل'},
+  {id:'dp',  ar:'🧊 عمق 3D'},
   {id:'trk', ar:'🎯 تراكينج'},
   {id:'trim', ar:'✂ تريم باث'},
   {id:'gf', ar:'✨ جنريتيف فيل'},
@@ -54,6 +55,7 @@ var MSG = {
   NO_LAYERS:'حدد لاير أو أكتر.',
   NO_ANIM_LAYER:'حدد لاير ينفع يتحرك (مش كاميرا أو نل).',
   NEED2:'حدد لايرين أو أكتر.',
+  NO_DEPTH:'مفيش عمق 3D معمول في الكومب ده. حدد اللايرات واعمله الأول.',
   NOT_UNDER:'البلاي هيد لازم يكون جوه اللاير المحدد.',
   NO_ROOM:'مفيش وقت كفاية في الكومب بعد البلاي هيد.',
   NO_FOLDER:'الفولدر مش موجود.',
@@ -90,7 +92,7 @@ var OKMSG = {
 /* =============================================================== state */
 var DEF = {
   tab:'tr', paused:false, acc:'#ff6b3d', lang:'ar', hide:true, perf:'full', ui:{side:300, nav:0, card:132},
-  sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF'},
+  sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
   mp:{dir:'both', frames:18, at:'layer'},
@@ -102,6 +104,7 @@ var DEF = {
   el:{secs:4, blend:'screen', amount:100},
   ed:{auto:true},
   trk:{smooth:0, rot:true, scale:true, text:'اكتب هنا', size:60, side:'r', amount:40, zoom:6, swap:false, stabRot:true},
+  dp:{order:'stack', spread:600, pivot:'front', secs:4, amt:100, at:'playhead', fog:false, dof:false, over:0},
   trim:{frames:24, stagger:0, width:4, stroke:'fill', snappy:true, at:'layer', seg:25, speed:100, addStroke:false, fillAfter:false, strokeFade:false},
   gf:{provider:'stability', key:'', prompt:'', search:'', grow:12, feather:14, hold:'layer', patch:true, follow:false, out:'916', lastPS:null},
   car:{count:8, content:'images', images:[], palette:0, colA:'#ff6b3d', colB:'#3d73ff', aspect:1, design:'clean', round:12, border:0, borderColor:'#ffffff', motion:0, speed:30, reverse:false, hold:1, tiltX:-12, backFade:35, backDim:30, blur:false, orbit:true, spokes:false, chain:false, lineStyle:'solid', lineColor:'#ffffff', intro:true, person:false, secs:8, size:100, radius:100, face:0},
@@ -162,6 +165,7 @@ function say(r){
     var d = typeof r.data==='string' ? r.data : 'OK', m = OKMSG[d];
     if(!m && /^OK_MOVED:/.test(d)) m = 'اتنقل ' + d.split(':')[1] + ' عنصر ✓';
     if(!m && /^OK_CAPS:/.test(d)) m = 'اتحط ' + d.split(':')[1] + ' كابشن ✓';
+    if(!m && /^OK_DPSKIP:/.test(d)) m = 'العمق اتعمل ✓ واتساب ' + d.split(':')[1] + ' لاير عشان متعلق على Parent';
     if(!m && /^OK_SKIPPED:/.test(d)) m = 'تم ✓ واتساب ' + d.split(':')[1] + ' لاير (عليه كي فريمز في الأنكور)';
     el.className='toast ok'; el.textContent = trText(m || 'تم ✓');
   } else {
@@ -203,6 +207,7 @@ function itemsOf(tab){
     case 'trk': return NABD_TOOLS2.TRK;
     case 'gf': return NABD_TOOLS2.GF;
     case 'trim': return NABD_TOOLS2.TRIM;
+    case 'dp': return NABD_TOOLS2.DEPTH;
     case 'lib': return LIBFILES.map(function(f){ return {id:f.path, ar:f.name, en:TLABEL[f.type], g:typeName(f.type), f:f}; });
   }
   return [];
@@ -397,6 +402,7 @@ function mountThumb(box, it, big){
     case 'trk': o = {k:'trk', it:it, box:box}; break;
     case 'gf': o = {k:'gf', it:it, box:box}; break;
     case 'trim': o = {k:'trim', el:P.mountTrim(box, trimItem(it), {acc:S.acc})}; break;
+    case 'dp': o = {k:'dp', el:P.mountDepth(box, it)}; break;
     case 'ln': var lc = lnColors(); o = {k:'ln', el:P.mountLine(box, it.mine ? it.pv : it, {c1:lc[0], c2:lc[1], width:S.ln.width, speed:S.ln.speed, erase:S.ln.erase, flow:S.ln.flow, guide:S.ln.guide, text:big ? S.ln.text : 'نص على خط'})}; break;
     case 'tl': box.classList.add('svgth'); box.innerHTML = it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id); break;
     case 'lib': box.innerHTML = libThumb(it.f, big) + '<span class="badge">' + TLABEL[it.f.type] + '</span>'; break;
@@ -540,6 +546,7 @@ function renderSide(){
     case 'trk': h += trkSide(it); break;
     case 'gf': h += gfSide(it); break;
     case 'trim': h += trimSide(it); break;
+    case 'dp': h += dpSide(it); break;
     case 'tl':
       h += '<div class="stage svgth" id="stage">' + (it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id)) + '</div>' + head(it, it.d);
       h += toolControls(it);
@@ -552,6 +559,7 @@ function renderSide(){
   if(S.tab==='ed') bindEditSide();
   if(S.tab==='car') bindCar();
   if(S.tab==='trk') bindTrk();
+  if(S.tab==='dp') bindDp();
   if(S.tab==='gf') bindGf();
   if(S.tab==='ln'){
     var lt = $('lnText'); if(lt) lt.addEventListener('input', function(){ S.ln.text = lt.value; save(); mountThumb($('stage'), cur(), true); });
@@ -608,7 +616,7 @@ function bindSide(){
         Array.prototype.forEach.call(g.children, function(x){ x.classList.toggle('on', x===b); });
         var k = g.dataset.seg;
         if(k==='cap.maxWords' && S.cap.words.length) rechunk();
-        if(/^(ln|car|trim|trk|gf)\./.test(k) || k==='tx.based' || k==='tx.cps' || k==='ti.side' || k==='tl.plat' || k==='tx.pattern' || /^(cap|fx)\./.test(k)){ renderSide(); renderGrid(); }
+        if(/^(ln|car|trim|trk|gf|dp)\./.test(k) || k==='tx.based' || k==='tx.cps' || k==='ti.side' || k==='tl.plat' || k==='tx.pattern' || /^(cap|fx)\./.test(k)){ renderSide(); renderGrid(); }
         else if(k==='tr.frames' || k==='tr.snappy' || k==='mp.dir' || k==='mp.frames'){ /* previews read state live */ }
       };
     });
@@ -679,6 +687,7 @@ function apply(){
     case 'car': p = host('carousel', carArgs(it)); break;
     case 'trk': p = trkApply(it); break;
     case 'trim': p = host('trimApply', trimArgs(it)); break;
+    case 'dp': p = host('dpRig', dpArgs(it)); break;
     case 'gf': gfRun(it); return;
     case 'ez': p = it.expr ? host('expr', {id:it.id}) : host('ease', {mode:it.mode||'bez', i:it.i, o:it.o}); break;
     case 'lib': p = host('libUse', {path:it.f.path, fit:S.lib.fit, screen:S.lib.screen}); break;
@@ -1232,6 +1241,39 @@ function trimArgs(it){
           width:t.width, strokeColor:sc, snappy:t.snappy, at:t.at, seg:t.seg, speed:t.speed};
 }
 
+/* ============================================================ depth 3D tab */
+function dpSide(it){
+  var d = S.dp, h = '<div class="stage" id="stage"></div>' + head(it, it.d);
+  h += '<div class="field"><span class="lbl">ترتيب الطبقات (الأول = الأقرب)</span>' + seg('dp.order', [['stack','زي التايملاين'],['reverse','بالعكس'],['random','عشوائي']], d.order) + '</div>';
+  h += '<div class="field"><span class="lbl">المسافة بين كل طبقة والتانية</span>' + seg('dp.spread', [[150,'150'],[300,'300'],[600,'600'],[1000,'1000'],[1600,'1600']], d.spread) + '</div>';
+  h += '<div class="field"><span class="lbl">الطبقة اللي تفضل في مكانها</span>' + seg('dp.pivot', [['front','أول واحدة'],['middle','اللي في النص'],['back','آخر واحدة']], d.pivot) + '</div>';
+  if(it.move!=='none'){
+    h += '<div class="field"><span class="lbl">قوة الحركة</span>' + seg('dp.amt', [[50,'هادية'],[100,'عادية'],[170,'قوية']], d.amt) + '</div>';
+    if(it.move!=='float' && it.move!=='shake'){
+      h += '<div class="field"><span class="lbl">المدة</span>' + seg('dp.secs', [[2,'2 ث'],[4,'4 ث'],[6,'6 ث'],[10,'10 ث'],[0,'طول الكومب']], d.secs) + '</div>';
+      h += '<div class="field"><span class="lbl">تبدأ</span>' + seg('dp.at', [['playhead','عند البلاي هيد'],['start','من أول الكومب']], d.at) + '</div>';
+    }
+  }
+  h += '<div class="field"><span class="lbl">تكبير الطبقات البعيدة (عشان الأطراف ما تبانش)</span>' + seg('dp.over', [[0,'0%'],[5,'5%'],[10,'10%'],[20,'20%']], d.over) + '</div>';
+  h += '<div class="row">' + chk('dp.fog', 'ضباب للبعيد', d.fog) + chk('dp.dof', 'فوكس وعمق ميدان', d.dof) + '</div>';
+  h += '<button class="btn primary" id="go">اعمل العمق + الحركة</button>';
+  h += '<div class="row"><button class="btn" id="dpMove">غيّر الحركة بس</button><button class="btn" id="dpOrder">حدّث الترتيب والمسافة</button></div>';
+  h += '<div class="row"><button class="btn" id="dpBake">ثبّت (Bake)</button><button class="btn warn" id="dpRemove">رجّعه 2D</button></div>';
+  h += '<div class="hint">حدد اللايرات (لايرين أو أكتر) ودوس الزرار. المشهد هيفضل زي ما هو بالظبط من الكاميرا، بس كل طبقة هتبقى في عمق مختلف. التحكم كله من النل HAMDY DEPTH CTRL: Spread للمسافة، Pivot للطبقة الثابتة، Fog وBlur Level وFocus On. ولكل لاير HAMDY Depth Index (ترتيبه) وHAMDY Depth Offset (تزقه لقدام أو لورا بإيدك). الكاميرا متعلقة على HAMDY DEPTH RIG، فلو عايز تحركها بإيدك حرّك الريج.</div>';
+  return h;
+}
+function dpArgs(it){
+  var d = S.dp;
+  return {move:it.move, order:d.order, spread:d.spread, pivot:d.pivot, amt:d.amt, secs:d.secs, at:d.at, fog:d.fog, dof:d.dof, over:d.over};
+}
+function bindDp(){
+  var it = cur();
+  if($('dpMove')) $('dpMove').onclick = function(){ host('dpMove', dpArgs(it)).then(say); };
+  if($('dpOrder')) $('dpOrder').onclick = function(){ var a = dpArgs(it); a.keepMove = true; host('dpRig', a).then(say); };
+  if($('dpBake')) $('dpBake').onclick = function(){ host('dpBake', {}).then(say); };
+  if($('dpRemove')) $('dpRemove').onclick = function(){ host('dpRemove', {}).then(say); };
+}
+
 /* ======================================================= generative fill tab */
 var GF_STATUS = '';
 function gfSide(it){
@@ -1731,6 +1773,7 @@ function step(o, now){
     case 'trk': o.box.innerHTML = P.trkSVG(o.it, t, S.acc); break;
     case 'gf': o.box.innerHTML = P.gfSVG(o.it, t, S.acc); break;
     case 'trim': P.drawTrim(o.el, t); break;
+    case 'dp': P.drawDepth(o.el, t, S.dp, S.acc); break;
     case 'ti': P.drawTitle(o.el, t); break;
     case 'el': o.box.innerHTML = P.elSVG(o.it.id, t, S.acc); break;
     case 'ez': P.drawEz(o.el, t); break;

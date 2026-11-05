@@ -83,3 +83,20 @@ if(typeof HMK_OTR !== 'undefined' && typeof NABD_DATA !== 'undefined'){
     {id:'axSkew',     ar:'ميل سريع',           en:'Skew Slide',        g:G2, skew:-40, pos:[200, 0], op:0, blur:[30, 0]}
   ].forEach(function(t){ D.TEXTS.push(t); });
 })(typeof NABD_DATA !== 'undefined' ? NABD_DATA : null);
+
+/* depth 3D (multiplane camera moves) */
+if(typeof NABD_TOOLS2 !== 'undefined'){
+  NABD_TOOLS2.DEPTH = [
+    {id:'dPush',  move:'push',  ar:'دخول للمشهد',  en:'Push In',        g:'حركات كاميرا', d:'الكاميرا بتدخل لجوه والطبقات بتفترق عن بعض.'},
+    {id:'dPull',  move:'pull',  ar:'رجوع لورا',          en:'Pull Out',       g:'حركات كاميرا', d:'الكاميرا بترجع لورا. لو الأطراف بانت زوّد «تكبير الخلفية».'},
+    {id:'dPanL',  move:'panL',  ar:'بان لشمال',     en:'Parallax Pan ←', g:'حركات كاميرا', d:'الكاميرا بتتحرك بالعرض والقريب بيتحرك أسرع من البعيد.'},
+    {id:'dPanR',  move:'panR',  ar:'بان ليمين',     en:'Parallax Pan →', g:'حركات كاميرا', d:'نفس البان بس للناحية التانية.'},
+    {id:'dRise',  move:'rise',  ar:'طلوع (كرين)',   en:'Crane Up',       g:'حركات كاميرا', d:'الكاميرا بتطلع لفوق وهي داخلة شوية.'},
+    {id:'dOrbit', move:'orbit', ar:'لفة خفيفة',     en:'Orbit',          g:'حركات كاميرا', d:'الكاميرا بتلف حوالين المشهد لفة صغيرة.'},
+    {id:'dPushOrbit', move:'pushOrbit', ar:'دخول ولف', en:'Push + Orbit', g:'حركات كاميرا', d:'دخول مع لفة خفيفة، شكلها سينمائي.'},
+    {id:'dDolly', move:'dolly', ar:'دولي زووم',     en:'Dolly Zoom (Vertigo)', g:'حركات كاميرا', d:'الكاميرا بتدخل والزووم بيوسع، فاللي في النص ثابت والخلفية بتتمط.'},
+    {id:'dFloat', move:'float', ar:'طفو (لوب)',      en:'Float Loop',     g:'لوب', d:'حركة طفو هادية على طول الكومب. قوتها من HAMDY Move Amount.'},
+    {id:'dShake', move:'shake', ar:'كاميرا إيد',     en:'Handheld',       g:'لوب', d:'اهتزاز كاميرا إيد طبيعي على طول الكومب.'},
+    {id:'dNone',  move:'none',  ar:'عمق بس',         en:'Depth Only',     g:'لوب', d:'بيعمل العمق والكاميرا من غير حركة، وإنت تحرك HAMDY DEPTH RIG بنفسك.'}
+  ];
+}

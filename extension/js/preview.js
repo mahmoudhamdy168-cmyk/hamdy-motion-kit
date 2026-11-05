@@ -1178,6 +1178,85 @@ function drawCar(el, t){
 
 /* ===================================================== tracking / fill / trim icons */
 var TRIM_PATHS = ['M40 70 L80 18 L120 70 Z', 'M80 30 a22 22 0 1 0 0.1 0', 'M22 84 C 50 60, 110 108, 138 84'];
+
+/* ---------- depth 3D (multiplane) preview: layered scene + camera rig, same math as the AE expressions ---------- */
+var DP_LAYERS = [
+  {k:'sky'},
+  {k:'sun'},
+  {k:'far', pts:[[-260,40],[-200,-10],[-150,15],[-90,-40],[-30,5],[30,-25],[90,10],[150,-45],[210,0],[260,-20],[260,160],[-260,160]]},
+  {k:'mid', pts:[[-240,60],[-170,25],[-100,50],[-20,18],[60,48],[140,22],[240,55],[240,160],[-240,160]]},
+  {k:'front'}
+];
+function mountDepth(box, it){
+  var cv = document.createElement('canvas'); cv.width = 640; cv.height = 360; cv.className = 'dpcv';
+  cv.style.width = '100%'; cv.style.height = '100%'; cv.style.display = 'block';
+  box.innerHTML = ''; box.appendChild(cv);
+  return {cv:cv, ctx:cv.getContext('2d'), it:it};
+}
+function dpCam(move, u, t, s){
+  var D = 400, r = [0, 0, 0], yaw = 0, pitch = 0, zoom = D, e = u < .5 ? 4*u*u*u : 1 - Math.pow(-2*u + 2, 3)/2;
+  switch(move){
+    case 'push': r[2] = D*.3*s*e; break;
+    case 'pull': r[2] = -D*.3*s*e; break;
+    case 'panL': r[0] = -320*.08*s*e*1.6; break;
+    case 'panR': r[0] = 320*.08*s*e*1.6; break;
+    case 'rise': r[1] = -180*.08*s*e*1.6; r[2] = D*.08*s*e; break;
+    case 'orbit': yaw = 12*s*e; break;
+    case 'pushOrbit': r[2] = D*.25*s*e; yaw = -9*s*e; break;
+    case 'dolly': r[2] = D*.45*s*e; zoom = D - r[2]; break;
+    case 'float': var A = 60*s*.6*.4; r = [Math.sin(t*.7)*A, Math.cos(t*.5)*A*.5, Math.sin(t*.35)*A*.8]; yaw = Math.sin(t*.4)*s*3; break;
+    case 'shake': var B = 25*s*.25*.5; r = [(Math.sin(t*5.1) + Math.sin(t*8.3)*.5)*B, (Math.sin(t*4.3 + 1) + Math.sin(t*7.7)*.5)*B, 0]; yaw = Math.sin(t*3.7)*s*.6; pitch = Math.sin(t*4.1)*s*.6; break;
+  }
+  return {D:D, r:r, yaw:yaw*Math.PI/180, pitch:pitch*Math.PI/180, zoom:zoom};
+}
+function drawDepth(el, t, o, acc){
+  var it = el.it, g = el.ctx, cyc = 4.2, tt = t % cyc, u = clamp((tt - .4)/2.8);
+  var loop = it.move==='float' || it.move==='shake';
+  var cam = dpCam(it.move, loop ? 1 : u, t, (o.amt||100)/100), D = cam.D;
+  var n = DP_LAYERS.length, sp = (o.spread||600)/600*110;
+  var piv = o.pivot==='back' ? n - 1 : (o.pivot==='middle' ? (n - 1)/2 : 0);
+  var cyw = Math.cos(cam.yaw), syw = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), spch = Math.sin(cam.pitch);
+  // camera sits at rig + R * [0,0,-D]
+  var cpos = [cam.r[0] - D*syw, cam.r[1], cam.r[2] - D*cyw];
+  // layer order: index 0 = front (nearest)
+  var order = o.order==='reverse' ? [0,1,2,3,4] : [4,3,2,1,0];
+  if(o.order==='random') order = [4,1,3,0,2];
+  function proj(x, y, z){
+    var px = x - cpos[0], py = y - cpos[1], pz = z - cpos[2];
+    var x1 = px*cyw - pz*syw, z1 = px*syw + pz*cyw;
+    var y1 = py*cp - z1*spch, z2 = py*spch + z1*cp;
+    z2 = Math.max(z2, 1);
+    return [160 + x1*cam.zoom/z2, 90 + y1*cam.zoom/z2];
+  }
+  var Ls = DP_LAYERS.map(function(L, li){
+    var idx = order[li], z = Math.max(sp*(idx - piv), -D*.9), k = (D + z)/D, f = clamp(idx/(n - 1));
+    k *= 1 + (o.over||0)/100*f;
+    return {L:L, z:z, k:k, f:f};
+  }).sort(function(a, b){ return b.z - a.z; });
+  g.setTransform(2, 0, 0, 2, 0, 0); g.fillStyle = '#0d0d12'; g.fillRect(0, 0, 320, 180);
+  var fz = 0; Ls.forEach(function(q){ if(q.L.k==='front') fz = q.z; });
+  Ls.forEach(function(q){
+    var L = q.L, k = q.k, z = q.z;
+    function P(x, y){ return proj(x*k, y*k, z); }
+    g.save();
+    if(o.dof){ var bl = Math.min(5, Math.abs(z - fz)/D*9); g.filter = bl > .2 ? 'blur(' + bl.toFixed(1) + 'px)' : 'none'; }
+    g.beginPath();
+    if(L.k==='sky'){ var a = P(-170, -95), b = P(170, 95), c2 = P(170, -95), d = P(-170, 95); g.moveTo(a[0], a[1]); g.lineTo(c2[0], c2[1]); g.lineTo(b[0], b[1]); g.lineTo(d[0], d[1]); g.closePath();
+      var gr = g.createLinearGradient(0, a[1], 0, b[1]); gr.addColorStop(0, '#1d2b55'); gr.addColorStop(.7, '#e0794f'); gr.addColorStop(1, '#f2b36b'); g.fillStyle = gr; }
+    else if(L.k==='sun'){ var cc = P(55, -10), rr = P(55 + 22, -10); g.arc(cc[0], cc[1], Math.abs(rr[0] - cc[0]), 0, Math.PI*2); g.fillStyle = '#ffe2a0'; }
+    else if(L.k==='front'){
+      var h0 = P(-70, 20), hr = P(-70 + 11, 20); g.arc(h0[0], h0[1], Math.abs(hr[0] - h0[0]), 0, Math.PI*2);
+      var b1 = P(-88, 34), b2 = P(-52, 34), b3 = P(-46, 110), b4 = P(-94, 110); g.moveTo(b1[0], b1[1]); g.lineTo(b2[0], b2[1]); g.lineTo(b3[0], b3[1]); g.lineTo(b4[0], b4[1]); g.closePath();
+      g.fillStyle = acc;
+    } else {
+      L.pts.forEach(function(p, i){ var s2 = P(p[0], p[1]); if(i) g.lineTo(s2[0], s2[1]); else g.moveTo(s2[0], s2[1]); }); g.closePath();
+      g.fillStyle = L.k==='far' ? '#6b3a5a' : '#2c1d33';
+    }
+    g.fill();
+    if(o.fog && q.f > 0){ g.globalAlpha = q.f*.45; g.fillStyle = '#9eadc7'; g.fill(); g.globalAlpha = 1; }
+    g.restore();
+  });
+}
 function mountTrim(box, it, o){
   var h = '<svg viewBox="0 0 160 100" class="lnsvg"><rect width="160" height="100" fill="#141418"/>';
   TRIM_PATHS.forEach(function(d, i){
@@ -1291,5 +1370,5 @@ function injectFilters(){
 return {mountTr:mountTr, drawTr:drawTr, mountMp:mountMp, drawMp:drawMp, mountTx:mountTx, drawTx:drawTx,
         mountEz:mountEz, drawEz:drawEz, mountTitle:mountTitle, drawTitle:drawTitle, elSVG:E, injectFilters:injectFilters,
         mountCap:mountCap, drawCap:drawCap, waveSVG:waveSVG, mountLook:mountLook, drawLook:drawLook, mountStyle:mountStyle,
-        clamp:clamp, rnd:rnd, mountSprite:mountSprite, drawSprite:drawSprite, mountLine:mountLine, drawLine:drawLine, mountCar:mountCar, drawCar:drawCar, mountTrim:mountTrim, drawTrim:drawTrim, trkSVG:trkSVG, gfSVG:gfSVG};
+        clamp:clamp, rnd:rnd, mountSprite:mountSprite, drawSprite:drawSprite, mountLine:mountLine, drawLine:drawLine, mountCar:mountCar, drawCar:drawCar, mountTrim:mountTrim, drawTrim:drawTrim, mountDepth:mountDepth, drawDepth:drawDepth, trkSVG:trkSVG, gfSVG:gfSVG};
 })();

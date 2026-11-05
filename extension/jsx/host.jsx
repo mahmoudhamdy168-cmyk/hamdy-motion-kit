@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.3.0";
+    var VER = "1.4.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -2590,6 +2590,199 @@ var NABD = (function () {
         return "OK";
     }
 
+    // ================================================ depth 3D (multiplane): spread layers in Z, keep the frame identical
+    // A layer pushed back by z is scaled by (D+z)/D and moved away from the centre by the same factor (D = camera
+    // distance to the z=0 plane = camera zoom), so through the camera it looks exactly like before. All of it is live
+    // expressions driven by the HAMDY DEPTH CTRL null, so changing the spacing later keeps the frame and only changes depth.
+    var DPN = { ctrl: "HAMDY DEPTH CTRL", rig: "HAMDY DEPTH RIG", cam: "HAMDY DEPTH CAM" };
+    var DP_Z = 'var C = thisComp.layer("HAMDY DEPTH CTRL");\nvar D = C.effect("HAMDY Base Distance")(1), sp = C.effect("HAMDY Spread")(1);\n' +
+        'var idx = effect("HAMDY Depth Index")(1), n = Math.max(1, C.effect("HAMDY Layer Count")(1) - 1);\n' +
+        'var z = sp * (idx - C.effect("HAMDY Pivot")(1)) + effect("HAMDY Depth Offset")(1);\nz = Math.max(z, -D * 0.9);\nvar k = (D + z) / D, f = Math.max(0, Math.min(1, idx / n));\n';
+    var DP_POS = DP_Z + 'var cx = thisComp.width / 2, cy = thisComp.height / 2;\n[cx + (value[0] - cx) * k, cy + (value[1] - cy) * k, value[2] + z]';
+    var DP_SCL = DP_Z + 'var ov = (1 + C.effect("HAMDY Overscan %")(1) / 100 * f) * k;\n[value[0] * ov, value[1] * ov, value[2] * ov]';
+    var DP_FOGC = 'thisComp.layer("HAMDY DEPTH CTRL").effect("HAMDY Fog Color")(1)';
+    var DP_FOGA = DP_Z + 'f * C.effect("HAMDY Fog %")(1)';
+    var DP_FOCUS = 'var C = thisComp.layer("HAMDY DEPTH CTRL");\ntry {\n    var L = C.effect("HAMDY Focus On")(1);\n    length(L.toWorld(L.anchorPoint), toWorld([0, 0, 0]));\n} catch (e) {\n    value;\n}';
+    function dpFind(c, nm) { var i; for (i = 1; i <= c.numLayers; i++) { if (c.layer(i).name === nm) { return c.layer(i); } } return null; }
+    function dpEff(L, nm) { var p = parade(L), i; for (i = 1; i <= p.numProperties; i++) { if (p.property(i).name === nm) { return p.property(i); } } return null; }
+    function dpSlider(L, nm, v) { var e = dpEff(L, nm); if (!e) { e = FX(L, addSlider(L, nm, v)); } else { try { e.property(1).setValue(v); } catch (x) {} } return e; }
+    function dpClear(p) {
+        if (!p) { return; }
+        try { p.expression = ""; } catch (e0) {}
+        try { while (p.numKeys > 0) { p.removeKey(1); } } catch (e1) {}
+    }
+    function dpRigged(c) {
+        var out = [], i;
+        for (i = 1; i <= c.numLayers; i++) { if (dpEff(c.layer(i), "HAMDY Depth Index")) { out.push(c.layer(i)); } }
+        return out;
+    }
+    function dpCamZoom(K) { return K.property("ADBE Camera Options Group").property("ADBE Camera Zoom"); }
+    function dpRig(a) {
+        var c = comp(), sel = c.selectedLayers, Ls = [], i, L, skipped = 0;
+        for (i = 0; i < sel.length; i++) {
+            L = sel[i];
+            if (!isAV(L) || /^HAMDY DEPTH/.test(L.name)) { continue; }
+            try { if (L.adjustmentLayer || L.nullLayer) { continue; } } catch (e0) {}
+            if (L.parent) { skipped++; continue; }
+            Ls.push(L);
+        }
+        if (Ls.length < 2) { throw Err("NEED2"); }
+        Ls.sort(function (x, y) { return x.index - y.index; });
+        if (a.order === "reverse") { Ls.reverse(); }
+        var n = Ls.length, cx = c.width / 2, cy = c.height / 2;
+        var K = dpFind(c, DPN.cam), R = dpFind(c, DPN.rig), C = dpFind(c, DPN.ctrl), fresh = !C;
+        if (!K) {
+            K = c.layers.addCamera(DPN.cam, [cx, cy]);
+            try { K.autoOrient = AutoOrientType.NO_AUTO_ORIENT; } catch (e1) {}
+            K.label = 14;
+        }
+        var zp = dpCamZoom(K);
+        try { zp.expression = ""; } catch (e2) {}
+        var bd = C ? dpEff(C, "HAMDY Base Distance") : null, D = bd ? bd.property(1).value : zp.value;
+        try { zp.setValue(D); } catch (e3) {}
+        if (!R) {
+            R = c.layers.addNull(); R.name = DPN.rig; R.threeDLayer = true; R.label = 14;
+            R.property("ADBE Transform Group").property("ADBE Position").setValue([cx, cy, 0]);
+            K.parent = R;
+        }
+        try { var an = R.property("ADBE Transform Group").property("ADBE Anchor Point").value; K.property("ADBE Transform Group").property("ADBE Position").setValue([an[0], an[1], (an[2] || 0) - D]); } catch (e4) {}
+        if (!C) {
+            C = c.layers.addNull(); C.name = DPN.ctrl; C.label = 14;
+            addSlider(C, "HAMDY Base Distance", D);
+            addSlider(C, "HAMDY Spread", a.spread || 600);
+            addSlider(C, "HAMDY Pivot", 0);
+            addSlider(C, "HAMDY Layer Count", n);
+            addSlider(C, "HAMDY Overscan %", a.over || 0);
+            addColorCtl(C, "HAMDY Fog Color", a.fogColor || [0.62, 0.68, 0.78]);
+            addSlider(C, "HAMDY Fog %", a.fog ? 45 : 0);
+            addSlider(C, "HAMDY Move Amount", a.amt || 100);
+            addSlider(C, "HAMDY Blur Level", 100);
+            addEffect(C, "ADBE Layer Control", "HAMDY Focus On");
+        } else {
+            dpSlider(C, "HAMDY Spread", a.spread || 600); dpSlider(C, "HAMDY Layer Count", n);
+            dpSlider(C, "HAMDY Overscan %", a.over || 0); dpSlider(C, "HAMDY Fog %", a.fog ? 45 : 0);
+            dpSlider(C, "HAMDY Move Amount", a.amt || 100);
+        }
+        var piv = a.pivot === "back" ? n - 1 : (a.pivot === "middle" ? (n - 1) / 2 : 0);
+        dpSlider(C, "HAMDY Pivot", piv);
+        var idx = [];
+        for (i = 0; i < n; i++) { idx.push(i); }
+        if (a.order === "random") { for (i = 0; i < n; i++) { idx[i] = (i === 0) ? 0 : Math.round(Math.random() * (n - 1) * 10) / 10; } }
+        for (i = 0; i < n; i++) {
+            L = Ls[i];
+            if (!L.threeDLayer) { L.threeDLayer = true; }
+            dpSlider(L, "HAMDY Depth Index", idx[i]);
+            if (!dpEff(L, "HAMDY Depth Offset")) { addSlider(L, "HAMDY Depth Offset", 0); }
+            var T = L.property("ADBE Transform Group"), P = T.property("ADBE Position");
+            try { if (P.dimensionsSeparated) { P.dimensionsSeparated = false; } } catch (e5) {}
+            P.expression = DP_POS;
+            T.property("ADBE Scale").expression = DP_SCL;
+            var fg = dpEff(L, "HAMDY Depth Fog");
+            if (a.fog && !fg) {
+                fg = addEffect(L, "ADBE Tint", "HAMDY Depth Fog");
+                fg.property(1).expression = DP_FOGC; fg.property(2).expression = DP_FOGC; fg.property(3).expression = DP_FOGA;
+            }
+        }
+        // focus on the layer that stays in place
+        var fl = Ls[Math.max(0, Math.min(n - 1, Math.round(piv)))];
+        try { dpEff(C, "HAMDY Focus On").property(1).setValue(fl.index); } catch (e6) {}
+        var O = K.property("ADBE Camera Options Group");
+        try {
+            O.property("ADBE Camera Depth of Field").setValue(a.dof ? 1 : 0);
+            if (a.dof) {
+                O.property("ADBE Camera Focus Distance").expression = DP_FOCUS;
+                O.property("ADBE Camera Aperture").setValue(Math.max(20, D * 0.05));
+                O.property("ADBE Camera Blur Level").expression = 'thisComp.layer("HAMDY DEPTH CTRL").effect("HAMDY Blur Level")(1)';
+            }
+        } catch (e7) {}
+        // stacking: controller, rig and camera on top
+        try { R.moveToBeginning(); K.moveToBeginning(); C.moveToBeginning(); } catch (e8) {}
+        if (!a.keepMove) { dpMoveRig(c, R, K, C, a); }
+        return skipped ? "OK_DPSKIP:" + skipped : "OK";
+    }
+    function dpMoveRig(c, R, K, C, a) {
+        var T = R.property("ADBE Transform Group"), P = T.property("ADBE Position"), RY = T.property("ADBE Rotate Y"), RX = T.property("ADBE Rotate X");
+        var zp = dpCamZoom(K), bd = dpEff(C, "HAMDY Base Distance"), D = bd ? bd.property(1).value : zp.value, cx = c.width / 2, cy = c.height / 2;
+        dpClear(P); dpClear(RY); dpClear(RX); try { zp.expression = ""; zp.setValue(D); } catch (e0) {}
+        P.setValue([cx, cy, 0]); RY.setValue(0); RX.setValue(0);
+        dpSlider(C, "HAMDY Move Amount", a.amt || 100);
+        var s = (a.amt || 100) / 100, t0 = a.at === "start" ? 0 : c.time, t1 = (a.secs > 0) ? Math.min(c.duration, t0 + a.secs) : c.duration;
+        if (t1 - t0 < c.frameDuration * 2) { t1 = Math.min(c.duration, t0 + 2); }
+        var b = [cx, cy, 0], W = c.width, H = c.height;
+        var AMT = 'thisComp.layer("HAMDY DEPTH CTRL").effect("HAMDY Move Amount")(1)';
+        switch (a.move) {
+            case "push": keyPair(P, t0, b, t1, [cx, cy, D * 0.3 * s], "cubic", "in"); break;
+            case "pull": keyPair(P, t0, b, t1, [cx, cy, -D * 0.3 * s], "cubic", "in"); break;
+            case "panL": keyPair(P, t0, b, t1, [cx - W * 0.08 * s, cy, 0], "cubic", "in"); break;
+            case "panR": keyPair(P, t0, b, t1, [cx + W * 0.08 * s, cy, 0], "cubic", "in"); break;
+            case "rise": keyPair(P, t0, b, t1, [cx, cy - H * 0.08 * s, D * 0.08 * s], "cubic", "in"); break;
+            case "orbit": keyPair(RY, t0, 0, t1, 12 * s, "cubic", "in"); break;
+            case "pushOrbit": keyPair(P, t0, b, t1, [cx, cy, D * 0.25 * s], "cubic", "in"); keyPair(RY, t0, 0, t1, -9 * s, "cubic", "in"); break;
+            case "dolly":
+                keyPair(P, t0, b, t1, [cx, cy, D * 0.45 * s], "cubic", "in");
+                zp.expression = 'value - thisComp.layer("HAMDY DEPTH RIG").transform.position[2]';
+                break;
+            case "float":
+                P.expression = 'var A = ' + AMT + ' * 0.6;\nvalue + [Math.sin(time * 0.7) * A, Math.cos(time * 0.5) * A * 0.5, Math.sin(time * 0.35) * A * 0.8]';
+                RY.expression = 'var A = ' + AMT + ' * 0.03;\nvalue + Math.sin(time * 0.4) * A';
+                break;
+            case "shake":
+                P.expression = 'var A = ' + AMT + ' * 0.25;\nwiggle(1.6, A)';
+                RX.expression = 'var A = ' + AMT + ' * 0.008;\nwiggle(1.2, A)';
+                RY.expression = 'var A = ' + AMT + ' * 0.008;\nwiggle(1.1, A)';
+                break;
+        }
+    }
+    function dpMove(a) {
+        var c = comp(), K = dpFind(c, DPN.cam), R = dpFind(c, DPN.rig), C = dpFind(c, DPN.ctrl);
+        if (!K || !R || !C) { throw Err("NO_DEPTH"); }
+        dpMoveRig(c, R, K, C, a);
+        return "OK";
+    }
+    function dpBakeProp(c, p, t0, t1) {
+        if (!p || !p.expression || !p.expressionEnabled) { return; }
+        var fd = c.frameDuration, ts = [], vs = [], t, still = true, v0 = p.valueAtTime(t0, false), v, j;
+        for (t = t0; t <= t1 + fd * 0.5; t += fd) { v = p.valueAtTime(t, false); ts.push(t); vs.push(v); }
+        for (j = 1; j < vs.length && still; j++) {
+            if (vs[j] instanceof Array) { var q; for (q = 0; q < vs[j].length; q++) { if (Math.abs(vs[j][q] - v0[q]) > 1e-4) { still = false; } } }
+            else if (Math.abs(vs[j] - v0) > 1e-4) { still = false; }
+        }
+        p.expression = "";
+        while (p.numKeys > 0) { p.removeKey(1); }
+        if (still) { p.setValue(v0); } else { p.setValuesAtTimes(ts, vs); }
+    }
+    function dpBake(a) {
+        var c = comp(), C = dpFind(c, DPN.ctrl), K = dpFind(c, DPN.cam), R = dpFind(c, DPN.rig), Ls = dpRigged(c), i, L, T, fg;
+        if (!C) { throw Err("NO_DEPTH"); }
+        for (i = 0; i < Ls.length; i++) {
+            L = Ls[i]; T = L.property("ADBE Transform Group");
+            dpBakeProp(c, T.property("ADBE Position"), Math.max(0, L.inPoint), Math.min(c.duration, L.outPoint));
+            dpBakeProp(c, T.property("ADBE Scale"), Math.max(0, L.inPoint), Math.min(c.duration, L.outPoint));
+            fg = dpEff(L, "HAMDY Depth Fog");
+            if (fg) { dpBakeProp(c, fg.property(1), 0, 0); dpBakeProp(c, fg.property(2), 0, 0); dpBakeProp(c, fg.property(3), 0, 0); }
+            try { dpEff(L, "HAMDY Depth Offset").remove(); } catch (e1) {}
+            try { dpEff(L, "HAMDY Depth Index").remove(); } catch (e2) {}
+        }
+        if (R) { T = R.property("ADBE Transform Group"); dpBakeProp(c, T.property("ADBE Position"), 0, c.duration); dpBakeProp(c, T.property("ADBE Rotate Y"), 0, c.duration); dpBakeProp(c, T.property("ADBE Rotate X"), 0, c.duration); }
+        if (K) { var O = K.property("ADBE Camera Options Group"); dpBakeProp(c, O.property("ADBE Camera Zoom"), 0, c.duration); dpBakeProp(c, O.property("ADBE Camera Focus Distance"), 0, c.duration); dpBakeProp(c, O.property("ADBE Camera Blur Level"), 0, c.duration); }
+        C.remove();
+        return "OK";
+    }
+    function dpRemove(a) {
+        var c = comp(), Ls = dpRigged(c), i, L, T, nm;
+        for (i = 0; i < Ls.length; i++) {
+            L = Ls[i]; T = L.property("ADBE Transform Group");
+            try { T.property("ADBE Position").expression = ""; } catch (e1) {}
+            try { T.property("ADBE Scale").expression = ""; } catch (e2) {}
+            for (nm in { "HAMDY Depth Fog": 1, "HAMDY Depth Offset": 1, "HAMDY Depth Index": 1 }) { try { dpEff(L, nm).remove(); } catch (e3) {} }
+            try { L.threeDLayer = false; } catch (e4) {}
+        }
+        var K = dpFind(c, DPN.cam), R = dpFind(c, DPN.rig), C = dpFind(c, DPN.ctrl);
+        if (!K && !R && !C && !Ls.length) { throw Err("NO_DEPTH"); }
+        if (K) { K.remove(); } if (R) { R.remove(); } if (C) { C.remove(); }
+        return "OK";
+    }
+
     // ================================================ overlay transitions (film burn, leaks, spray, ink…)
     function otrApply(a) {
         var c = comp(), f = new File(a.file || ""), sel = c.selectedLayers, fd = c.frameDuration, i;
@@ -4212,7 +4405,7 @@ var NABD = (function () {
         libPick: libPick, libList: libList, libUse: libUse, libOpen: libOpen,
         capSource: capSource, captions: captions, saveText: saveText, openText: openText,
         look: look, textStyle: textStyle,
-        overlay: overlay, otrApply: otrApply, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
+        overlay: overlay, otrApply: otrApply, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,
