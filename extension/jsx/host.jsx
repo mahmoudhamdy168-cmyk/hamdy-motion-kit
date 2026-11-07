@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.4.0";
+    var VER = "1.5.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -2590,6 +2590,371 @@ var NABD = (function () {
         return "OK";
     }
 
+    // ================================================ on the beat
+    function beatExpr(nm) {
+        return 'var m = thisComp.layer(' + J(nm) + ').marker, d = 99;\n' +
+            'if (m.numKeys > 0) {\n    var k = m.nearestKey(time).index;\n    if (m.key(k).time > time) { k--; }\n    if (k > 0) { d = time - m.key(k).time; }\n}\n' +
+            'var e = Math.exp(-d * effect("HAMDY Beat Decay")(1)) * effect("HAMDY Beat Amount")(1) / 100;\n';
+    }
+    function beatApply(a) {
+        var c = comp(), A = c.layer(a.audio), i, times = a.times || [];
+        if (!times.length) { throw Err("NO_BEATS"); }
+        var mk = A.property("ADBE Marker");
+        for (i = mk.numKeys; i >= 1; i--) { try { if (mk.keyValue(i).comment === "beat") { mk.removeKey(i); } } catch (e0) {} }
+        for (i = 0; i < times.length; i++) { mk.setValueAtTime(times[i], new MarkerValue("beat")); }
+        if (a.mode === "markers") { return "OK_BEATS:" + times.length; }
+        if (a.mode === "cut") { return beatCut(c, A, times); }
+        var t0 = Math.max(0, times[0] - 0.1), t1 = Math.min(c.duration, times[times.length - 1] + 1.2), E = beatExpr(A.name), L, fx;
+        L = c.layers.addSolid(a.mode === "flash" ? [1, 1, 1] : [0.5, 0.5, 0.5], "HAMDY BEAT " + a.mode, c.width, c.height, c.pixelAspect, c.duration);
+        if (a.mode !== "flash") { L.adjustmentLayer = true; }
+        L.inPoint = t0; L.outPoint = t1; L.label = 11;
+        addSlider(L, "HAMDY Beat Amount", a.amt || 100);
+        addSlider(L, "HAMDY Beat Decay", a.decay || 10);
+        switch (a.mode) {
+            case "zoom": fx = addEffect(L, "ADBE Geometry2", "HAMDY Beat Zoom"); fx.property(4).expression = E + 'value + e * 12'; break;
+            case "shake":
+                fx = addEffect(L, "ADBE Geometry2", "HAMDY Beat Shake");
+                fx.property(2).expression = E + 'var s = thisComp.height * 0.025 * e;\nvalue + [Math.sin(time * 61) * s, Math.cos(time * 47) * s]';
+                fx.property(8).expression = E + 'value + Math.sin(time * 53) * 2.5 * e';
+                fx.property(4).expression = E + 'value + e * 6';
+                break;
+            case "glow": fx = addEffect(L, "ADBE Glo2", "HAMDY Beat Glow"); fx.property(3).setValue(Math.round(c.height * 0.05)); fx.property(4).expression = E + 'e * 3'; break;
+            case "blur": fx = addEffect(L, "ADBE Gaussian Blur 2", "HAMDY Beat Blur"); fx.property(1).expression = E + 'e * 30'; try { fx.property(3).setValue(1); } catch (e1) {} break;
+            case "flash":
+                L.blendingMode = BlendingMode.ADD;
+                L.property("ADBE Transform Group").property("ADBE Opacity").expression = E + 'e * 70';
+                break;
+        }
+        L.moveToBeginning();
+        return "OK_BEATS:" + times.length;
+    }
+    function beatCut(c, A, times) {
+        var sel = c.selectedLayers, src = [], i, n = 0, L;
+        for (i = 0; i < sel.length; i++) { if (sel[i] !== A && isAV(sel[i]) && sel[i].hasVideo) { src.push(sel[i]); } }
+        if (!src.length) { throw Err("NEED_VISUAL"); }
+        src.sort(function (x, y) { return x.index - y.index; });
+        var gap = times.length > 1 ? (times[times.length - 1] - times[0]) / (times.length - 1) : 0.5, used = [];
+        for (i = 0; i < times.length && i < 300; i++) {
+            var base = src[i % src.length], t = times[i], e = (i + 1 < times.length) ? times[i + 1] : t + gap;
+            L = used[i % src.length] ? base.duplicate() : base; used[i % src.length] = true;
+            L.startTime = t;
+            L.inPoint = t; L.outPoint = Math.min(c.duration, e);
+            n++;
+        }
+        return "OK_BEATS:" + n;
+    }
+
+    // ================================================ align & distribute
+    function boxOf(L, t) {
+        var r = L.sourceRectAtTime(t, false), T = L.property("ADBE Transform Group");
+        var p = T.property("ADBE Position").valueAtTime(t, false), an = T.property("ADBE Anchor Point").valueAtTime(t, false), s = T.property("ADBE Scale").valueAtTime(t, false);
+        var sx = s[0] / 100, sy = s[1] / 100;
+        var x0 = p[0] + (r.left - an[0]) * sx, y0 = p[1] + (r.top - an[1]) * sy, x1 = x0 + r.width * sx, y1 = y0 + r.height * sy;
+        return { x0: Math.min(x0, x1), y0: Math.min(y0, y1), x1: Math.max(x0, x1), y1: Math.max(y0, y1) };
+    }
+    function moveBy(L, dx, dy, t) {
+        var P = L.property("ADBE Transform Group").property("ADBE Position"), k;
+        if (P.dimensionsSeparated) {
+            var X = L.property("ADBE Transform Group").property("ADBE Position_0"), Y = L.property("ADBE Transform Group").property("ADBE Position_1");
+            shiftProp(X, dx); shiftProp(Y, dy); return;
+        }
+        if (P.numKeys) { for (k = 1; k <= P.numKeys; k++) { var v = P.keyValue(k); v[0] += dx; v[1] += dy; P.setValueAtKey(k, v); } }
+        else { var w = P.value; w[0] += dx; w[1] += dy; P.setValue(w); }
+    }
+    function shiftProp(p, d) { var k; if (p.numKeys) { for (k = 1; k <= p.numKeys; k++) { p.setValueAtKey(k, p.keyValue(k) + d); } } else { p.setValue(p.value + d); } }
+    function alignLayers(a) {
+        var c = comp(), t = c.time, sel = c.selectedLayers, Ls = [], B = [], i;
+        for (i = 0; i < sel.length; i++) { if (isAV(sel[i]) && !sel[i].parent) { Ls.push(sel[i]); } }
+        if (!Ls.length) { throw Err("NO_LAYERS"); }
+        for (i = 0; i < Ls.length; i++) { B.push(boxOf(Ls[i], t)); }
+        var R = { x0: 0, y0: 0, x1: c.width, y1: c.height };
+        if (a.to === "sel" && Ls.length > 1) { R = { x0: 1e9, y0: 1e9, x1: -1e9, y1: -1e9 }; for (i = 0; i < B.length; i++) { R.x0 = Math.min(R.x0, B[i].x0); R.y0 = Math.min(R.y0, B[i].y0); R.x1 = Math.max(R.x1, B[i].x1); R.y1 = Math.max(R.y1, B[i].y1); } }
+        var m = a.mode;
+        if (m === "distH" || m === "distV") {
+            if (Ls.length < 3 && a.to === "sel") { throw Err("NEED3"); }
+            var ix = [], H = m === "distH", tot = 0, span, gap, cur;
+            for (i = 0; i < Ls.length; i++) { ix.push(i); tot += H ? (B[i].x1 - B[i].x0) : (B[i].y1 - B[i].y0); }
+            ix.sort(function (p, q) { return H ? B[p].x0 - B[q].x0 : B[p].y0 - B[q].y0; });
+            span = H ? (R.x1 - R.x0) : (R.y1 - R.y0);
+            gap = (span - tot) / Math.max(1, Ls.length - 1);
+            if (Ls.length === 1) { gap = 0; }
+            cur = H ? R.x0 : R.y0;
+            if (a.to !== "sel") { gap = (span - tot) / (Ls.length + 1); cur += gap; }
+            for (i = 0; i < ix.length; i++) {
+                var b = B[ix[i]];
+                if (H) { moveBy(Ls[ix[i]], cur - b.x0, 0, t); cur += (b.x1 - b.x0) + gap; }
+                else { moveBy(Ls[ix[i]], 0, cur - b.y0, t); cur += (b.y1 - b.y0) + gap; }
+            }
+            return "OK";
+        }
+        for (i = 0; i < Ls.length; i++) {
+            var q = B[i], dx = 0, dy = 0;
+            if (m === "left") { dx = R.x0 - q.x0; } else if (m === "right") { dx = R.x1 - q.x1; } else if (m === "hcenter") { dx = (R.x0 + R.x1) / 2 - (q.x0 + q.x1) / 2; }
+            else if (m === "top") { dy = R.y0 - q.y0; } else if (m === "bottom") { dy = R.y1 - q.y1; } else if (m === "vcenter") { dy = (R.y0 + R.y1) / 2 - (q.y0 + q.y1) / 2; }
+            else if (m === "center") { dx = (R.x0 + R.x1) / 2 - (q.x0 + q.x1) / 2; dy = (R.y0 + R.y1) / 2 - (q.y0 + q.y1) / 2; }
+            moveBy(Ls[i], dx, dy, t);
+        }
+        return "OK";
+    }
+
+    // ================================================ custom bezier curve -> AE speed/influence
+    function easeCurve(a) {
+        var props = selectedProps(true), i, j, p, ks, n = 0, x1 = Math.max(0.001, Math.min(0.999, a.x1)), y1 = a.y1, x2 = Math.max(0.001, Math.min(0.999, a.x2)), y2 = a.y2;
+        for (i = 0; i < props.length; i++) {
+            p = props[i]; ks = p.selectedKeys;
+            for (j = 0; j < ks.length; j++) {
+                var k = ks[j];
+                if (k >= p.numKeys) { continue; }
+                if (j + 1 < ks.length && ks[j + 1] !== k + 1 && ks.length > 1) { continue; }
+                try { curveSeg(p, k, x1, y1, x2, y2); n++; } catch (e) {}
+            }
+        }
+        if (!n) { throw Err("NO_KEYS"); }
+        return "OK";
+    }
+    function curveSeg(p, k, x1, y1, x2, y2) {
+        var dt = p.keyTime(k + 1) - p.keyTime(k), v0 = p.keyValue(k), v1 = p.keyValue(k + 1), dims, sp = [], i;
+        var spatial = p.propertyValueType === PropertyValueType.TwoD_SPATIAL || p.propertyValueType === PropertyValueType.ThreeD_SPATIAL;
+        if (spatial) { var d = 0; for (i = 0; i < v0.length; i++) { d += (v1[i] - v0[i]) * (v1[i] - v0[i]); } sp = [Math.sqrt(d) / dt]; }
+        else if (v0 instanceof Array) { for (i = 0; i < easeDims(p); i++) { sp.push((v1[i] - v0[i]) / dt); } }
+        else { sp = [(v1 - v0) / dt]; }
+        dims = sp.length;
+        var oIn = p.keyInTemporalEase(k), out = [], inn = [], nIn = p.keyOutTemporalEase(k + 1);
+        for (i = 0; i < dims; i++) {
+            out.push(new KeyframeEase(sp[i] * (y1 / x1), Math.max(0.1, Math.min(100, x1 * 100))));
+            inn.push(new KeyframeEase(sp[i] * ((1 - y2) / (1 - x2)), Math.max(0.1, Math.min(100, (1 - x2) * 100))));
+        }
+        p.setInterpolationTypeAtKey(k, p.keyInInterpolationType(k), KeyframeInterpolationType.BEZIER);
+        p.setInterpolationTypeAtKey(k + 1, KeyframeInterpolationType.BEZIER, p.keyOutInterpolationType(k + 1));
+        p.setTemporalEaseAtKey(k, oIn.length === dims ? oIn : out, out);
+        p.setTemporalEaseAtKey(k + 1, inn, nIn.length === dims ? nIn : inn);
+    }
+
+    // ================================================ social & render
+    function verticalize(a) {
+        var src = comp(), W = a.w || 1080, H = a.h || 1920;
+        var c = app.project.items.addComp(src.name + " " + W + "x" + H, W, H, 1, src.duration, 1 / src.frameDuration);
+        var fg = c.layers.add(src), sF = Math.min(W / src.width, H / src.height) * 100, sC = Math.max(W / src.width, H / src.height) * 100;
+        fg.name = "HAMDY FG"; fg.property("ADBE Transform Group").property("ADBE Scale").setValue([a.mode === "fill" ? sC : sF, a.mode === "fill" ? sC : sF]);
+        if (a.mode !== "fill") {
+            var bg = c.layers.add(src); bg.name = "HAMDY BG BLUR"; bg.moveAfter(fg);
+            bg.property("ADBE Transform Group").property("ADBE Scale").setValue([sC * 1.08, sC * 1.08]);
+            var b = addEffect(bg, "ADBE Gaussian Blur 2", "HAMDY BG Blur"); b.property(1).setValue(Math.round(W * 0.06)); try { b.property(3).setValue(1); } catch (e) {}
+            var bc = addEffect(bg, "ADBE Brightness & Contrast 2", "HAMDY BG Dim"); try { bc.property(1).setValue(-25); } catch (e2) {}
+            try { bg.audioEnabled = false; } catch (e3) {}
+        }
+        c.openInViewer();
+        return "OK";
+    }
+    function unusedItems(a) {
+        var it, i, list = [], n = app.project.numItems;
+        for (i = n; i >= 1; i--) {
+            it = app.project.item(i);
+            if ((it instanceof FootageItem) && it.usedIn.length === 0 && !(it.mainSource instanceof SolidSource)) { list.push(it); }
+        }
+        if (!a.remove) { var names = []; for (i = 0; i < list.length && i < 40; i++) { names.push(list[i].name); } return { count: list.length, names: names }; }
+        for (i = 0; i < list.length; i++) { try { list[i].remove(); } catch (e) {} }
+        return "OK_REMOVED:" + list.length;
+    }
+    function outFolder() {
+        var f = app.project.file ? app.project.file.parent : Folder.desktop, o = new Folder(f.fsName + "/Hamdy Exports");
+        if (!o.exists) { o.create(); }
+        return o;
+    }
+    function renderNow(a) {
+        var c = comp(), q = app.project.renderQueue, rq = q.items.add(c), om = rq.outputModule(1), ok = false, i;
+        var names = a.fmt === "hq" ? ["High Quality", "Apple ProRes 422 HQ", "Lossless"] : ["H.264 - Match Render Settings - 15 Mbps", "H.264 - Match Render Settings - 5 Mbps", "H.264 - Match Render Settings - 40 Mbps", "H.264"];
+        if (a.fmt !== "ame") { for (i = 0; i < names.length && !ok; i++) { try { om.applyTemplate(names[i]); ok = true; } catch (e) {} } }
+        var stamp = new Date(), nm = c.name.replace(/[\\\/:\*\?"<>\|]/g, "_") + "_" + stamp.getHours() + "-" + stamp.getMinutes() + "-" + stamp.getSeconds();
+        try { om.file = new File(outFolder().fsName + "/" + nm); } catch (e2) {}
+        if (a.fmt === "ame" || !ok) {
+            if (q.canQueueInAME) { q.queueInAME(a.fmt === "ame"); return a.fmt === "ame" ? "OK_AME" : "OK_AME_FALLBACK"; }
+            if (!ok) { throw Err("NO_TEMPLATE"); }
+        }
+        q.render();
+        return { path: om.file ? om.file.fsName : outFolder().fsName };
+    }
+    function saveFramePng(a) {
+        var c = comp(), t = snap(c, c.time), nm = c.name.replace(/[\\\/:\*\?"<>\|]/g, "_") + "_" + Math.round(t / c.frameDuration) + ".png";
+        var f = new File(outFolder().fsName + "/" + nm);
+        if (typeof c.saveFrameToPng !== "function") { throw Err("NO_SAVEFRAME"); }
+        c.saveFrameToPng(t, f);
+        return { path: f.fsName };
+    }
+    function openFolder(a) { var f = new Folder(a.path || outFolder().fsName); if (f.exists) { f.execute(); } return "OK"; }
+
+    // ================================================ liquid glass (built-in effects only, one control null)
+    function glassRect(c, nm, ctl, fill, stroke) {
+        var S2 = c.layers.addShape(); S2.name = nm;
+        var g = S2.property("ADBE Root Vectors Group").addProperty("ADBE Vector Group"); g.name = "Glass";
+        var V = g.property("ADBE Vectors Group"), r = V.addProperty("ADBE Vector Shape - Rect");
+        var C = 'thisComp.layer("' + ctl + '")';
+        r.property("ADBE Vector Rect Size").expression = '[' + C + '.effect("HAMDY Width")(1), ' + C + '.effect("HAMDY Height")(1)]';
+        r.property("ADBE Vector Rect Roundness").expression = 'Math.min(' + C + '.effect("HAMDY Width")(1), ' + C + '.effect("HAMDY Height")(1)) / 2 * ' + C + '.effect("HAMDY Roundness %")(1) / 100';
+        if (fill) { var f = V.addProperty("ADBE Vector Graphic - Fill"); f.property("ADBE Vector Fill Color").setValue(fill); }
+        if (stroke) {
+            var s = V.addProperty("ADBE Vector Graphic - Stroke"); s.property("ADBE Vector Stroke Color").setValue([1, 1, 1]);
+            s.property("ADBE Vector Stroke Width").expression = C + '.effect("HAMDY Rim")(1) / 25 * thisComp.height / 540';
+            s.property("ADBE Vector Stroke Opacity").expression = 'Math.min(100, ' + C + '.effect("HAMDY Rim")(1) * 1.4)';
+        }
+        S2.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
+        return S2;
+    }
+    function liquidGlass(a) {
+        var c = comp(), W = c.width, H = c.height, t0 = c.time, dur = a.secs > 0 ? a.secs : c.duration - t0, nm = "HAMDY GLASS CTRL", i = 1;
+        while (dpFind(c, nm)) { i++; nm = "HAMDY GLASS CTRL " + i; }
+        var N = c.layers.addNull(); N.name = nm; N.label = 14;
+        N.property("ADBE Transform Group").property("ADBE Position").setValue([W / 2, H * (a.y || 50) / 100]);
+        var sw = a.shape === "circle" ? 0.35 : (a.shape === "card" ? 0.7 : 0.62), sh = a.shape === "circle" ? 0.35 : (a.shape === "card" ? 0.42 : 0.16);
+        var base = Math.min(W, H);
+        addSlider(N, "HAMDY Width", Math.round(base * sw * (a.shape === "circle" ? 1 : W / base)));
+        addSlider(N, "HAMDY Height", Math.round(base * sh * (a.shape === "card" ? 1.2 : 1)));
+        addSlider(N, "HAMDY Roundness %", a.shape === "card" ? 22 : 100);
+        addSlider(N, "HAMDY Blur", a.blur || 30);
+        addSlider(N, "HAMDY Refraction", a.refract || 40);
+        addSlider(N, "HAMDY Brightness", 12);
+        addSlider(N, "HAMDY Rim", 40);
+        var C = 'thisComp.layer("' + nm + '")';
+        // adjustment layer = the glass body (blur + lens + brightness) clipped by a matte shape
+        var A = c.layers.addSolid([1, 1, 1], "HAMDY GLASS BODY", W, H, c.pixelAspect, c.duration); A.adjustmentLayer = true;
+        var b = addEffect(A, "ADBE Gaussian Blur 2", "HAMDY Glass Blur"); b.property(1).expression = C + '.effect("HAMDY Blur")(1) * thisComp.height / 1080'; try { b.property(3).setValue(1); } catch (e0) {}
+        try { var ln = addEffect(A, "CC Lens", "HAMDY Glass Lens"); ln.property(1).expression = C + '.toComp(' + C + '.anchorPoint)'; ln.property(2).expression = 'Math.max(' + C + '.effect("HAMDY Width")(1), ' + C + '.effect("HAMDY Height")(1)) / thisComp.width * 100 * 0.62'; ln.property(3).expression = C + '.effect("HAMDY Refraction")(1)'; } catch (e1) {}
+        var bc = addEffect(A, "ADBE Brightness & Contrast 2", "HAMDY Glass Light"); bc.property(1).expression = C + '.effect("HAMDY Brightness")(1)';
+        var M = glassRect(c, "HAMDY GLASS MATTE", nm, [1, 1, 1], false); M.parent = N; M.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
+        M.moveBefore(A); setMatte(A, M, false);
+        try { A.trackMatteType = TrackMatteType.ALPHA; } catch (e2) {}
+        try { A.setTrackMatte(M, TrackMatteType.ALPHA); } catch (e3) {}
+        try { M.enabled = false; } catch (e4) {}
+        // rim light + soft shadow
+        var R = glassRect(c, "HAMDY GLASS RIM", nm, null, true); R.parent = N; R.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
+        try { var gl = addEffect(R, "ADBE Glo2", "HAMDY Rim Glow"); gl.property(3).setValue(Math.round(H * 0.01)); gl.property(4).setValue(0.6); } catch (e5) {}
+        R.blendingMode = BlendingMode.ADD;
+        var D = glassRect(c, "HAMDY GLASS SHADOW", nm, [0, 0, 0], false); D.parent = N; D.property("ADBE Transform Group").property("ADBE Position").setValue([0, H * 0.012]);
+        D.property("ADBE Transform Group").property("ADBE Opacity").setValue(28);
+        var db = addEffect(D, "ADBE Gaussian Blur 2", "HAMDY Shadow Blur"); db.property(1).setValue(H * 0.03);
+        var all = [D, A, M, R], T = null;
+        if (a.text) {
+            T = c.layers.addText(a.text); T.name = "HAMDY GLASS TEXT";
+            var tp = T.property("ADBE Text Properties").property("ADBE Text Document"), td = tp.value;
+            td.fontSize = Math.round(base * sh * 0.42); td.fillColor = [1, 1, 1]; td.justification = ParagraphJustification.CENTER_JUSTIFY;
+            if (a.font) { try { td.font = a.font; } catch (ef) {} }
+            tp.setValue(td);
+            T.property("ADBE Transform Group").property("ADBE Anchor Point").expression = 'var r = sourceRectAtTime(time, false);\n[r.left + r.width / 2, r.top + r.height / 2]';
+            T.parent = N; T.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
+            all.push(T);
+        }
+        for (i = 0; i < all.length; i++) { span(all[i], t0, Math.min(c.duration, t0 + dur)); }
+        span(N, t0, Math.min(c.duration, t0 + dur));
+        // order: shadow, body+matte, rim, text, ctrl (top)
+        D.moveToBeginning(); A.moveToBeginning(); M.moveBefore(A); R.moveToBeginning(); if (T) { T.moveToBeginning(); } N.moveToBeginning();
+        if (a.anim) {
+            var sc = N.property("ADBE Transform Group").property("ADBE Scale"), op = N.property("ADBE Transform Group").property("ADBE Opacity");
+            keyPair(sc, t0, [70, 70], t0 + 0.45, [100, 100], "snappy", "in");
+            try { setEase(sc, 2, 85, 33); } catch (e6) {}
+        }
+        return "OK";
+    }
+    // fix Arabic text direction / composer on selected text layers (AE 24+), plus a fallback that flips a reversed string
+    function fixArabic(a) {
+        var c = comp(), sel = c.selectedLayers, i, n = 0, L, tp, td;
+        for (i = 0; i < sel.length; i++) {
+            L = sel[i]; if (L.matchName !== "ADBE Text Layer") { continue; }
+            tp = L.property("ADBE Text Properties").property("ADBE Text Document");
+            if (tp.numKeys) { continue; }
+            td = tp.value;
+            try { td.composerEngine = ComposerEngine.UNIVERSAL_TYPE_ENGINE; } catch (e1) {}
+            try { td.direction = ParagraphDirection.DIRECTION_RIGHT_TO_LEFT; } catch (e2) {}
+            if (a.reverse) { td.text = String(td.text).split("").reverse().join(""); }
+            tp.setValue(td); n++;
+        }
+        if (!n) { throw Err("NO_TEXTLAYER"); }
+        return "OK";
+    }
+
+    // ================================================ AI assistant (in-panel chat and the Claude Desktop bridge)
+    function aiR(v, d) { if (typeof v === "number") { var m = Math.pow(10, d === undefined ? 2 : d); return Math.round(v * m) / m; } if (v instanceof Array) { var o = [], i; for (i = 0; i < v.length; i++) { o.push(aiR(v[i], d)); } return o; } return v; }
+    function aiType(L) {
+        var mn = L.matchName || "";
+        if (mn === "ADBE Text Layer") { return "text"; }
+        if (mn === "ADBE Vector Layer") { return "shape"; }
+        if (mn === "ADBE Camera Layer") { return "camera"; }
+        if (mn === "ADBE Light Layer") { return "light"; }
+        try { if (L.nullLayer) { return "null"; } if (L.adjustmentLayer) { return "adjustment"; } } catch (e) {}
+        try { if (L.source instanceof CompItem) { return "precomp"; } if (L.source && L.source.mainSource instanceof SolidSource) { return "solid"; } if (L.source && !L.hasVideo) { return "audio"; } if (L.source && L.source.mainSource && L.source.mainSource.isStill) { return "image"; } } catch (e2) {}
+        return "footage";
+    }
+    function aiProp(p, t) {
+        var o = { v: aiR(p.valueAtTime(t, false)) };
+        if (p.numKeys) { o.keys = []; var k; for (k = 1; k <= Math.min(p.numKeys, 12); k++) { o.keys.push([aiR(p.keyTime(k), 3), aiR(p.keyValue(k))]); } if (p.numKeys > 12) { o.moreKeys = p.numKeys - 12; } }
+        if (p.expression && p.expressionEnabled) { o.expr = String(p.expression).substr(0, 300); }
+        return o;
+    }
+    function aiLayer(L, t, deep) {
+        var o = { i: L.index, name: L.name, type: aiType(L), in: aiR(L.inPoint, 3), out: aiR(L.outPoint, 3) };
+        try { if (L.parent) { o.parent = L.parent.index; } } catch (e0) {}
+        try { if (L.threeDLayer) { o.is3D = true; } } catch (e1) {}
+        try { if (!L.enabled) { o.hidden = true; } } catch (e2) {}
+        if (!deep) { return o; }
+        try { if (L.source && L.source.width) { o.size = [L.source.width, L.source.height]; } } catch (e3) {}
+        try { var r = L.sourceRectAtTime(t, false); o.rect = aiR([r.left, r.top, r.width, r.height], 1); } catch (e4) {}
+        var T = L.property("ADBE Transform Group"), tr = {}, nm = { "ADBE Anchor Point": "anchor", "ADBE Position": "position", "ADBE Scale": "scale", "ADBE Rotate Z": "rotation", "ADBE Opacity": "opacity" }, k;
+        if (T) { for (k in nm) { try { tr[nm[k]] = aiProp(T.property(k), t); } catch (e5) {} } }
+        o.transform = tr;
+        if (o.type === "text") {
+            try { var td = L.property("ADBE Text Properties").property("ADBE Text Document").valueAtTime(t, false); o.text = { str: String(td.text).substr(0, 200), font: td.font, size: aiR(td.fontSize, 1), fill: aiR(td.fillColor, 3), just: String(td.justification) }; } catch (e6) {}
+            try { var an = L.property("ADBE Text Properties").property("ADBE Text Animators"); if (an.numProperties) { o.textAnimators = []; for (k = 1; k <= an.numProperties; k++) { o.textAnimators.push(an.property(k).name); } } } catch (e7) {}
+        }
+        try { var P = parade(L); if (P.numProperties) { o.effects = []; for (k = 1; k <= Math.min(P.numProperties, 20); k++) { o.effects.push(P.property(k).name + " [" + P.property(k).matchName + "]"); } } } catch (e8) {}
+        try { var M = L.property("ADBE Mask Parade"); if (M && M.numProperties) { o.masks = M.numProperties; } } catch (e9) {}
+        try { if (L.hasTrackMatte) { o.trackMatte = true; } } catch (e10) {}
+        return o;
+    }
+    function aiContext(a) {
+        var c = comp(), t = c.time, sel = c.selectedLayers, i, all = [];
+        var out = { comp: { name: c.name, w: c.width, h: c.height, fps: aiR(1 / c.frameDuration, 3), dur: aiR(c.duration, 3), time: aiR(t, 3), workArea: [aiR(c.workAreaStart, 3), aiR(c.workAreaStart + c.workAreaDuration, 3)], numLayers: c.numLayers } };
+        if (a.t0 !== undefined && a.t0 !== null) { out.range = [aiR(a.t0, 3), aiR(a.t1, 3)]; }
+        out.selected = [];
+        for (i = 0; i < sel.length && i < 12; i++) { out.selected.push(aiLayer(sel[i], t, true)); }
+        if (a.all || !sel.length) { for (i = 1; i <= Math.min(c.numLayers, 60); i++) { all.push(aiLayer(c.layer(i), t, false)); } out.layers = all; }
+        if (a.layers) { out.detail = []; for (i = 0; i < a.layers.length && i < 12; i++) { try { out.detail.push(aiLayer(c.layer(a.layers[i]), t, true)); } catch (e) {} } }
+        return out;
+    }
+    function aiRun(a) {
+        var c = comp(), sel = c.selectedLayers, SEL = [], i;
+        for (i = 0; i < sel.length; i++) { SEL.push(sel[i]); }
+        var T0 = (a.t0 !== undefined && a.t0 !== null) ? a.t0 : c.time, T1 = (a.t1 !== undefined && a.t1 !== null) ? a.t1 : Math.min(c.duration, T0 + 1);
+        var LOG = [];
+        function log(x) { LOG.push(String(x)); }
+        var fn = eval("(function (comp, SEL, T0, T1, log, HMK) {\n" + a.code + "\n})");
+        var r = fn(c, SEL, T0, T1, log, AIH);
+        var res = { log: LOG.join("\n").substr(0, 3000) };
+        if (r !== undefined) { try { res.result = (typeof r === "object") ? J(r).substr(0, 3000) : String(r).substr(0, 3000); } catch (e) { res.result = String(r); } }
+        return res;
+    }
+    // small helper library the model can use inside run_script (HMK.*)
+    var AIH = {
+        key: function (prop, t, v, ease) { prop.setValueAtTime(t, v); var k = prop.nearestKeyIndex(t); if (ease) { AIH.ease(prop, k, ease); } return k; },
+        ease: function (prop, k, how) {
+            var d = prop.propertyValueType === PropertyValueType.ThreeD_SPATIAL || prop.propertyValueType === PropertyValueType.TwoD_SPATIAL ? 1 : (prop.value instanceof Array ? prop.value.length : 1);
+            var inf = { linear: [0.1, 0.1], ease: [33, 33], out: [75, 10], "in": [10, 75], strong: [90, 90], snappy: [85, 40] }[how] || [33, 33];
+            var a = [], b = [], j;
+            for (j = 0; j < d; j++) { a.push(new KeyframeEase(0, inf[1])); b.push(new KeyframeEase(0, inf[0])); }
+            try { prop.setTemporalEaseAtKey(k, a, b); } catch (e) {}
+        },
+        tr: function (L, nm) { return L.property("ADBE Transform Group").property({ anchor: "ADBE Anchor Point", position: "ADBE Position", scale: "ADBE Scale", rotation: "ADBE Rotate Z", opacity: "ADBE Opacity", x: "ADBE Position_0", y: "ADBE Position_1" }[nm] || nm); },
+        fx: function (L, matchName, name) { return addEffect(L, matchName, name || ("HAMDY AI " + matchName)); },
+        slider: function (L, name, v) { return FX(L, addSlider(L, name, v)); },
+        layer: function (x) { var c = comp(), i; if (typeof x === "number") { return c.layer(x); } for (i = 1; i <= c.numLayers; i++) { if (c.layer(i).name === x) { return c.layer(i); } } return null; }
+    };
+    function aiFrame(a) {
+        var c = comp(), t = (a.t !== undefined && a.t !== null) ? snap(c, a.t) : snap(c, c.time);
+        var f = new File(Folder.temp.fsName + "/hamdy_ai_" + new Date().getTime() + ".png");
+        if (typeof c.saveFrameToPng !== "function") { throw Err("NO_SAVEFRAME"); }
+        c.saveFrameToPng(t, f);
+        return { path: f.fsName, w: c.width, h: c.height, t: t };
+    }
+    function aiSetTime(a) { var c = comp(); c.time = Math.max(0, Math.min(c.duration, a.t)); return { t: c.time }; }
+
     // ================================================ depth 3D (multiplane): spread layers in Z, keep the frame identical
     // A layer pushed back by z is scaled by (D+z)/D and moved away from the centre by the same factor (D = camera
     // distance to the z=0 plane = camera zoom), so through the camera it looks exactly like before. All of it is live
@@ -4267,7 +4632,7 @@ var NABD = (function () {
         for (i = 0; i < sel.length; i++) {
             L = sel[i];
             if (isAV(L) && L.source && L.source.file && L.hasAudio) {
-                return { path: L.source.file.fsName, start: L.startTime, inPoint: L.inPoint, outPoint: L.outPoint, stretch: L.stretch, name: L.name };
+                return { path: L.source.file.fsName, index: L.index, start: L.startTime, inPoint: L.inPoint, outPoint: L.outPoint, stretch: L.stretch, name: L.name };
             }
         }
         throw Err(sel.length ? "NO_AUDIO_LAYER" : "NO_LAYERS");
@@ -4390,7 +4755,7 @@ var NABD = (function () {
     }
 
     // ============================================================ dispatch
-    var NO_UNDO = { ping: 1, inspect: 1, carPick: 1, trkInfo: 1, gfPhotoshop: 1, gfPSBack: 1, libPick: 1, libList: 1, libOpen: 1, capSource: 1, saveText: 1, openText: 1 };
+    var NO_UNDO = { ping: 1, inspect: 1, carPick: 1, trkInfo: 1, gfPhotoshop: 1, gfPSBack: 1, libPick: 1, libList: 1, libOpen: 1, capSource: 1, saveText: 1, openText: 1, aiContext: 1, aiFrame: 1, aiSetTime: 1, renderNow: 1, saveFramePng: 1, openFolder: 1 };
     var CMDS = {
         ping: function () {
             var c = null;
@@ -4405,7 +4770,7 @@ var NABD = (function () {
         libPick: libPick, libList: libList, libUse: libUse, libOpen: libOpen,
         capSource: capSource, captions: captions, saveText: saveText, openText: openText,
         look: look, textStyle: textStyle,
-        overlay: overlay, otrApply: otrApply, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
+        overlay: overlay, otrApply: otrApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,

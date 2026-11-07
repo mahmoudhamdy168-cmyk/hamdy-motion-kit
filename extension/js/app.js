@@ -23,7 +23,9 @@ var TABS = [
   {id:'ez',  ar:'الإيز'},
   {id:'lib', ar:'المكتبة'},
   {id:'tl',  ar:'أدوات'},
-  {id:'ed',  ar:'✎ تعديل'}
+  {id:'ed',  ar:'✎ تعديل'},
+  {id:'br',  ar:'🎞 بي رول وأصوات'},
+  {id:'ai',  ar:'🤖 مساعد Claude'}
 ];
 var KIND_AR = {'in':'دخول وخروج', emph:'تأكيد عند البلاي هيد', loop:'لوب على طول اللاير'};
 
@@ -55,6 +57,14 @@ var MSG = {
   NO_LAYERS:'حدد لاير أو أكتر.',
   NO_ANIM_LAYER:'حدد لاير ينفع يتحرك (مش كاميرا أو نل).',
   NEED2:'حدد لايرين أو أكتر.',
+  NO_BEATS:'ما لقيتش بيتس واضحة. جرّب حساسية أعلى أو «كل الصوت».',
+  BAD_AUDIO:'مش قادر أفك الصوت ده. لو فيديو MOV أو ملف غريب، صدّر الصوت MP3 أو WAV وحطه في الكومب.',
+  NEED_VISUAL:'حدد مع المزيكا الصور أو الكليبات اللي عايز تقطّعها.',
+  NEED3:'حدد 3 لايرات أو أكتر عشان التوزيع بينهم، أو اختار «الكومب».',
+  NO_TEMPLATE:'مش لاقي تمبليت H.264 في الأفتر بتاعك. جرّب Media Encoder.',
+  NO_TEXTLAYER:'حدد لاير نص (أو أكتر) الأول.',
+  NO_PX_KEY:'حط مفتاح Pexels الأول (ببلاش من pexels.com/api).',
+  NO_FS_KEY:'حط مفتاح Freesound الأول (ببلاش من freesound.org).',
   NO_DEPTH:'مفيش عمق 3D معمول في الكومب ده. حدد اللايرات واعمله الأول.',
   NOT_UNDER:'البلاي هيد لازم يكون جوه اللاير المحدد.',
   NO_ROOM:'مفيش وقت كفاية في الكومب بعد البلاي هيد.',
@@ -92,7 +102,7 @@ var OKMSG = {
 /* =============================================================== state */
 var DEF = {
   tab:'tr', paused:false, acc:'#ff6b3d', lang:'ar', hide:true, perf:'full', ui:{side:300, nav:0, card:132},
-  sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush'},
+  sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:''},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
   mp:{dir:'both', frames:18, at:'layer'},
@@ -104,13 +114,16 @@ var DEF = {
   el:{secs:4, blend:'screen', amount:100},
   ed:{auto:true},
   trk:{smooth:0, rot:true, scale:true, text:'اكتب هنا', size:60, side:'r', amount:40, zoom:6, swap:false, stabRot:true},
+  ez:{curve:[0.65,0,0.35,1]},
+  br:{src:'video', orient:'any', quality:'hd', fit:true, pxKey:'', fsKey:''},
+  ai:{key:'', model:'claude-sonnet-5-5', auto:true, frame:false, t0:null, t1:null, bridge:false, port:47811},
   dp:{order:'stack', spread:600, pivot:'front', secs:4, amt:100, at:'playhead', fog:false, dof:false, over:0},
   trim:{frames:24, stagger:0, width:4, stroke:'fill', snappy:true, at:'layer', seg:25, speed:100, addStroke:false, fillAfter:false, strokeFade:false},
   gf:{provider:'stability', key:'', prompt:'', search:'', grow:12, feather:14, hold:'layer', patch:true, follow:false, out:'916', lastPS:null},
   car:{count:8, content:'images', images:[], palette:0, colA:'#ff6b3d', colB:'#3d73ff', aspect:1, design:'clean', round:12, border:0, borderColor:'#ffffff', motion:0, speed:30, reverse:false, hold:1, tiltX:-12, backFade:35, backDim:30, blur:false, orbit:true, spokes:false, chain:false, lineStyle:'solid', lineColor:'#ffffff', intro:true, person:false, secs:8, size:100, radius:100, face:0},
   ln:{frames:20, secs:3, col:'accW', width:100, erase:true, speed:100, flow:'travel', guide:true, reverse:false, text:'نص ماشي على خط', size:90, snappy:true, sfx:true, at:'layer'},
   lib:{paths:[], fit:true, screen:false},
-  tl:{size:0, fps:30, secs:10, name:'', stagger:3, overlap:0, pct:150, nudge:1, deep:false, plat:'reels', zones:true, safe:true, thirds:false, center:false}
+  tl:{gShape:'pill', gText:'', gBlur:30, gAnim:true, arRev:false, beatSens:'mid', beatBand:'bass', beatGap:0.25, beatMode:'zoom', beatAmt:100, beatDecay:10, align:'center', alignTo:'comp', vMode:'blur', vSize:'1080x1920', rfmt:'mp4', size:0, fps:30, secs:10, name:'', stagger:3, overlap:0, pct:150, nudge:1, deep:false, plat:'reels', zones:true, safe:true, thirds:false, center:false}
 };
 var S = load();
 function load(){
@@ -134,10 +147,10 @@ function rawEval(script, ms){
     window.__adobe_cep__.evalScript(script, function(r){ if(done) return; done = true; clearTimeout(h); res(r); });
   });
 }
-function host(cmd, args){
+function host(cmd, args, ms){
   var payload = {cmd:cmd, tuck:S.hide !== false}; for(var k in (args||{})) payload[k]=args[k];
   if(!CEP) return new Promise(function(res){ setTimeout(function(){ res(mock(payload)); }, 120); });
-  return rawEval('NABD.run(' + JSON.stringify(asciiJSON(payload)) + ')').then(function(r){
+  return rawEval('NABD.run(' + JSON.stringify(asciiJSON(payload)) + ')', ms).then(function(r){
     try{ return JSON.parse(r); }catch(e){ return {ok:false, code:'NO_ENGINE', msg:String(r)}; }
   });
 }
@@ -165,6 +178,12 @@ function say(r){
     var d = typeof r.data==='string' ? r.data : 'OK', m = OKMSG[d];
     if(!m && /^OK_MOVED:/.test(d)) m = 'اتنقل ' + d.split(':')[1] + ' عنصر ✓';
     if(!m && /^OK_CAPS:/.test(d)) m = 'اتحط ' + d.split(':')[1] + ' كابشن ✓';
+    if(!m && /^OK_BEATS:/.test(d)) m = trText('اتحط على') + ' ' + d.split(':')[1] + ' ' + trText('بيت ✓');
+    if(!m && /^OK_REMOVED:/.test(d)) m = trText('اتشال') + ' ' + d.split(':')[1] + ' ' + trText('ملف من المشروع ✓');
+    if(!m && d==='OK_AME') m = 'اتبعت لـ Media Encoder ✓';
+    if(!m && d==='OK_AME_FALLBACK') m = 'مالقيتش تمبليت MP4 فبعته لـ Media Encoder ✓';
+    if(!m && d==='OK_SAVED') m = 'الصورة اتحفظت في فولدر Hamdy Exports ✓';
+    if(!m && r.data && r.data.path) m = 'خلص ✓ ' + r.data.path;
     if(!m && /^OK_DPSKIP:/.test(d)) m = 'العمق اتعمل ✓ واتساب ' + d.split(':')[1] + ' لاير عشان متعلق على Parent';
     if(!m && /^OK_SKIPPED:/.test(d)) m = 'تم ✓ واتساب ' + d.split(':')[1] + ' لاير (عليه كي فريمز في الأنكور)';
     el.className='toast ok'; el.textContent = trText(m || 'تم ✓');
@@ -202,6 +221,8 @@ function itemsOf(tab){
     case 'fx': return D.FILTERS;
     case 'sfx': return NABD_SFX.concat(S.sfx.gen);
     case 'ed': return [];
+    case 'ai': return [];
+    case 'br': return [];
     case 'ln': return MY_PATH.concat(NABD_LINES.LIST);
     case 'car': return NABD_CAR.SHAPES;
     case 'trk': return NABD_TOOLS2.TRK;
@@ -295,6 +316,8 @@ function renderGrid(){
   var grid = $('grid'); if(IO) IO.disconnect(); grid.innerHTML = ''; live = [];
   grid.className = 'grid' + (S.tab==='tl' ? ' small' : '');
   if(S.tab==='ed'){ $('filters').innerHTML=''; renderEdit(); return; }
+  if(S.tab==='ai'){ $('filters').innerHTML=''; AI.renderChat(); return; }
+  if(S.tab==='br'){ $('filters').innerHTML=''; STOCK.render(); return; }
   var shown = its.filter(function(it){
     if(fl!=='الكل' && it.g!==fl) return false;
     if(q && (it.ar + ' ' + (it.en||'')).toLowerCase().indexOf(q)<0) return false;
@@ -355,6 +378,14 @@ function guideSVG(g, opt){
 }
 
 var TICON = {
+  glass:'<defs><linearGradient id="tg" x1="0" x2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#5a6cff"/></linearGradient></defs><rect x="10" y="10" width="140" height="80" fill="url(#tg)" opacity=".55"/><rect x="34" y="36" width="92" height="30" rx="15" fill="#ffffff" fill-opacity=".22" stroke="#fff" stroke-opacity=".8"/><text x="80" y="56" font-size="12" fill="#fff" text-anchor="middle" font-family="sans-serif">glass</text>',
+  fixAr:'<text x="80" y="62" font-size="34" fill="var(--acc)" text-anchor="middle" font-family="sans-serif" direction="rtl">عربي</text><path d="M40 78h80" stroke="#55555f" stroke-width="2"/><path d="M48 74l-8 4 8 4" fill="none" stroke="#fff" stroke-width="2"/>',
+  beat:'<g fill="var(--acc)"><rect x="22" y="44" width="6" height="12"/><rect x="34" y="30" width="6" height="40"/><rect x="46" y="40" width="6" height="20"/><rect x="58" y="18" width="6" height="64"/><rect x="70" y="38" width="6" height="24"/><rect x="82" y="26" width="6" height="48"/><rect x="94" y="42" width="6" height="16"/><rect x="106" y="20" width="6" height="60"/><rect x="118" y="36" width="6" height="28"/><rect x="130" y="44" width="6" height="12"/></g><g fill="#fff"><path d="M61 10l-4-6h8z"/><path d="M109 10l-4-6h8z"/></g>',
+  align:'<line x1="40" y1="14" x2="40" y2="86" stroke="var(--acc)" stroke-width="3"/><rect x="40" y="22" width="80" height="16" rx="3" fill="#55555f"/><rect x="40" y="44" width="50" height="16" rx="3" fill="#77777f"/><rect x="40" y="66" width="96" height="16" rx="3" fill="#99999f"/>',
+  vertical:'<rect x="20" y="30" width="64" height="40" rx="3" fill="#55555f"/><path d="M92 50h14" stroke="#fff" stroke-width="3"/><path d="M106 44l8 6-8 6z" fill="#fff"/><rect x="118" y="12" width="28" height="76" rx="3" fill="#2f2f38"/><rect x="118" y="38" width="28" height="24" fill="var(--acc)"/>',
+  unused:'<rect x="40" y="20" width="80" height="60" rx="4" fill="none" stroke="#55555f" stroke-width="2"/><g fill="#77777f"><rect x="50" y="30" width="60" height="8" rx="2"/><rect x="50" y="46" width="60" height="8" rx="2"/></g><rect x="50" y="62" width="60" height="8" rx="2" fill="var(--acc)"/><path d="M116 60l14 14M130 60l-14 14" stroke="#f55" stroke-width="3"/>',
+  render:'<rect x="34" y="22" width="92" height="56" rx="6" fill="#2a2a31" stroke="#55555f"/><path d="M72 36l22 14-22 14z" fill="var(--acc)"/>',
+  savePng:'<rect x="34" y="20" width="92" height="60" rx="4" fill="#2a2a31" stroke="#55555f"/><path d="M40 74l26-26 18 18 12-10 24 18z" fill="var(--acc)"/><circle cx="104" cy="36" r="7" fill="#fff"/>',
   anchor:'<rect x="50" y="22" width="60" height="56" rx="4" fill="#2a2a31" stroke="#55555f"/><g fill="#55555f"><circle cx="50" cy="22" r="3"/><circle cx="80" cy="22" r="3"/><circle cx="110" cy="22" r="3"/><circle cx="50" cy="50" r="3"/><circle cx="110" cy="50" r="3"/><circle cx="50" cy="78" r="3"/><circle cx="80" cy="78" r="3"/><circle cx="110" cy="78" r="3"/></g><circle cx="80" cy="50" r="6" fill="none" stroke="var(--acc)" stroke-width="2.5"/><path d="M80 40v20M70 50h20" stroke="var(--acc)" stroke-width="2"/>',
   center:'<rect x="30" y="16" width="100" height="68" rx="3" fill="none" stroke="#55555f" stroke-width="2"/><rect x="66" y="38" width="28" height="24" fill="var(--acc)"/><path d="M80 18v12M80 70v12M32 50h12M116 50h12" stroke="#fff" stroke-width="2"/>',
   nullCtl:'<rect x="68" y="18" width="24" height="24" fill="none" stroke="var(--acc)" stroke-width="2.5"/><g stroke="#77777f" stroke-width="2"><line x1="80" y1="42" x2="52" y2="66"/><line x1="80" y1="42" x2="80" y2="66"/><line x1="80" y1="42" x2="108" y2="66"/></g><g fill="#2a2a31" stroke="#99999f"><rect x="42" y="66" width="20" height="14" rx="3"/><rect x="70" y="66" width="20" height="14" rx="3"/><rect x="98" y="66" width="20" height="14" rx="3"/></g>',
@@ -397,7 +428,7 @@ function mountThumb(box, it, big){
     case 'el':
       if(it.ov){ o = {k:'spr', el:P.mountSprite(box, 'assets/' + it.ov.thumb, 'ov')}; break; }
       o = {k:'el', it:it, box:box}; box.classList.add('elx'); break;
-    case 'ez': o = {k:'ez', it:it, el:P.mountEz(box, it)}; break;
+    case 'ez': o = {k:'ez', it:it, el:P.mountEz(box, it.curve ? {id:'curve', bz:S.ez.curve} : it)}; break;
     case 'car': o = {k:'car', el:P.mountCar(box, it, carOpts(big))}; break;
     case 'trk': o = {k:'trk', it:it, box:box}; break;
     case 'gf': o = {k:'gf', it:it, box:box}; break;
@@ -421,7 +452,7 @@ function head(it, extra){ return '<h2>' + esc(it.ar) + ' <span class="en">' + es
 function renderSide(){
   var it = cur(), side = $('side'), h = '';
   stageEl = null;
-  if(!it && S.tab!=='lib' && S.tab!=='ed'){ side.innerHTML=''; return; }
+  if(!it && S.tab!=='lib' && S.tab!=='ed' && S.tab!=='ai' && S.tab!=='br'){ side.innerHTML=''; return; }
   switch(S.tab){
     case 'tr':
       if(it.otr){
@@ -527,6 +558,7 @@ function renderSide(){
       break;
     case 'sfx': h += sfxSide(it); break;
     case 'ez':
+      if(it.curve){ h += curveSide(it); break; }
       h += '<div class="stage ease" id="stage"></div>' + head(it, '');
       h += '<button class="btn primary" id="go">' + (it.expr ? (it.id==='none' ? 'شيل الإكسبريشن من المحدد' : 'طبّق على الخاصية المحددة') : 'طبّق على الكي فريمز المحددة') + '</button>';
       h += '<div class="hint">' + (it.expr ? 'حدد خاصية في التايملاين (زي Position أو Rotation). الأوفرشوت والنطّة واللوب محتاجين كي فريمز على الخاصية.' : 'حدد الكي فريمز في التايملاين وبعدين دوس الزرار.') + '</div>';
@@ -541,6 +573,8 @@ function renderSide(){
       h += '<div class="hint">اعمل فولدرات لـ: بريسيتس .ffx، أوفرليز وتسريبات ضوء، أصوات وSFX. أي صوت اسمه فيه whoosh أو swoosh بيتحط تلقائي مع الترانزيشنز.</div>';
       break;
     case 'ed': h += editSide(); break;
+    case 'ai': h += AI.side(); break;
+    case 'br': h += STOCK.side(); break;
     case 'ln': h += lineSide(it); break;
     case 'car': h += carSide(it); break;
     case 'trk': h += trkSide(it); break;
@@ -557,6 +591,10 @@ function renderSide(){
   var st = $('stage');
   if(st && it && S.tab!=='tl' && S.tab!=='ed') mountThumb(st, it, true);
   if(S.tab==='ed') bindEditSide();
+  if(S.tab==='ai') AI.bindSide();
+  if(S.tab==='br') STOCK.bindSide();
+  if(S.tab==='ez' && it && it.curve) bindCurve();
+  Array.prototype.forEach.call(document.querySelectorAll('#side [data-al]'), function(b){ b.onclick = function(){ S.tl.align = b.dataset.al; save(); Array.prototype.forEach.call(document.querySelectorAll('#side [data-al]'), function(x){ x.classList.toggle('on', x===b); }); }; });
   if(S.tab==='car') bindCar();
   if(S.tab==='trk') bindTrk();
   if(S.tab==='dp') bindDp();
@@ -578,6 +616,38 @@ function renderSide(){
 function toolControls(it){
   var h = '';
   switch(it.id){
+    case 'glass':
+      h += '<div class="field"><span class="lbl">الشكل</span>' + seg('tl.gShape', [['pill','كبسولة'],['card','كارت'],['circle','دايرة']], S.tl.gShape) + '</div>';
+      h += '<div class="field"><span class="lbl">نص على الزجاج (اختياري)</span><input type="text" data-k="tl.gText" value="' + esc(S.tl.gText||'') + '" style="width:100%"></div>';
+      h += '<div class="field"><span class="lbl">البلور</span>' + seg('tl.gBlur', [[12,'خفيف'],[30,'وسط'],[60,'تقيل']], S.tl.gBlur) + '</div>';
+      h += chk('tl.gAnim', 'يدخل بنطّة', S.tl.gAnim);
+      h += '<div class="hint">زجاج بيكسر الصورة اللي تحته ومعمول بإفكتات الأفتر نفسه (من غير بلجنز). كل حاجة من نل HAMDY GLASS CTRL: العرض والطول والاستدارة والبلور والانكسار واللمعة والحافة. حرّك النل يتحرك الزجاج كله.</div>';
+      break;
+    case 'fixAr':
+      h += chk('tl.arRev', 'النص نفسه مقلوب (الحروف بالعكس)', S.tl.arRev);
+      h += '<div class="hint">حدد لاير النص العربي. بيظبط الاتجاه من اليمين للشمال ونوع الكتابة (Middle Eastern) عشان الحروف تتشبك صح. محتاج After Effects 2024 أو أحدث.</div>';
+      break;
+    case 'beat':
+      h += '<div class="field"><span class="lbl">الحساسية</span>' + seg('tl.beatSens', [['low','قليلة'],['mid','وسط'],['high','عالية']], S.tl.beatSens) + '</div>';
+      h += '<div class="field"><span class="lbl">يسمع إيه</span>' + seg('tl.beatBand', [['bass','الدرامز والباس'],['all','كل الصوت']], S.tl.beatBand) + '</div>';
+      h += '<div class="field"><span class="lbl">أقل مسافة بين بيتين</span>' + seg('tl.beatGap', [[0.15,'0.15 ث'],[0.25,'0.25 ث'],[0.4,'0.4 ث'],[0.6,'0.6 ث']], S.tl.beatGap) + '</div>';
+      h += '<div class="field"><span class="lbl">يعمل إيه على كل بيت</span>' + seg('tl.beatMode', [['markers','ماركرات بس'],['zoom','زووم'],['shake','هزة'],['flash','فلاش'],['glow','جلو'],['blur','بلور'],['cut','قطّع الصور']], S.tl.beatMode) + '</div>';
+      if(S.tl.beatMode!=='markers' && S.tl.beatMode!=='cut') h += '<div class="field"><span class="lbl">القوة</span>' + seg('tl.beatAmt', [[50,'50%'],[100,'100%'],[160,'160%']], S.tl.beatAmt) + '</div>';
+      h += '<div class="hint">' + (S.tl.beatMode==='cut' ? 'حدد لاير المزيكا والصور أو الكليبات اللي عايز تقطّعها (بالترتيب) ودوس الزرار.' : 'حدد لاير المزيكا ودوس الزرار.') + '</div><div class="hint">التحليل بيحصل على جهازك. الماركرات بتتحط على لاير المزيكا، والإفكت بيقرا منها، فلو حركت أو مسحت ماركر الإفكت بيتبعه. القوة والهدوء من HAMDY Beat Amount وDecay.</div>';
+      break;
+    case 'align':
+      h += '<div class="field"><span class="lbl">محاذاة</span><div class="algrid">' + [['left','⇤'],['hcenter','↔'],['right','⇥'],['top','⤒'],['vcenter','↕'],['bottom','⤓'],['center','◎'],['distH','⋯ H'],['distV','⋮ V']].map(function(a){ return '<button class="btn' + (S.tl.align===a[0]?' on':'') + '" data-al="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div></div>';
+      h += '<div class="field"><span class="lbl">بالنسبة لـ</span>' + seg('tl.alignTo', [['comp','الكومب'],['sel','اللايرات المحددة']], S.tl.alignTo) + '</div>';
+      h += '<div class="hint">بيحسب حدود اللاير الحقيقية (النص والشيب كمان)، ولو عليه كي فريمز في البوزيشن بيزحّقهم كلهم مع بعض.</div>';
+      break;
+    case 'vertical':
+      h += '<div class="field"><span class="lbl">المقاس</span>' + seg('tl.vSize', [['1080x1920','9:16'],['1080x1350','4:5'],['1080x1080','1:1']], S.tl.vSize) + '</div>';
+      h += '<div class="field"><span class="lbl">الطريقة</span>' + seg('tl.vMode', [['blur','في النص وخلفية مبلّرة'],['fill','يملا الكادر']], S.tl.vMode) + '</div>';
+      break;
+    case 'render':
+      h += '<div class="field"><span class="lbl">الصيغة</span>' + seg('tl.rfmt', [['mp4','MP4 (H.264)'],['hq','جودة عالية'],['ame','Media Encoder']], S.tl.rfmt) + '</div>';
+      h += '<div class="hint">بيترندر في فولدر Hamdy Exports جنب ملف المشروع (أو على الديسكتوب لو المشروع مش متسيف). الأفتر هيقف لحد ما الرندر يخلص.</div>';
+      break;
     case 'anchor':
       h += '<div class="agrid">';
       [[0,0,'↖'],[0.5,0,'↑'],[1,0,'↗'],[0,0.5,'←'],[0.5,0.5,'●'],[1,0.5,'→'],[0,1,'↙'],[0.5,1,'↓'],[1,1,'↘']].forEach(function(a){ h += '<button data-ax="' + a[0] + '" data-ay="' + a[1] + '">' + a[2] + '</button>'; });
@@ -612,7 +682,7 @@ function bindSide(){
     Array.prototype.forEach.call(g.children, function(b){
       b.onclick = function(){
         var v = b.dataset.v; if(v==='true') v=true; else if(v==='false') v=false; else if(v!=='' && !isNaN(+v)) v=+v;
-        setPath(g.dataset.seg, v);
+        setPath(g.dataset.seg, v); if(/^ai\./.test(g.dataset.seg)) AI.onSet(g.dataset.seg); if(/^br\./.test(g.dataset.seg)){ STOCK.onSet(g.dataset.seg); renderSide(); }
         Array.prototype.forEach.call(g.children, function(x){ x.classList.toggle('on', x===b); });
         var k = g.dataset.seg;
         if(k==='cap.maxWords' && S.cap.words.length) rechunk();
@@ -628,6 +698,7 @@ function bindSide(){
       setPath(inp.dataset.k, v);
       if(/^tl\.(zones|safe|thirds|center)$/.test(inp.dataset.k)){ $('stage').innerHTML = guideSVG(byId(D.GUIDES, S.tl.plat), S.tl); renderGrid(); }
       if(inp.dataset.k==='tx.size'){ /* no-op */ }
+      if(/^ai\./.test(inp.dataset.k)) AI.onSet(inp.dataset.k);
       if(/^ln\.(erase|guide|speed)$/.test(inp.dataset.k) && $('stage')) mountThumb($('stage'), cur(), true);
       if(/^car\./.test(inp.dataset.k)){ if(inp.dataset.k==='car.count') renderCarSlots(); renderGrid(); if($('stage')) mountThumb($('stage'), cur(), true); }
     });
@@ -677,7 +748,7 @@ function apply(){
       p = host('element', {id:it.id, secs:S.el.secs, acc:acc}); break;
     case 'cap':
       if(!S.cap.caps.length){ say({ok:false, code:'NO_CAPS'}); return; }
-      p = host('captions', {caps:S.cap.caps.map(function(c){ return {s:c.s, e:c.e, text:S.cap.upper ? c.text.toUpperCase() : c.text, words:c.w}; }), style:it,
+      p = host('captions', {caps:S.cap.caps.map(function(c){ return {s:c.s, e:c.e, text:capClean(S.cap.upper ? c.text.toUpperCase() : c.text), words:c.w}; }), style:it,
         opts:{size:S.cap.size, y:S.cap.y, font:S.cap.font, stroke:S.cap.stroke, shadow:S.cap.shadow, box:S.cap.box, boxOp:S.cap.boxOp, color:hexRGB(S.cap.color), acc:acc, boxColor:[0,0,0]}});
       break;
     case 'sfx': p = host('libUse', {path:sfxPath(it), fit:false, screen:false}); break;
@@ -689,7 +760,8 @@ function apply(){
     case 'trim': p = host('trimApply', trimArgs(it)); break;
     case 'dp': p = host('dpRig', dpArgs(it)); break;
     case 'gf': gfRun(it); return;
-    case 'ez': p = it.expr ? host('expr', {id:it.id}) : host('ease', {mode:it.mode||'bez', i:it.i, o:it.o}); break;
+    case 'ez': if(it.curve){ var cv = S.ez.curve; p = host('easeCurve', {x1:cv[0], y1:cv[1], x2:cv[2], y2:cv[3]}); break; }
+      p = it.expr ? host('expr', {id:it.id}) : host('ease', {mode:it.mode||'bez', i:it.i, o:it.o}); break;
     case 'lib': p = host('libUse', {path:it.f.path, fit:S.lib.fit, screen:S.lib.screen}); break;
     case 'tl':
       switch(it.id){
@@ -704,6 +776,16 @@ function apply(){
         case 'trimOut': p = host('trim', {side:'out'}); break;
         case 'guides': p = host('guides', {plat:S.tl.plat, zones:S.tl.zones, safe:S.tl.safe, thirds:S.tl.thirds, center:S.tl.center}); break;
         case 'newComp': var c = D.COMP_SIZES[+S.tl.size||0]; p = host('newComp', {w:c.w, h:c.h, fps:S.tl.fps, secs:S.tl.secs, name:S.tl.name || ('HAMDY ' + c.ar)}); break;
+        case 'beat': beatRun(); return;
+        case 'glass': p = host('liquidGlass', {shape:S.tl.gShape, text:S.tl.gText, blur:S.tl.gBlur, anim:S.tl.gAnim, font:S.tx && S.tx.font}); break;
+        case 'fixAr': p = host('fixArabic', {reverse:S.tl.arRev}); break;
+        case 'align': p = host('alignLayers', {mode:S.tl.align, to:S.tl.alignTo}); break;
+        case 'vertical': var vs = S.tl.vSize.split('x'); p = host('verticalize', {w:+vs[0], h:+vs[1], mode:S.tl.vMode}); break;
+        case 'unused':
+          if(Date.now() - orgArm > 6000 || !UNUSED){ host('unusedItems', {remove:false}).then(function(r){ if(!r.ok) return say(r); UNUSED = r.data.count; orgArm = Date.now(); var t=$('toast'); t.className='toast info'; t.textContent = r.data.count ? (trText('في') + ' ' + r.data.count + ' ' + trText('ملف مش مستخدم:') + ' ' + r.data.names.slice(0,6).join('، ') + (r.data.count>6?' …':'') + '. ' + trText('دوس تاني عشان تمسحهم من المشروع (مش من الهارد).')) : trText('مفيش ملفات مش مستخدمة ✓'); }); return; }
+          orgArm = 0; UNUSED = 0; p = host('unusedItems', {remove:true}); break;
+        case 'render': p = host('renderNow', {fmt:S.tl.rfmt}, 600000).then(function(r){ if(r.ok && r.data && r.data.path) host('openFolder', {path:dirOf(r.data.path)}); return r; }); break;
+        case 'savePng': p = host('saveFramePng', {}).then(function(r){ if(r.ok && r.data && r.data.path){ host('openFolder', {path:dirOf(r.data.path)}); r = {ok:true, data:'OK_SAVED'}; } return r; }); break;
         case 'organize':
           if(Date.now() - orgArm > 4000){ orgArm = Date.now(); var t=$('toast'); t.className='toast info'; t.textContent='دوس تاني للتأكيد. هيتنقل كل حاجة لفولدرات ومش هيتمسح حاجة.'; return; }
           orgArm = 0; p = host('organize', {deep:S.tl.deep}); break;
@@ -712,8 +794,89 @@ function apply(){
       break;
   }
   if(p) p.then(function(r){ say(r); if(r.ok) ED_DIRTY = true; });
+  return p;
 }
 
+var CURVES = [
+  ['easeInOutSine',[0.37,0,0.63,1]],['easeInOutQuad',[0.45,0,0.55,1]],['easeInOutCubic',[0.65,0,0.35,1]],['easeInOutQuart',[0.76,0,0.24,1]],['easeInOutExpo',[0.87,0,0.13,1]],
+  ['easeOutSine',[0.61,1,0.88,1]],['easeOutCubic',[0.33,1,0.68,1]],['easeOutQuart',[0.25,1,0.5,1]],['easeOutExpo',[0.16,1,0.3,1]],['easeOutBack',[0.34,1.56,0.64,1]],
+  ['easeInSine',[0.12,0,0.39,0]],['easeInCubic',[0.32,0,0.67,0]],['easeInExpo',[0.7,0,0.84,0]],['easeInBack',[0.36,0,0.66,-0.56]]];
+function curveSide(it){
+  var c = S.ez.curve, h = '<div class="head"><h2>' + it.ar + ' <span class="en">Curve Editor</span></h2><p>' + trText('اسحب النقطتين لحد ما توصل للإحساس اللي عايزه، أو اختار واحد جاهز. بيتحوّل لسرعة وتأثير حقيقيين في الكي فريمز.') + '</p></div>';
+  h += '<div class="cved"><svg id="cvSvg" viewBox="-20 -60 240 340"><rect x="0" y="0" width="200" height="200" fill="#121216" stroke="#26262c"/>' +
+    '<g stroke="#1e1e24">' + [40,80,120,160].map(function(v){ return '<line x1="' + v + '" y1="0" x2="' + v + '" y2="200"/><line x1="0" y1="' + v + '" x2="200" y2="' + v + '"/>'; }).join('') + '</g>' +
+    '<line id="cvL1" stroke="#77777f" stroke-width="1.5"/><line id="cvL2" stroke="#77777f" stroke-width="1.5"/><path id="cvPath" fill="none" stroke="var(--acc)" stroke-width="3"/>' +
+    '<circle cx="0" cy="200" r="4" fill="#fff"/><circle cx="200" cy="0" r="4" fill="#fff"/><circle id="cvH1" r="9" fill="var(--acc)" stroke="#fff" stroke-width="2" style="cursor:grab"/><circle id="cvH2" r="9" fill="var(--acc2)" stroke="#fff" stroke-width="2" style="cursor:grab"/>' +
+    '<circle id="cvDot" r="6" fill="#fff"/></svg><div class="cvnum" id="cvNum"></div></div>';
+  h += '<div class="cvpre">' + CURVES.map(function(k){ return '<button class="btn" data-cv="' + k[1].join(',') + '">' + k[0].replace('ease','') + '</button>'; }).join('') + '</div>';
+  h += '<button class="btn primary" id="go">' + trText('طبّق على الكي فريمز المحددة') + '</button>';
+  h += '<div class="hint">' + trText('حدد كي فريمز (اتنين أو أكتر) في التايملاين. المنحنى بيتطبق على كل مسافة بين كي فريمين ورا بعض.') + '</div>';
+  return h;
+}
+function bindCurve(){
+  var svg = $('cvSvg'); if(!svg) return;
+  function draw(){
+    var c = S.ez.curve, P1 = [c[0]*200, 200 - c[1]*200], P2 = [c[2]*200, 200 - c[3]*200];
+    $('cvH1').setAttribute('cx', P1[0]); $('cvH1').setAttribute('cy', P1[1]); $('cvH2').setAttribute('cx', P2[0]); $('cvH2').setAttribute('cy', P2[1]);
+    $('cvL1').setAttribute('x1', 0); $('cvL1').setAttribute('y1', 200); $('cvL1').setAttribute('x2', P1[0]); $('cvL1').setAttribute('y2', P1[1]);
+    $('cvL2').setAttribute('x1', 200); $('cvL2').setAttribute('y1', 0); $('cvL2').setAttribute('x2', P2[0]); $('cvL2').setAttribute('y2', P2[1]);
+    $('cvPath').setAttribute('d', 'M0 200 C' + P1[0] + ' ' + P1[1] + ' ' + P2[0] + ' ' + P2[1] + ' 200 0');
+    $('cvNum').textContent = 'cubic-bezier(' + c.map(function(v){ return (+v).toFixed(2); }).join(', ') + ')';
+  }
+  function drag(id, ix){
+    var h = $(id);
+    h.onpointerdown = function(e){
+      h.setPointerCapture(e.pointerId);
+      h.onpointermove = function(ev){
+        var pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; var q = pt.matrixTransform(svg.getScreenCTM().inverse());
+        S.ez.curve[ix] = Math.round(Math.max(0, Math.min(1, q.x/200))*100)/100; S.ez.curve[ix+1] = Math.round(Math.max(-0.6, Math.min(1.6, (200 - q.y)/200))*100)/100; draw();
+      };
+      h.onpointerup = function(){ h.onpointermove = null; save(); var st = $('stage') || null; renderGrid(); };
+    };
+  }
+  drag('cvH1', 0); drag('cvH2', 2); draw();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cv]'), function(b){ b.onclick = function(){ S.ez.curve = b.dataset.cv.split(',').map(Number); save(); draw(); renderGrid(); }; });
+  var t0 = performance.now();
+  (function anim(){ var d = $('cvDot'); if(!d) return; var u = ((performance.now() - t0) / 1400) % 1.4; u = Math.min(1, u); var f = P.easeFn({bz:S.ez.curve})(u); d.setAttribute('cx', u*200); d.setAttribute('cy', 200 - f*200); requestAnimationFrame(anim); })();
+}
+function capClean(t){ return S.cap.nopunct ? String(t).replace(/[.,!?؟،؛:;"'“”«»…]+/g, '').replace(/\s{2,}/g, ' ').trim() : t; }
+var UNUSED = 0;
+function dirOf(p){ return String(p).replace(/[\\\/][^\\\/]*$/, ''); }
+/* ---- on the beat: decode the selected music layer on this machine and find onsets ---- */
+function beatRun(){
+  var t = $('toast'); t.className = 'toast info'; t.textContent = trText('بحلّل المزيكا…');
+  host('capSource', {}).then(function(r){
+    if(!r.ok) return say(r);
+    var src = r.data, fs = NODE && NODE('fs');
+    if(!fs) return say({ok:false, code:'NO_NODE'});
+    var buf; try{ buf = fs.readFileSync(src.path); }catch(e){ return say({ok:false, msg:String(e.message||e)}); }
+    var ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength), AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+    ac.decodeAudioData(ab, function(audio){
+      try{ ac.close(); }catch(e){}
+      var beats = detectBeats(audio, S.tl), st = (src.stretch || 100) / 100, times = [];
+      beats.forEach(function(b){ var ct = src.start + b * st; if(ct >= src.inPoint - 0.001 && ct <= src.outPoint) times.push(Math.round(ct * 1000) / 1000); });
+      if(!times.length) return say({ok:false, code:'NO_BEATS'});
+      host('beatApply', {audio:src.index, times:times, mode:S.tl.beatMode, amt:S.tl.beatAmt, decay:S.tl.beatDecay}).then(say);
+    }, function(){ say({ok:false, code:'BAD_AUDIO'}); });
+  });
+}
+function detectBeats(audio, o){
+  var sr = audio.sampleRate, n = audio.length, ch = audio.numberOfChannels, x = new Float32Array(n), c, i;
+  for(c = 0; c < ch; c++){ var d = audio.getChannelData(c); for(i = 0; i < n; i++) x[i] += d[i] / ch; }
+  if(o.beatBand !== 'all'){ var a = Math.exp(-2 * Math.PI * 160 / sr), y = 0; for(i = 0; i < n; i++){ y = (1 - a) * x[i] + a * y; x[i] = y; } }
+  var hop = Math.round(sr / 100), N = Math.floor(n / hop), env = new Float32Array(N), fl = new Float32Array(N);
+  for(i = 0; i < N; i++){ var s = 0, j0 = i * hop, j; for(j = j0; j < j0 + hop; j++) s += x[j] * x[j]; env[i] = Math.log(1 + 1000 * Math.sqrt(s / hop)); }
+  for(i = 1; i < N; i++) fl[i] = Math.max(0, env[i] - env[i-1]);
+  var k = {low:2.2, mid:1.5, high:1.0}[o.beatSens] || 1.5, W = 50, out = [], last = -9, gap = o.beatGap || 0.25;
+  for(i = 1; i < N - 1; i++){
+    if(fl[i] < fl[i-1] || fl[i] < fl[i+1]) continue;
+    var a0 = Math.max(0, i - W), a1 = Math.min(N, i + W), m = 0, q = 0, cnt = a1 - a0, j2;
+    for(j2 = a0; j2 < a1; j2++) m += fl[j2]; m /= cnt;
+    for(j2 = a0; j2 < a1; j2++) q += (fl[j2] - m) * (fl[j2] - m); q = Math.sqrt(q / cnt);
+    if(fl[i] > m + k * q && fl[i] > 0.02){ var tt = i / 100; if(tt - last >= gap){ out.push(tt); last = tt; } }
+  }
+  return out;
+}
 function refreshLib(){
   if(!S.lib.paths.length){ LIBFILES = []; if(S.tab==='lib') renderAll(); return; }
   host('libList', {paths:S.lib.paths}).then(function(r){
@@ -723,7 +886,7 @@ function refreshLib(){
   });
 }
 
-function renderAll(){ document.body.classList.toggle('ed', S.tab==='ed'); renderTabs(); renderGrid(); renderSide(); var tn = TABS.filter(function(t){ return t.id===S.tab; })[0].ar; $('q').placeholder = S.lang==='en' ? 'Search ' + trText(tn) + '...' : 'ابحث في ' + tn + '...'; }
+function renderAll(){ document.body.classList.toggle('ed', S.tab==='ed' || S.tab==='ai' || S.tab==='br'); document.body.classList.toggle('aitab', S.tab==='ai' || S.tab==='br'); renderTabs(); renderGrid(); renderSide(); var tn = TABS.filter(function(t){ return t.id===S.tab; })[0].ar; $('q').placeholder = S.lang==='en' ? 'Search ' + trText(tn) + '...' : 'ابحث في ' + tn + '...'; }
 
 /* ===================================================== text style -> host */
 function stHost(st){
@@ -898,7 +1061,7 @@ function capSide(it){
   if(!it.maxWords) h += '<div class="field"><span class="lbl">أقصى كلمات في الكابشن</span>' + seg('cap.maxWords', [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5'],[6,'6']], S.cap.maxWords) + '</div>';
   h += '<div class="row">' + num('cap.size','الحجم',S.cap.size) + num('cap.y','المكان من فوق %',S.cap.y) + '</div>';
   h += '<div class="row"><div class="field"><label>لون الكلام</label><input type="color" data-k="cap.color" value="' + S.cap.color + '"></div><div class="field"><label>الخط (PostScript)</label><input type="text" data-k="cap.font" dir="ltr" placeholder="Cairo-Bold" value="' + esc(S.cap.font) + '"></div></div>';
-  h += '<div class="row">' + chk('cap.shadow','ظل',S.cap.shadow) + chk('cap.stroke','إطار',S.cap.stroke) + chk('cap.box','بوكس ورا',S.cap.box) + chk('cap.upper','CAPS للإنجليزي',S.cap.upper) + '</div>';
+  h += '<div class="row">' + chk('cap.shadow','ظل',S.cap.shadow) + chk('cap.stroke','إطار',S.cap.stroke) + chk('cap.box','بوكس ورا',S.cap.box) + chk('cap.upper','CAPS للإنجليزي',S.cap.upper) + chk('cap.nopunct','شيل الترقيم',S.cap.nopunct) + '</div>';
   h += '<div class="sect">٣. راجع الكلام (' + S.cap.caps.length + ')</div>';
   if(S.cap.caps.length){
     h += '<div class="caplist">' + S.cap.caps.map(function(c,i){ return '<div class="capline"><span class="ct">' + fmtT(c.s) + '</span><input type="text" class="capedit" data-ci="' + i + '" dir="auto" value="' + esc(c.text) + '"></div>'; }).join('') + '</div>';
@@ -1797,6 +1960,9 @@ function setStatus(r){
   if(r && r.ok){ st.className='chip live'; st.innerHTML='<i></i><span>' + (r.data.comp ? esc(r.data.comp) : 'متصل') + '</span>'; }
   else { st.className='chip'; st.innerHTML='<i style="background:var(--bad)"></i><span>المحرك مش شغال</span>'; }
 }
+var AI = HMK_MAKE_AI({S:S, host:host, save:save, say:say, $:$, esc:esc, NODE:NODE, CEP:CEP, apply:apply, itemsOf:itemsOf, byId:byId, trText:trText, seg:seg, chk:chk, openURL:openURL, extPath:extPath, rawEval:rawEval, MSG:MSG, dirty:function(){ ED_DIRTY = true; }});
+AI.init();
+var STOCK = HMK_MAKE_STOCK({S:S, host:host, save:save, say:say, $:$, esc:esc, NODE:NODE, CEP:CEP, trText:trText, seg:seg, chk:chk, openURL:openURL});
 applyLang();
 initLayout();
 renderAll();

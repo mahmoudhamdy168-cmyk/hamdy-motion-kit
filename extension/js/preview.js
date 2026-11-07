@@ -540,6 +540,7 @@ function pvChar(sp, spec, i, n, fs, t, acc, g){
 
 /* ======================================================== easing preview */
 function easeFn(e){
+  if(e.bz) return bez(e.bz[0], e.bz[1], e.bz[2], e.bz[3]);
   if(e.mode==='linear') return function(x){ return x; };
   if(e.mode==='hold') return function(x){ return x<1?0:1; };
   return bez(e.o/100, 0, 1 - e.i/100, 1);
@@ -1368,7 +1369,7 @@ function injectFilters(){
 }
 
 return {mountTr:mountTr, drawTr:drawTr, mountMp:mountMp, drawMp:drawMp, mountTx:mountTx, drawTx:drawTx,
-        mountEz:mountEz, drawEz:drawEz, mountTitle:mountTitle, drawTitle:drawTitle, elSVG:E, injectFilters:injectFilters,
+        mountEz:mountEz, drawEz:drawEz, easeFn:easeFn, mountTitle:mountTitle, drawTitle:drawTitle, elSVG:E, injectFilters:injectFilters,
         mountCap:mountCap, drawCap:drawCap, waveSVG:waveSVG, mountLook:mountLook, drawLook:drawLook, mountStyle:mountStyle,
         clamp:clamp, rnd:rnd, mountSprite:mountSprite, drawSprite:drawSprite, mountLine:mountLine, drawLine:drawLine, mountCar:mountCar, drawCar:drawCar, mountTrim:mountTrim, drawTrim:drawTrim, mountDepth:mountDepth, drawDepth:drawDepth, trkSVG:trkSVG, gfSVG:gfSVG};
 })();

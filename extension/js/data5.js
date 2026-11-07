@@ -100,3 +100,18 @@ if(typeof NABD_TOOLS2 !== 'undefined'){
     {id:'dNone',  move:'none',  ar:'عمق بس',         en:'Depth Only',     g:'لوب', d:'بيعمل العمق والكاميرا من غير حركة، وإنت تحرك HAMDY DEPTH RIG بنفسك.'}
   ];
 }
+
+/* EditFast-style extra tools */
+if(typeof NABD_DATA !== 'undefined'){
+  NABD_DATA.TOOLS.push(
+    {id:'glass',   ar:'زجاج سايل',           en:'Liquid Glass',     g:'زجاج', d:'كبسولة أو كارت زجاج بيكسر ويبلّر اللي تحته، وعليه نص لو عايز.'},
+    {id:'fixAr',   ar:'صلّح اتجاه العربي',    en:'Fix Arabic Direction', g:'لايرات', d:'لو العربي طالع مقطّع أو مقلوب في لاير النص.'},
+    {id:'beat',    ar:'على الإيقاع',        en:'On the Beat',      g:'مزيكا', d:'بيلقط البيتس من المزيكا ويحط ماركرات، وبيعمل زووم أو هزة أو فلاش أو جلو أو بلور على كل بيت، أو يقطّع الصور على الإيقاع.'},
+    {id:'align',   ar:'محاذاة وتوزيع',      en:'Align & Distribute', g:'لايرات', d:'يمين وشمال وسنتر وفوق وتحت، وتوزيع بمسافات متساوية.'},
+    {id:'vertical',ar:'حوّله طولي',          en:'Make Vertical',    g:'مشروع', d:'كومب جديد 9:16 أو 4:5 أو 1:1 والفيديو في النص على خلفية مبلّرة منه.'},
+    {id:'unused',  ar:'الملفات مش المستخدمة', en:'Unused Footage',   g:'مشروع', d:'بيطلّعلك الملفات اللي مش مستخدمة في أي كومب، ولو دوست تاني بيشيلها من المشروع.'},
+    {id:'render',  ar:'رندر بضغطة',          en:'One-Click Render', g:'مشروع', d:'MP4 أو جودة عالية أو تبعته لـ Media Encoder.'},
+    {id:'savePng', ar:'احفظ الفريم PNG',     en:'Save Frame as PNG', g:'مشروع', d:'بيحفظ الفريم اللي عند البلاي هيد صورة PNG.'}
+  );
+  NABD_DATA.EASES.unshift({id:'curve', ar:'منحنى بإيدك', en:'Curve Editor', g:'إيز', curve:true});
+}

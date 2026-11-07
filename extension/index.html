@@ -225,6 +225,33 @@ body.dragout::after{content:'اسحب الكارت لبرة البانل على 
 /* edit page */
 .grid.edgrid{display:block}
 body.ed #q{visibility:hidden}
+body.aitab #cardSize, body.aitab #count{display:none}
+.grid.aigrid{display:block;height:100%}
+.aiwrap{display:flex;flex-direction:column;height:calc(100vh - 150px);min-height:300px;gap:8px}
+.aiscope{font-size:12px;color:#a9a9b6;background:#1b1b22;border:1px solid #2a2a33;border-radius:8px;padding:6px 10px}
+.ailog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
+.aib{max-width:88%;padding:9px 12px;border-radius:12px;line-height:1.7;font-size:13px;white-space:normal;word-wrap:break-word}
+.aib.user{align-self:flex-start;background:var(--acc);color:#111}
+.aib.bot{align-self:flex-end;background:#22222b;color:#e8e8ee}
+.aib.tool{align-self:flex-end;background:#16161c;border:1px dashed #33333d;color:#9a9aa8;font-size:12px}
+.aib.tool.bad{border-color:#a33;color:#f08a8a}
+.aib.err{align-self:center;background:#3a1d1d;color:#f3b0b0}
+.aib pre{direction:ltr;text-align:left;max-height:220px;overflow:auto;background:#0e0e12;padding:8px;border-radius:6px;font-size:11px;white-space:pre-wrap}
+.aib code{direction:ltr;background:#0e0e12;padding:1px 4px;border-radius:4px}
+.aiact{display:flex;gap:6px;margin-top:6px}.aiact .btn{width:auto;padding:4px 14px}
+.aiin textarea{width:100%;box-sizing:border-box;background:#141419;color:#eee;border:1px solid #2c2c36;border-radius:10px;padding:10px;font:inherit;resize:vertical}
+.aibtns{display:flex;gap:8px;align-items:center;margin-top:6px}.aibtns .btn{width:auto;padding:6px 18px}
+.algrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.algrid .btn{padding:8px 0;font-size:16px}.algrid .btn.on{background:var(--acc);color:#111}
+.cved{position:relative}.cved svg{width:100%;max-width:300px;display:block;margin:0 auto;touch-action:none}.cvnum{text-align:center;font:12px monospace;color:#9a9aa8;direction:ltr;margin-top:4px}
+.cvpre{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin:10px 0}.cvpre .btn{padding:5px 4px;font-size:11px;direction:ltr}
+.grid.brgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-min,170px),1fr));gap:10px;align-content:start}
+.brgrid .edempty,.brgrid .brmore{grid-column:1/-1;text-align:center}
+.brth{aspect-ratio:16/9;background-size:cover;background-position:center;position:relative;border-radius:8px 8px 0 0;background-color:#16161c}
+.brth.wave{background-size:100% 100%;background-color:#e9e9ef}
+.brplay{position:absolute;inset:auto auto 6px 6px;width:30px;height:30px;border-radius:50%;border:0;background:var(--acc);color:#111;cursor:pointer}
+.brtag{position:absolute;top:6px;right:6px;background:#000a;color:#fff;font-size:10px;padding:2px 6px;border-radius:6px}
+.brc .meta{padding:6px 8px;display:flex;flex-direction:column;gap:2px;font-size:11px}.brc .meta span{color:#8b8b97}
+.aiuse{font-size:11px;color:#777;margin-inline-start:auto;direction:ltr}
 .edwrap{display:flex;flex-direction:column;gap:10px;padding:2px}
 .edcard{background:var(--card,#1b1b21);border:1px solid #2c2c35;border-radius:10px;padding:10px 12px}
 .edcard h3{margin:0 0 6px;font-size:13px;display:flex;align-items:center;gap:8px;justify-content:space-between}
@@ -296,6 +323,8 @@ nav#tabs button[data-t=ed]{color:var(--acc)}
 <script src="js/data5.js"></script>
 <script src="js/sfx_data.js"></script>
 <script src="js/preview.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/stock.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
