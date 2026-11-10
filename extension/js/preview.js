@@ -575,6 +575,18 @@ function exprVal(id, t){
     case 'wiggleSoft': k = 0.5 + 0.3*D.noise(t*1.5, 2); return {x:k, y:k};
     case 'wiggleHard': k = 0.5 + 0.45*D.noise(t*8, 4); return {x:clamp(k), y:clamp(k)};
     case 'spin': return {x:0.5, y:0.5, rot:(t*90)%360};
+    case 'a_excite': return exprVal('overshoot', t);
+    case 'a_bounce': return exprVal('bounce', t);
+    case 'a_spin': return {x:(t*0.5)%1, y:(t*0.5)%1};
+    case 'a_orbit': return {x:0.5 + 0.35*Math.cos(t*2), y:0.5 + 0.35*Math.sin(t*2)};
+    case 'a_float': return {x:0.5, y:0.5 + 0.3*Math.sin(t*2*Math.PI*0.8)};
+    case 'a_swing': k = 0.5 + 0.4*Math.sin(t*2*Math.PI*1.2); return {x:k, y:k};
+    case 'a_pulse': k = Math.abs(Math.sin(t*Math.PI*1.5)); return {x:0.5, y:0.3 + 0.5*k};
+    case 'a_blink': k = ((t*4)%1) < 0.5 ? 0.9 : 0.1; return {x:k, y:k};
+    case 'a_shake': return exprVal('wiggleHard', t);
+    case 'a_wheel': c = (t*0.4)%1; return {x:c, y:c};
+    case 'a_stare': k = 0.5 + 0.35*Math.sin(t*1.3); return {x:k, y:k};
+    case 'a_looper': return exprVal('loopPing', t);
     default: return {x:0.5, y:0.5};
   }
 }

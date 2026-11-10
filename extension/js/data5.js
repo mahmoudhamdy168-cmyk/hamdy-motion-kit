@@ -115,3 +115,27 @@ if(typeof NABD_DATA !== 'undefined'){
   );
   NABD_DATA.EASES.unshift({id:'curve', ar:'منحنى بإيدك', en:'Curve Editor', g:'إيز', curve:true});
 }
+
+/* automatic animations (expressions with slider controls) */
+if(typeof NABD_DATA !== 'undefined'){
+  var G_AUTO = 'حركات تلقائية';
+  [
+    ['excite','أوفرشوت بعد آخر كي','Excite',true,'بعد آخر كي فريم اللاير بيكمّل ويرجع بنطّة مرنة، على أي بروبرتي.'],
+    ['bounce','نطّة حقيقية','Bounce',true,'بعد آخر كي فريم بينط على الأرض زي الكورة ويهدى.'],
+    ['spin','لف مستمر','Spin',false,'اللاير بيلف على طول بسرعة تحددها.'],
+    ['orbit','يدور في دايرة','Orbit',false,'اللاير بيلف في دايرة حوالين مكانه.'],
+    ['float','طفو','Float',false,'طالع نازل بهدوء على طول.'],
+    ['swing','بندول','Swing',false,'بيتمرجح زي البندول، وتقدر تخليه يهدى.'],
+    ['pulse','نبض','Pulse',false,'بيكبر ويصغر زي نبض القلب.'],
+    ['blink','يرمش','Blink',false,'بيظهر ويختفي بسرعة تحددها.'],
+    ['shake','اهتزاز','Shake',false,'اهتزاز عشوائي بقوة وسرعة.'],
+    ['wheel','عجلة','Wheel',false,'بيلف على قد ما بيتحرك بالعرض، زي العجلة.'],
+    ['stare','يبص على لاير','Stare',false,'بيلف عشان يفضل باصص على لاير تاني تختاره من HAMDY Stare Target.'],
+    ['looper','لوب للكي فريمز','Looper',true,'بيكرر الكي فريمز (Cycle أو Ping-pong أو Continue).']
+  ].forEach(function(a){ NABD_DATA.EASES.push({id:'a_' + a[0], ar:a[1], en:a[2], g:G_AUTO, auto:a[0], keyed:a[3], expr:true, d:a[4]}); });
+  NABD_DATA.TOOLS.push(
+    {id:'tbreak', ar:'فكّ النص لايرات', en:'Text Break', g:'لايرات', d:'بيقسم لاير النص لكلمات أو سطور أو حروف، كل واحدة في لاير لوحدها وفي نفس مكانها بالظبط.'},
+    {id:'rekey',  ar:'احفظ الحركة', en:'Save Animation (Re-Key)', g:'كي فريمز', d:'تحفظ كي فريمز عملتها وتطبّقها على أي لاير تاني في أي مشروع، بالإيز بتاعها.'},
+    {id:'brand',  ar:'ألوان البراند', en:'Brand Kit', g:'مشروع', d:'تحفظ ألوان العميل وفونته، وتستخدمهم في القوالب بضغطة.'}
+  );
+}

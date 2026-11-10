@@ -254,6 +254,12 @@ body.aitab #cardSize, body.aitab #count{display:none}
 .tplsvg{width:100%;height:100%;display:block}.tplback{fill:#15161c}
 .tpf{display:flex;flex-direction:column;gap:3px;margin-bottom:7px;font-size:11px;color:#9a9aa8}.tpf input,.tpf textarea{width:100%;box-sizing:border-box;background:#141419;color:#eee;border:1px solid #2c2c36;border-radius:8px;padding:7px 9px;font:inherit;font-size:13px}
 .tpcols{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.tpcols label{display:flex;align-items:center;gap:4px;font-size:11px;color:#9a9aa8}.tpcols input{width:34px;height:26px;border:0;padding:0;background:none}.tpcols .btn{width:auto;padding:4px 10px;font-size:11px}
+.favb{position:absolute;top:6px;inset-inline-start:6px;width:24px;height:24px;border-radius:50%;border:0;background:#0009;color:#888;font-size:13px;cursor:pointer;opacity:0;transition:.15s}.card{position:relative}.card:hover .favb,.favb.on{opacity:1}.favb.on{color:#ffc83d}
+.qs{position:fixed;inset:0;background:#0008;z-index:9999;display:flex;justify-content:center;align-items:flex-start;padding-top:9vh}
+.qsbox{width:min(640px,92vw);background:#18181e;border:1px solid #2c2c36;border-radius:14px;box-shadow:0 20px 60px #000a;overflow:hidden}
+.qsbox input{width:100%;box-sizing:border-box;border:0;border-bottom:1px solid #2c2c36;background:transparent;color:#fff;font:inherit;font-size:16px;padding:14px 16px;outline:0}
+.qslist{max-height:60vh;overflow:auto;padding:6px}.qsi{display:flex;gap:10px;align-items:baseline;padding:8px 10px;border-radius:8px;cursor:pointer}.qsi b{font-weight:600}.qsi span{color:#8b8b97;font-size:12px}.qsi em{margin-inline-start:auto;font-style:normal;font-size:11px;color:var(--acc)}.qsi.on{background:#26262f}.qsempty{padding:16px;color:#8b8b97;text-align:center}
+.klist{display:flex;flex-direction:column;gap:6px;margin:8px 0}.krow{display:flex;gap:6px;align-items:center;background:#16161c;border-radius:8px;padding:6px 8px}.krow b{flex:1}.krow span{font-size:11px;color:#8b8b97}.krow .btn{width:auto;padding:4px 10px}
 .aiuse{font-size:11px;color:#777;margin-inline-start:auto;direction:ltr}
 .edwrap{display:flex;flex-direction:column;gap:10px;padding:2px}
 .edcard{background:var(--card,#1b1b21);border:1px solid #2c2c35;border-radius:10px;padding:10px 12px}
@@ -292,6 +298,7 @@ nav#tabs button[data-t=ed]{color:var(--acc)}
     <div class="hctl">
     <label class="hcol" title="لون الأشكال والعناوين">لونك <input type="color" id="acc"></label>
     <button class="iconbtn" id="langBtn" title="Language / اللغة">EN</button>
+    <button class="iconbtn" id="qsBtn" title="دوّر في الكيت كله (Ctrl+K)">🔍</button>
     <button class="iconbtn" id="hideBtn" title="اخفي اللايرات المساعدة في التايملاين">👁</button>
     <button class="iconbtn" id="updBtn" title="دوّر على تحديث">⟳</button>
     <button class="iconbtn" id="pause" title="وقف / شغّل معاينات الكروت (المعاينة الكبيرة بتفضل شغالة)">⏸</button>
@@ -324,11 +331,13 @@ nav#tabs button[data-t=ed]{color:var(--acc)}
 <script src="js/car_core.js"></script>
 <script src="js/otr_data.js"></script>
 <script src="js/tpl_data.js"></script>
+<script src="js/tpl_data2.js"></script>
 <script src="js/data5.js"></script>
 <script src="js/sfx_data.js"></script>
 <script src="js/preview.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/stock.js"></script>
+<script src="js/localasr.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
