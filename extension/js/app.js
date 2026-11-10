@@ -66,6 +66,7 @@ var MSG = {
   NO_TEXTLAYER:'حدد لاير نص (أو أكتر) الأول.',
   NO_PX_KEY:'حط مفتاح Pexels الأول (ببلاش من pexels.com/api).',
   NO_FS_KEY:'حط مفتاح Freesound الأول (ببلاش من freesound.org).',
+  NEED_IMAGE:'حدد لاير صورة أو فيديو الأول.',
   NO_DEPTH:'مفيش عمق 3D معمول في الكومب ده. حدد اللايرات واعمله الأول.',
   NOT_UNDER:'البلاي هيد لازم يكون جوه اللاير المحدد.',
   NO_ROOM:'مفيش وقت كفاية في الكومب بعد البلاي هيد.',
@@ -126,7 +127,7 @@ var DEF = {
   car:{count:8, content:'images', images:[], palette:0, colA:'#ff6b3d', colB:'#3d73ff', aspect:1, design:'clean', round:12, border:0, borderColor:'#ffffff', motion:0, speed:30, reverse:false, hold:1, tiltX:-12, backFade:35, backDim:30, blur:false, orbit:true, spokes:false, chain:false, lineStyle:'solid', lineColor:'#ffffff', intro:true, person:false, secs:8, size:100, radius:100, face:0},
   ln:{frames:20, secs:3, col:'accW', width:100, erase:true, speed:100, flow:'travel', guide:true, reverse:false, text:'نص ماشي على خط', size:90, snappy:true, sfx:true, at:'layer'},
   lib:{paths:[], fit:true, screen:false},
-  tl:{tbBy:'word', kSpeed:1, kMode:'relative', kName:'', gShape:'pill', gText:'', gBlur:30, gAnim:true, arRev:false, beatSens:'mid', beatBand:'bass', beatGap:0.25, beatMode:'zoom', beatAmt:100, beatDecay:10, align:'center', alignTo:'comp', vMode:'blur', vSize:'1080x1920', rfmt:'mp4', size:0, fps:30, secs:10, name:'', stagger:3, overlap:0, pct:150, nudge:1, deep:false, plat:'reels', zones:true, safe:true, thirds:false, center:false}
+  tl:{cutModel:'general', cutMode:'above', cutText:'', tbBy:'word', kSpeed:1, kMode:'relative', kName:'', gShape:'pill', gText:'', gBlur:30, gAnim:true, arRev:false, beatSens:'mid', beatBand:'bass', beatGap:0.25, beatMode:'zoom', beatAmt:100, beatDecay:10, align:'center', alignTo:'comp', vMode:'blur', vSize:'1080x1920', rfmt:'mp4', size:0, fps:30, secs:10, name:'', stagger:3, overlap:0, pct:150, nudge:1, deep:false, plat:'reels', zones:true, safe:true, thirds:false, center:false}
 };
 var S = load();
 function load(){
@@ -184,6 +185,7 @@ function say(r){
     if(!m && /^OK_BEATS:/.test(d)) m = trText('اتحط على') + ' ' + d.split(':')[1] + ' ' + trText('بيت ✓');
     if(!m && /^OK_REMOVED:/.test(d)) m = trText('اتشال') + ' ' + d.split(':')[1] + ' ' + trText('ملف من المشروع ✓');
     if(!m && d==='OK_AME') m = 'اتبعت لـ Media Encoder ✓';
+    if(!m && d==='OK_FRAME_ONLY') m = 'اتفصل ✓ (ده الفريم اللي عند البلاي هيد بس، لأن اللاير فيديو)';
     if(!m && d==='OK_AME_FALLBACK') m = 'مالقيتش تمبليت MP4 فبعته لـ Media Encoder ✓';
     if(!m && d==='OK_SAVED') m = 'الصورة اتحفظت في فولدر Hamdy Exports ✓';
     if(!m && r.data && r.data.path) m = 'خلص ✓ ' + r.data.path;
@@ -385,6 +387,7 @@ function guideSVG(g, opt){
 }
 
 var TICON = {
+  cutout:'<rect x="20" y="16" width="120" height="68" rx="6" fill="#2f2f38"/><g fill="none" stroke="#55555f" stroke-width="2" stroke-dasharray="4 4"><rect x="20" y="16" width="120" height="68" rx="6"/></g><circle cx="80" cy="40" r="13" fill="var(--acc)"/><path d="M56 84q4-28 24-28t24 28z" fill="var(--acc)"/>',
   tbreak:'<g font-family="sans-serif" font-size="20" fill="#fff" text-anchor="middle"><rect x="18" y="34" width="38" height="30" rx="4" fill="#2f2f38"/><text x="37" y="55">أهلاً</text><rect x="62" y="34" width="38" height="30" rx="4" fill="var(--acc)"/><text x="81" y="55" fill="#111">بيك</text><rect x="106" y="34" width="38" height="30" rx="4" fill="#2f2f38"/><text x="125" y="55">هنا</text></g>',
   rekey:'<g fill="var(--acc)"><path d="M40 50l10-10 10 10-10 10z"/><path d="M75 50l10-10 10 10-10 10z"/><path d="M110 50l10-10 10 10-10 10z"/></g><path d="M50 66q35 24 70 0" fill="none" stroke="#fff" stroke-width="3"/><circle cx="120" cy="66" r="4" fill="#fff"/>',
   brand:'<g><rect x="28" y="28" width="30" height="44" rx="6" fill="var(--acc)"/><rect x="65" y="28" width="30" height="44" rx="6" fill="#ffffff"/><rect x="102" y="28" width="30" height="44" rx="6" fill="#2a2a31" stroke="#55555f"/></g>',
@@ -429,7 +432,7 @@ function mountThumb(box, it, big){
     case 'tx':
       var txt = big ? (S.tx.text || ' ') : (it.latin ? 'MOTION' : 'حركة النص');
       var fs = big ? Math.max(18, Math.min(46, 260/Math.max(4, (S.tx.text||'').length*0.75))) : 24;
-      o = {k:'tx', it:it, el:P.mountTx(box, txt, (it.src||it.tw) ? 'chars' : S.tx.based, fs)}; break;
+      o = {k:'tx', it:it, el:P.mountTx(box, txt, (it.src||it.tw) ? 'chars' : (it.by || S.tx.based), fs)}; break;
     case 'ti': o = {k:'ti', it:it, el:P.mountTitle(box, it, tiTexts(it), {side:it.side || S.ti.side})}; break;
     case 'cap': o = {k:'cap', it:it, el:P.mountCap(box, it, capOpt(big))}; break;
     case 'ts': P.mountStyle(box, it, big ? (S.tx.text || 'حمدي') : 'حمدي', S.acc); break;
@@ -637,6 +640,14 @@ function renderSide(){
 function toolControls(it){
   var h = '';
   switch(it.id){
+    case 'cutout':
+      h += '<div class="field"><span class="lbl">بتفصل إيه</span>' + seg('tl.cutModel', [['general','أي حاجة'],['person','أشخاص']], S.tl.cutModel) + '</div>';
+      h += '<div class="field"><span class="lbl">النتيجة</span>' + seg('tl.cutMode', [['above','لاير فوق الأصلي'],['replace','بدل الأصلي'],['behind','نص ورا الشخص']], S.tl.cutMode) + '</div>';
+      if(S.tl.cutMode==='behind') h += '<div class="field"><span class="lbl">النص (لو مفيش لاير نص متحدد)</span><input type="text" data-k="tl.cutText" value="' + esc(S.tl.cutText||'') + '" placeholder="حمدي" style="width:100%"></div>';
+      h += '<div class="hint okline">بيشتغل على جهازك ببلاش ومن غير مفتاح. أول مرة بس بينزّل الموديل لوحده (176 ميجا).</div>';
+      h += '<div class="hint">حدد لاير صورة (أو فيديو، وساعتها بيفصل الفريم اللي عند البلاي هيد بس). للنص ورا الشخص: حدد الصورة ولاير النص مع بعض، أو سيبه يعمل نص جديد.</div>';
+      h += '<div class="hint" id="cutStatus"></div>';
+      break;
     case 'tbreak':
       h += '<div class="field"><span class="lbl">قسّمه</span>' + seg('tl.tbBy', [['word','كلمات'],['line','سطور'],['char','حروف']], S.tl.tbBy) + '</div>';
       h += '<div class="hint">' + (S.tl.tbBy==='char' ? 'خلي بالك: الحروف العربي بتتفصل عن بعض لو قسّمته حروف. للعربي استخدم كلمات أو سطور.' : 'كل جزء بيبقى لاير لوحده في نفس مكانه بالظبط، والحروف العربي بتفضل متشبكة. اللاير الأصلي بيتقفل.') + '</div>';
@@ -767,7 +778,7 @@ function bindSide(){
 
 function txArgs(){
   var tp = cur();
-  return {spec:txSpec(tp), based:S.tx.based, frames:S.tx.frames, size:S.tx.size, secs:S.tx.secs, doIn:S.tx.doIn, doOut:S.tx.doOut, text:S.tx.text, font:S.tx.font,
+  return {spec:txSpec(tp), based:tp.by || S.tx.based, frames:S.tx.frames, size:S.tx.size, secs:S.tx.secs, doIn:S.tx.doIn, doOut:S.tx.doOut, text:S.tx.text, font:S.tx.font,
           cps:S.tx.cps, cursor:S.tx.cursor, acc:hexRGB(S.acc), sfx:((tp.src||tp.tw) && S.tx.typeSfx) ? sfxPath({id:'typing'}) : null};
 }
 var orgArm = 0;
@@ -819,6 +830,7 @@ function apply(){
         case 'newComp': var c = D.COMP_SIZES[+S.tl.size||0]; p = host('newComp', {w:c.w, h:c.h, fps:S.tl.fps, secs:S.tl.secs, name:S.tl.name || ('HAMDY ' + c.ar)}); break;
         case 'beat': beatRun(); return;
         case 'tbreak': p = host('textBreak', {by:S.tl.tbBy}); break;
+        case 'cutout': cutoutRun(); return;
         case 'rekey': case 'brand': return;
         case 'glass': p = host('liquidGlass', {shape:S.tl.gShape, text:S.tl.gText, blur:S.tl.gBlur, anim:S.tl.gAnim, font:S.tx && S.tx.font}); break;
         case 'fixAr': p = host('fixArabic', {reverse:S.tl.arRev}); break;
@@ -994,6 +1006,21 @@ function qsOpen(){
 document.addEventListener('keydown', function(e){
   if((e.ctrlKey || e.metaKey) && (e.key==='k' || e.key==='K' || e.code==='KeyK' || e.code==='Space')){ e.preventDefault(); qsOpen(); }
 });
+var SEG = null;
+function cutoutRun(){
+  if(!NODE){ say({ok:false, code:'NO_NODE'}); return; }
+  if(!SEG) SEG = HMK_MAKE_SEG({NODE:NODE});
+  function msg(m){ var el = $('cutStatus'); if(el) el.textContent = m; var t = $('toast'); t.className = 'toast info'; t.textContent = m; }
+  msg(trText('بجهّز الصورة…'));
+  host('layerFrame', {}).then(function(r){
+    if(!r.ok) return say(r);
+    var fr = r.data;
+    return SEG.cut(fr.path, S.tl.cutModel, msg).then(function(png){
+      msg(trText('بحط النتيجة في الكومب…'));
+      return host('placeCutout', {path:png, index:fr.index, mode:S.tl.cutMode, still:fr.still, text:S.tl.cutText, font:(S.brand && S.brand.font) || (S.tx && S.tx.font)});
+    }).then(function(r2){ msg(''); say(r2); });
+  }).catch(function(e){ msg(''); say({ok:false, msg:String(e && e.message || e)}); });
+}
 var UNUSED = 0;
 function dirOf(p){ return String(p).replace(/[\\\/][^\\\/]*$/, ''); }
 /* ---- on the beat: decode the selected music layer on this machine and find onsets ---- */

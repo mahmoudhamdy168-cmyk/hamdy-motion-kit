@@ -139,3 +139,33 @@ if(typeof NABD_DATA !== 'undefined'){
     {id:'brand',  ar:'ألوان البراند', en:'Brand Kit', g:'مشروع', d:'تحفظ ألوان العميل وفونته، وتستخدمهم في القوالب بضغطة.'}
   );
 }
+
+/* word & line text animations (safe for Arabic: letters stay joined) */
+(function(D){
+  if(!D) return;
+  var GW = 'حركات كلمات وسطور';
+  [
+    {id:'wPop',    ar:'كلمة كلمة بوب',    en:'Word Pop',        by:'words', sc:0, op:0, overshoot:true},
+    {id:'wRise',   ar:'كلمات طالعة',       en:'Words Rise',      by:'words', pos:[0,80], op:0, blur:[0,20]},
+    {id:'wDrop',   ar:'كلمات واقعة',       en:'Words Drop',      by:'words', pos:[0,-140], op:0, overshoot:true},
+    {id:'wBlur',   ar:'كلمات من البلور',   en:'Words Focus',     by:'words', blur:[40,40], op:0, sc:120},
+    {id:'wSlide',  ar:'كلمات من اليمين',   en:'Words Slide',     by:'words', pos:[140,0], op:0},
+    {id:'wFlip',   ar:'كلمات بتتقلب',      en:'Words Flip 3D',   by:'words', three:true, rx:-90, op:0},
+    {id:'wSpin',   ar:'كلمات بتلف',        en:'Words Spin',      by:'words', rot:-90, sc:0, overshoot:true},
+    {id:'wStretch',ar:'كلمات مطاطية',      en:'Words Stretch',   by:'words', scv:[180,20], op:0},
+    {id:'wGlow',   ar:'كلمات بتنور',       en:'Words Highlight', by:'words', fill:true, sc:115},
+    {id:'wRandom', ar:'كلمات عشوائي',      en:'Words Random',    by:'words', random:true, op:0, sc:60},
+    {id:'wBounce', ar:'نطّة كلمات',        en:'Words Bounce',    by:'words', pos:[0,-220], overshoot:true},
+    {id:'wSkew',   ar:'كلمات مايلة',       en:'Words Skew',      by:'words', skew:40, pos:[90,0], op:0},
+    {id:'wGlitch', ar:'كلمات جليتش',       en:'Words Glitch',    by:'words', random:true, square:true, op:0, fx:[{m:'ADBE Turbulent Displace', s:[[3, 30], [5, 1.2]], x:[[6, 'time * 500']], k:[[2, 60, 0, 1]]}], pv:['rgb']},
+    {id:'lRise',   ar:'سطور طالعة',        en:'Lines Rise',      by:'lines', pos:[0,100], op:0},
+    {id:'lSlide',  ar:'سطور من الجنب',     en:'Lines Slide',     by:'lines', pos:[260,0], op:0, blur:[30,0]},
+    {id:'lBlur',   ar:'سطور من البلور',    en:'Lines Focus',     by:'lines', blur:[50,50], op:0},
+    {id:'lZoom',   ar:'سطور زووم',         en:'Lines Zoom',      by:'lines', sc:170, op:0, blur:[20,20]},
+    {id:'lFlip',   ar:'سطور بتتقلب',       en:'Lines Flip 3D',   by:'lines', three:true, rx:90, op:0}
+  ].forEach(function(t){ t.g = GW; D.TEXTS.push(t); });
+})(typeof NABD_DATA !== 'undefined' ? NABD_DATA : null);
+
+if(typeof NABD_DATA !== 'undefined'){
+  NABD_DATA.TOOLS.unshift({id:'cutout', ar:'شيل الخلفية', en:'Remove Background', g:'ذكاء اصطناعي', d:'بيفصل الشخص أو المنتج عن الخلفية على جهازك ببلاش، ويعمل كمان نص ورا الشخص.'});
+}

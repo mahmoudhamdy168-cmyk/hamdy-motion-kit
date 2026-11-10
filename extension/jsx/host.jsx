@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.7.0";
+    var VER = "1.8.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -2783,6 +2783,59 @@ var NABD = (function () {
     }
     function openFolder(a) { var f = new Folder(a.path || outFolder().fsName); if (f.exists) { f.execute(); } return "OK"; }
 
+    // ================================================ local cut-out (background removal) helpers
+    function layerFrame(a) {
+        var c = comp(), sel = c.selectedLayers, L = null, i;
+        for (i = 0; i < sel.length; i++) { if (isAV(sel[i]) && sel[i].source && sel[i].hasVideo && sel[i].matchName === "ADBE AV Layer") { L = sel[i]; break; } }
+        if (!L) { throw Err("NEED_IMAGE"); }
+        var src = L.source, still = false;
+        try { still = src.mainSource && src.mainSource.isStill; } catch (e0) {}
+        if (still && src.file && /\.(png|jpe?g|webp|bmp)$/i.test(src.file.name)) { return { path: src.file.fsName, index: L.index, still: true }; }
+        if (!(src instanceof FootageItem) && !(src instanceof CompItem)) { throw Err("NEED_IMAGE"); }
+        var t = (c.time - L.startTime) * (L.stretch ? 100 / L.stretch : 1);
+        var tc = app.project.items.addComp("HAMDY tmp frame", src.width, src.height, src.pixelAspect || 1, Math.max(0.1, src.duration || 1), 1 / c.frameDuration);
+        tc.layers.add(src);
+        var f = new File(Folder.temp.fsName + "/hamdy_frame_" + new Date().getTime() + ".png");
+        try { tc.saveFrameToPng(Math.max(0, Math.min(t, tc.duration - tc.frameDuration)), f); } catch (e1) { tc.remove(); throw e1; }
+        $.sleep(400);
+        tc.remove();
+        return { path: f.fsName, index: L.index, still: !!still };
+    }
+    function placeCutout(a) {
+        var c = comp(), L = c.layer(a.index), f = new File(a.path);
+        if (!f.exists) { throw Err("NO_FILE"); }
+        var it = importFile(f), C = c.layers.add(it), T = L.property("ADBE Transform Group"), CT = C.property("ADBE Transform Group"), nm, k;
+        C.name = "HAMDY CUTOUT | " + L.name;
+        var props = ["ADBE Anchor Point", "ADBE Position", "ADBE Scale", "ADBE Rotate Z", "ADBE Opacity"];
+        for (k = 0; k < props.length; k++) {
+            try {
+                var sp = T.property(props[k]), dp = CT.property(props[k]);
+                if (sp.numKeys === 0) { dp.setValue(sp.value); }
+                else { dp.expression = 'thisComp.layer(' + J(L.name) + ').transform.' + ({ "ADBE Anchor Point": "anchorPoint", "ADBE Position": "position", "ADBE Scale": "scale", "ADBE Rotate Z": "rotation", "ADBE Opacity": "opacity" })[props[k]]; }
+            } catch (e) {}
+        }
+        try { C.parent = L.parent; } catch (e2) {}
+        C.startTime = L.inPoint; C.inPoint = L.inPoint; C.outPoint = L.outPoint;
+        C.moveBefore(L);
+        if (a.mode === "replace") { L.enabled = false; }
+        if (a.mode === "behind") {
+            // put the selected text layers (if any) between the photo and the cut-out
+            var sel = c.selectedLayers, i, moved = 0;
+            for (i = 0; i < sel.length; i++) { if (sel[i].matchName === "ADBE Text Layer") { sel[i].moveAfter(C); moved++; } }
+            if (!moved) {
+                var tx = c.layers.addText(a.text || "حمدي"); tx.name = "HAMDY BEHIND TEXT";
+                var d = tx.property("ADBE Text Properties").property("ADBE Text Document"), td = d.value;
+                td.fontSize = Math.round(c.height * 0.22); td.fillColor = [1, 1, 1]; td.justification = ParagraphJustification.CENTER_JUSTIFY; if (a.font) { try { td.font = a.font; } catch (ef) {} }
+                d.setValue(td);
+                tx.property("ADBE Transform Group").property("ADBE Anchor Point").expression = 'var r = sourceRectAtTime(time, false);\n[r.left + r.width / 2, r.top + r.height / 2]';
+                tx.property("ADBE Transform Group").property("ADBE Position").setValue([c.width / 2, c.height * 0.4]);
+                tx.inPoint = L.inPoint; tx.outPoint = L.outPoint;
+                tx.moveAfter(C);
+            }
+        }
+        return a.still ? "OK" : "OK_FRAME_ONLY";
+    }
+
     // ================================================ speed tools: ease copy/paste/read, auto animations, text break, re-key
     function easeCopy(a) {
         var props = selectedProps(true), p, k;
@@ -5091,7 +5144,7 @@ var NABD = (function () {
         libPick: libPick, libList: libList, libUse: libUse, libOpen: libOpen,
         capSource: capSource, captions: captions, saveText: saveText, openText: openText,
         look: look, textStyle: textStyle,
-        overlay: overlay, otrApply: otrApply, tplApply: tplApply, easeCopy: easeCopy, easePaste: easePaste, autoAnim: autoAnim, textBreak: textBreak, keySave: keySave, keyApply: keyApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
+        overlay: overlay, otrApply: otrApply, layerFrame: layerFrame, placeCutout: placeCutout, tplApply: tplApply, easeCopy: easeCopy, easePaste: easePaste, autoAnim: autoAnim, textBreak: textBreak, keySave: keySave, keyApply: keyApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,
