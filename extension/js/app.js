@@ -15,6 +15,7 @@ var TABS = [
   {id:'trk', ar:'🎯 تراكينج'},
   {id:'trim', ar:'✂ تريم باث'},
   {id:'gf', ar:'✨ جنريتيف فيل'},
+  {id:'tp',  ar:'🧩 قوالب'},
   {id:'ti',  ar:'عناوين جاهزة'},
   {id:'el',  ar:'عناصر'},
   {id:'fx',  ar:'فلاتر وإفكتات'},
@@ -102,7 +103,7 @@ var OKMSG = {
 /* =============================================================== state */
 var DEF = {
   tab:'tr', paused:false, acc:'#ff6b3d', lang:'ar', hide:true, perf:'full', ui:{side:300, nav:0, card:132},
-  sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:''},
+  sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:'', tp:'uiSub'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
   mp:{dir:'both', frames:18, at:'layer'},
@@ -115,6 +116,7 @@ var DEF = {
   ed:{auto:true},
   trk:{smooth:0, rot:true, scale:true, text:'اكتب هنا', size:60, side:'r', amount:40, zoom:6, swap:false, stabRot:true},
   ez:{curve:[0.65,0,0.35,1]},
+  tp:{f:{}, c:{}, dur:0, place:'def', size:1, sfx:true},
   br:{src:'video', orient:'any', quality:'hd', fit:true, pxKey:'', fsKey:''},
   ai:{key:'', model:'claude-sonnet-5-5', auto:true, frame:false, t0:null, t1:null, bridge:false, port:47811},
   dp:{order:'stack', spread:600, pivot:'front', secs:4, amt:100, at:'playhead', fog:false, dof:false, over:0},
@@ -213,6 +215,7 @@ function itemsOf(tab){
     case 'mp': return D.MOTION;
     case 'tx': return D.TEXTS;
     case 'ti': return D.TITLES;
+    case 'tp': return HMK_TPL;
     case 'el': return D.ELEMENTS;
     case 'ez': return D.EASES;
     case 'tl': return D.TOOLS;
@@ -433,6 +436,7 @@ function mountThumb(box, it, big){
     case 'trk': o = {k:'trk', it:it, box:box}; break;
     case 'gf': o = {k:'gf', it:it, box:box}; break;
     case 'trim': o = {k:'trim', el:P.mountTrim(box, trimItem(it), {acc:S.acc})}; break;
+    case 'tp': o = {k:'tpl', it:it, el:P.mountTpl(box, it, {zoom:(it.g==='واجهات UI' || it.g==='ستايل شرح وكولاج') ? (big ? 1.4 : 1.8) : 1})}; break;
     case 'dp': o = {k:'dp', el:P.mountDepth(box, it)}; break;
     case 'ln': var lc = lnColors(); o = {k:'ln', el:P.mountLine(box, it.mine ? it.pv : it, {c1:lc[0], c2:lc[1], width:S.ln.width, speed:S.ln.speed, erase:S.ln.erase, flow:S.ln.flow, guide:S.ln.guide, text:big ? S.ln.text : 'نص على خط'})}; break;
     case 'tl': box.classList.add('svgth'); box.innerHTML = it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id); break;
@@ -580,6 +584,7 @@ function renderSide(){
     case 'trk': h += trkSide(it); break;
     case 'gf': h += gfSide(it); break;
     case 'trim': h += trimSide(it); break;
+    case 'tp': h += tpSide(it); break;
     case 'dp': h += dpSide(it); break;
     case 'tl':
       h += '<div class="stage svgth" id="stage">' + (it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id)) + '</div>' + head(it, it.d);
@@ -592,6 +597,7 @@ function renderSide(){
   if(st && it && S.tab!=='tl' && S.tab!=='ed') mountThumb(st, it, true);
   if(S.tab==='ed') bindEditSide();
   if(S.tab==='ai') AI.bindSide();
+  if(S.tab==='tp') bindTp();
   if(S.tab==='br') STOCK.bindSide();
   if(S.tab==='ez' && it && it.curve) bindCurve();
   Array.prototype.forEach.call(document.querySelectorAll('#side [data-al]'), function(b){ b.onclick = function(){ S.tl.align = b.dataset.al; save(); Array.prototype.forEach.call(document.querySelectorAll('#side [data-al]'), function(x){ x.classList.toggle('on', x===b); }); }; });
@@ -758,6 +764,7 @@ function apply(){
     case 'car': p = host('carousel', carArgs(it)); break;
     case 'trk': p = trkApply(it); break;
     case 'trim': p = host('trimApply', trimArgs(it)); break;
+    case 'tp': p = host('tplApply', tpArgs(it)); break;
     case 'dp': p = host('dpRig', dpArgs(it)); break;
     case 'gf': gfRun(it); return;
     case 'ez': if(it.curve){ var cv = S.ez.curve; p = host('easeCurve', {x1:cv[0], y1:cv[1], x2:cv[2], y2:cv[3]}); break; }
@@ -840,6 +847,44 @@ function bindCurve(){
   (function anim(){ var d = $('cvDot'); if(!d) return; var u = ((performance.now() - t0) / 1400) % 1.4; u = Math.min(1, u); var f = P.easeFn({bz:S.ez.curve})(u); d.setAttribute('cx', u*200); d.setAttribute('cy', 200 - f*200); requestAnimationFrame(anim); })();
 }
 function capClean(t){ return S.cap.nopunct ? String(t).replace(/[.,!?؟،؛:;"'“”«»…]+/g, '').replace(/\s{2,}/g, ' ').trim() : t; }
+/* ============================================================ templates tab */
+var TP_PLACE = {top:[0.5,0.15], center:[0.5,0.5], bottom:[0.5,0.84], left:[0.3,0.5], right:[0.7,0.5]};
+function tplOpts(it){
+  var f = {}, k;
+  (it.fields||[]).forEach(function(x){ var v = S.tp.f[it.id] && S.tp.f[it.id][x.k]; if(v !== undefined && v !== '') f[x.k] = v; });
+  return {fields:f, cols:(S.tp.c[it.id] || it.cols), anc:(S.tp.place!=='def' && it.layers[0].t!=='bg') ? TP_PLACE[S.tp.place] : null, scale:it.layers[0].t==='bg' ? 1 : S.tp.size};
+}
+function tpSide(it){
+  var h = '<div class="stage" id="stage"></div>' + head(it, ''), o = tplOpts(it), cols = o.cols;
+  h += '<div class="field"><span class="lbl">عدّل قبل الإضافة</span>';
+  (it.fields||[]).forEach(function(x){
+    var v = (S.tp.f[it.id] && S.tp.f[it.id][x.k]) || '', def = '';
+    it.layers.forEach(function(l){ if(l.fld===x.k) def = l.def; });
+    h += '<label class="tpf"><span>' + x.ar + '</span>' + (String(def).indexOf('\n') >= 0 ? '<textarea rows="2" data-tpf="' + x.k + '" placeholder="' + esc(def) + '">' + esc(v) + '</textarea>' : '<input type="text" data-tpf="' + x.k + '" value="' + esc(v) + '" placeholder="' + esc(def) + '">') + '</label>';
+  });
+  h += '<div class="tpcols">' + [0,1,2].map(function(i){ return '<label><input type="color" data-tpc="' + i + '" value="' + cols[i] + '"><span>' + ['لون 1','لون 2','لون 3'][i] + '</span></label>'; }).join('') + '<button class="btn" id="tpReset">رجّع الأصلي</button></div></div>';
+  if(it.layers[0].t!=='bg'){
+    h += '<div class="field"><span class="lbl">المكان</span>' + seg('tp.place', [['def','الأصلي'],['top','فوق'],['center','النص'],['bottom','تحت'],['right','يمين'],['left','شمال']], S.tp.place) + '</div>';
+    h += '<div class="field"><span class="lbl">الحجم</span>' + seg('tp.size', [[0.7,'صغير'],[1,'عادي'],[1.3,'كبير']], S.tp.size) + '</div>';
+  }
+  h += '<div class="field"><span class="lbl">المدة</span>' + seg('tp.dur', [[0,'الأصلية'],[3,'3 ث'],[5,'5 ث'],[8,'8 ث']], S.tp.dur) + '</div>';
+  h += chk('tp.sfx', 'صوت مع الدخلة', S.tp.sfx);
+  h += '<button class="btn primary" id="go">حط القالب</button>';
+  h += '<div class="hint">القالب بينزل لايرات أفتر عادية كلها متعلقة على نل اسمه HAMDY TPL. حرّك النل أو كبّره يتحرك القالب كله، والألوان التلاتة من HAMDY Color 1 و2 و3 عليه، فتقدر تغيّرها بعد ما ينزل. النصوص لايرات نص عادية.</div>';
+  return h;
+}
+function tpArgs(it){
+  var o = tplOpts(it);
+  return {spec:it, fields:o.fields, colors:o.cols, dur:S.tp.dur || it.dur, anchor:o.anc, scale:o.scale, font:S.tx && S.tx.font, sfx:(S.tp.sfx && it.layers[0].t!=='bg') ? sfxPath({id:it.sfx || ({'واجهات UI':'pop_1','ستايل شرح وكولاج':'swish_1','ستايل أخبار':'whoosh_bright'}[it.g]) || 'pop_1'}) : null};
+}
+function bindTp(){
+  var it = cur(); if(!it) return;
+  var tmr = null;
+  function later(){ clearTimeout(tmr); tmr = setTimeout(function(){ save(); }, 400); }
+  Array.prototype.forEach.call(document.querySelectorAll('#side [data-tpf]'), function(inp){ inp.oninput = function(){ S.tp.f[it.id] = S.tp.f[it.id] || {}; S.tp.f[it.id][inp.dataset.tpf] = inp.value; later(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('#side [data-tpc]'), function(inp){ inp.oninput = function(){ var c = (S.tp.c[it.id] || it.cols).slice(); c[+inp.dataset.tpc] = inp.value; S.tp.c[it.id] = c; later(); }; });
+  if($('tpReset')) $('tpReset').onclick = function(){ delete S.tp.f[it.id]; delete S.tp.c[it.id]; save(); renderSide(); };
+}
 var UNUSED = 0;
 function dirOf(p){ return String(p).replace(/[\\\/][^\\\/]*$/, ''); }
 /* ---- on the beat: decode the selected music layer on this machine and find onsets ---- */
@@ -1936,6 +1981,7 @@ function step(o, now){
     case 'trk': o.box.innerHTML = P.trkSVG(o.it, t, S.acc); break;
     case 'gf': o.box.innerHTML = P.gfSVG(o.it, t, S.acc); break;
     case 'trim': P.drawTrim(o.el, t); break;
+    case 'tpl': P.drawTpl(o.el, t, tplOpts(o.it)); break;
     case 'dp': P.drawDepth(o.el, t, S.dp, S.acc); break;
     case 'ti': P.drawTitle(o.el, t); break;
     case 'el': o.box.innerHTML = P.elSVG(o.it.id, t, S.acc); break;

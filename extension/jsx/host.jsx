@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.5.0";
+    var VER = "1.6.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -2783,6 +2783,183 @@ var NABD = (function () {
     }
     function openFolder(a) { var f = new Folder(a.path || outFolder().fsName); if (f.exists) { f.execute(); } return "OK"; }
 
+    // ================================================ templates (UI, explainer/collage, news, scenes)
+    // A template is a list of layer specs designed on a 1920x1080 canvas around an anchor point.
+    // Every layer is parented to one control null ("HAMDY TPL …") that holds the colours, so the whole
+    // template can be moved, scaled and recoloured after it lands. Same spec drives the panel preview.
+    var TEZ = { o: [10, 85], i: [85, 10], io: [60, 60], b: [10, 85] };
+    function tplHex(h) { h = String(h).replace("#", ""); return [parseInt(h.substr(0, 2), 16) / 255, parseInt(h.substr(2, 2), 16) / 255, parseInt(h.substr(4, 2), 16) / 255]; }
+    function tplCol(N, nm, v, cols) {
+        if (typeof v === "string" && /^c\d$/.test(v)) { return { expr: 'thisComp.layer(' + J(nm) + ').effect("HAMDY Color ' + v.substr(1) + '")(1)', val: cols[+v.substr(1) - 1] || [1, 1, 1] }; }
+        return { val: tplHex(v || "#ffffff") };
+    }
+    function tplKeys(prop, t0, keys, ez, map) {
+        var i, idx = [];
+        for (i = 0; i < keys.length; i++) { prop.setValueAtTime(t0 + keys[i][0], map(keys[i][1])); }
+        if (ez === "l") { for (i = 0; i < keys.length; i++) { try { setLinear(prop, prop.nearestKeyIndex(t0 + keys[i][0])); } catch (e) {} } return; }
+        var E = TEZ[ez || "o"] || TEZ.o;
+        for (i = 0; i < keys.length; i++) { idx.push(prop.nearestKeyIndex(t0 + keys[i][0])); }
+        for (i = 0; i < idx.length; i++) {
+            var inn = i > 0 ? E[1] : 33, out = i < idx.length - 1 ? E[0] : 33;
+            try { setEase(prop, idx[i], inn, out); } catch (e2) {}
+        }
+    }
+    function tplShape(c, sp, nm, cols) {
+        var L = c.layers.addShape(), G = L.property("ADBE Root Vectors Group").addProperty("ADBE Vector Group"), V = G.property("ADBE Vectors Group"), s;
+        G.name = "Shape";
+        if (sp.t === "rect") {
+            s = V.addProperty("ADBE Vector Shape - Rect"); s.property("ADBE Vector Rect Size").setValue(sp.s); s.property("ADBE Vector Rect Roundness").setValue(sp.r || 0);
+            if (sp.org === "l") { s.property("ADBE Vector Rect Position").setValue([sp.s[0] / 2, 0]); }
+            if (sp.org === "r") { s.property("ADBE Vector Rect Position").setValue([-sp.s[0] / 2, 0]); }
+        } else if (sp.t === "ell") {
+            s = V.addProperty("ADBE Vector Shape - Ellipse"); s.property("ADBE Vector Ellipse Size").setValue(sp.s);
+        } else {
+            s = V.addProperty("ADBE Vector Shape - Group");
+            var sh = new Shape(), vs = [], k; for (k = 0; k < sp.pts.length; k++) { vs.push([sp.pts[k][0], sp.pts[k][1]]); }
+            sh.vertices = vs; sh.closed = !!sp.closed;
+            if (sp.smooth) { var it = [], ot = [], q; for (q = 0; q < vs.length; q++) { var pv = vs[Math.max(0, q - 1)], nx = vs[Math.min(vs.length - 1, q + 1)], tx = (nx[0] - pv[0]) / 6, ty = (nx[1] - pv[1]) / 6; it.push([-tx, -ty]); ot.push([tx, ty]); } sh.inTangents = it; sh.outTangents = ot; }
+            s.property("ADBE Vector Shape").setValue(sh);
+        }
+        if (sp.f) { var F = V.addProperty("ADBE Vector Graphic - Fill"), fc = tplCol(null, nm, sp.f, cols); F.property("ADBE Vector Fill Color").setValue(fc.val); if (fc.expr) { F.property("ADBE Vector Fill Color").expression = fc.expr; } }
+        if (sp.st) {
+            var S2 = V.addProperty("ADBE Vector Graphic - Stroke"), sc = tplCol(null, nm, sp.st[0], cols);
+            S2.property("ADBE Vector Stroke Color").setValue(sc.val); if (sc.expr) { S2.property("ADBE Vector Stroke Color").expression = sc.expr; }
+            S2.property("ADBE Vector Stroke Width").setValue(sp.st[1] || 4);
+            try { S2.property("ADBE Vector Stroke Line Cap").setValue(2); S2.property("ADBE Vector Stroke Line Join").setValue(2); } catch (e) {}
+        }
+        if (sp.trim) { var T = G.property("ADBE Vectors Group").addProperty("ADBE Vector Filter - Trim"); T.name = "HAMDY Trim"; }
+        return L;
+    }
+    function tplApply(a) {
+        var c = comp(), T = a.spec, cols = [], i, j, k = Math.min(c.width / 1920, c.height / 1080), t0 = snap(c, c.time), dur = Math.max(1, a.dur || T.dur || 4);
+        if (c.height > c.width) { k = c.width / 1080 * (T.vk || 0.9); }
+        for (i = 0; i < 3; i++) { cols.push(tplHex((a.colors && a.colors[i]) || (T.cols && T.cols[i]) || "#ffffff")); }
+        var nm = "HAMDY TPL " + (T.en || T.id), n = 1; while (dpFind(c, nm)) { n++; nm = "HAMDY TPL " + (T.en || T.id) + " " + n; }
+        var anc = a.anchor || T.anc || [0.5, 0.5];
+        var N = c.layers.addNull(); N.name = nm; N.label = 9;
+        var NT = N.property("ADBE Transform Group");
+        NT.property("ADBE Anchor Point").setValue([0, 0]);
+        NT.property("ADBE Position").setValue([c.width * anc[0], c.height * anc[1]]);
+        NT.property("ADBE Scale").setValue([k * 100 * (a.scale || 1), k * 100 * (a.scale || 1)]);
+        for (i = 0; i < 3; i++) { addColorCtl(N, "HAMDY Color " + (i + 1), cols[i]); }
+        var made = [], L, sp, X;
+        for (i = 0; i < T.layers.length; i++) {
+            sp = T.layers[i];
+            if (sp.t === "text") {
+                var str = (a.fields && a.fields[sp.fld] !== undefined && a.fields[sp.fld] !== "") ? a.fields[sp.fld] : sp.def;
+                var tc = tplCol(N, nm, sp.fc || "#ffffff", cols);
+                L = makeText(c, str, sp.fs || 60, tc.val, sp.just || "c", sp.font === "sym" ? "ArialMT" : (a.font || null), sp.trk || 0);
+                if (tc.expr) {
+                    try { var an = L.property("ADBE Text Properties").property("ADBE Text Animators").addProperty("ADBE Text Animator"); an.name = "HAMDY Color"; an.property("ADBE Text Animator Properties").addProperty("ADBE Text Fill Color").expression = tc.expr; } catch (ec) {}
+                }
+                var ax = sp.just === "l" ? "r.left" : (sp.just === "r" ? "r.left + r.width" : "r.left + r.width / 2");
+                L.property("ADBE Transform Group").property("ADBE Anchor Point").expression = 'var r = sourceRectAtTime(time, false);\n[' + ax + ', r.top + r.height / 2]';
+                if (sp.typ) {
+                    var ta = L.property("ADBE Text Properties").property("ADBE Text Animators").addProperty("ADBE Text Animator"); ta.name = "HAMDY Type";
+                    ta.property("ADBE Text Animator Properties").addProperty("ADBE Text Opacity").setValue(0);
+                    var sel = ta.property("ADBE Text Selectors").addProperty("ADBE Text Selector");
+                    tplKeys(sel.property("ADBE Text Percent Start"), t0, [[sp.typ[0], 0], [sp.typ[0] + sp.typ[1], 100]], "l", function (v) { return v; });
+                }
+                if (sp.count) {
+                    if (sp.cfld && a.fields && a.fields[sp.cfld] !== undefined && a.fields[sp.cfld] !== "" && !isNaN(parseFloat(String(a.fields[sp.cfld]).replace(/,/g, "")))) { sp.count[1] = parseFloat(String(a.fields[sp.cfld]).replace(/,/g, "")); }
+                    L.property("ADBE Text Properties").property("ADBE Text Document").expression = 'var t = Math.max(0, Math.min(1, (time - inPoint - ' + sp.count[2] + ') / ' + sp.count[3] + '));\nt = 1 - Math.pow(1 - t, 3);\nvar v = ' + sp.count[0] + ' + (' + sp.count[1] + ' - ' + sp.count[0] + ') * t;\nvar s = Math.round(v).toString().replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",");\n"' + (sp.pre || "") + '" + s + "' + (sp.suf || "") + '"';
+                }
+            } else if (sp.t === "bg") {
+                L = c.layers.addSolid(cols[0], nm + " BG", c.width, c.height, c.pixelAspect, c.duration);
+                tplBg(L, sp, nm, cols);
+            } else {
+                L = tplShape(c, sp, nm, cols);
+            }
+            L.name = nm + " | " + (sp.n || sp.t + (i + 1));
+            if (sp.t !== "bg") { L.parent = N; }
+            X = L.property("ADBE Transform Group");
+            if (sp.t !== "bg") { X.property("ADBE Position").setValue(sp.p || [0, 0]); }
+            if (sp.rot) { X.property("ADBE Rotate Z").setValue(sp.rot); }
+            if (sp.o !== undefined) { X.property("ADBE Opacity").setValue(sp.o); }
+            if (sp.sh) { var ds = addEffect(L, "ADBE Drop Shadow", "HAMDY Shadow"); ds.property(2).setValue(sp.sh[0] !== undefined ? sp.sh[0] * 2.55 : 90); ds.property(4).setValue(sp.sh[1] || 12); ds.property(5).setValue(sp.sh[2] || 24); }
+            if (sp.rough) { try { var rg = addEffect(L, "ADBE Roughen Edges", "HAMDY Paper Edge"); rg.property(3).setValue(sp.rough); rg.property(4).setValue(8); } catch (er) {} }
+            if (sp.glow) { try { var gw = addEffect(L, "ADBE Glo2", "HAMDY Glow"); gw.property(3).setValue(sp.glow); gw.property(4).setValue(1.2); } catch (eg) {} }
+            if (sp.jit) {
+                X.property("ADBE Position").expression = 'posterizeTime(' + (sp.jit[2] || 8) + ');\nseedRandom(index, false);\nvalue + [random(-1, 1) * ' + sp.jit[0] + ', random(-1, 1) * ' + sp.jit[0] + ']';
+                X.property("ADBE Rotate Z").expression = 'posterizeTime(' + (sp.jit[2] || 8) + ');\nseedRandom(index + 7, false);\nvalue + random(-1, 1) * ' + sp.jit[1];
+            }
+            if (sp.scroll) { X.property("ADBE Position").expression = 'var w = sourceRectAtTime(time, false).width + ' + (sp.gap || 200) + ';\nvar x = ((time - inPoint) * ' + sp.scroll + ') % w;\nvalue - [x, 0]'; }
+            if (sp.spin) { X.property("ADBE Rotate Z").expression = 'value + (time - inPoint) * ' + sp.spin; }
+            if (sp.pulse) { X.property("ADBE Scale").expression = 'var s = 1 + Math.sin((time - inPoint) * ' + sp.pulse[1] + ') * ' + sp.pulse[0] + ';\nvalue * s'; }
+            var A = sp.a || [];
+            for (j = 0; j < A.length; j++) { tplAnim(L, X, A[j], t0, sp); }
+            L.inPoint = t0; L.outPoint = Math.min(c.duration, t0 + dur);
+            if (sp.t === "bg") { L.moveToEnd(); }
+            made.push(L);
+        }
+        // order: first spec at the bottom, last on top, the null above them
+        for (i = 0; i < made.length; i++) { if (T.layers[i].t !== "bg") { made[i].moveToBeginning(); } }
+        N.moveToBeginning(); N.inPoint = t0; N.outPoint = Math.min(c.duration, t0 + dur);
+        var P0 = NT.property("ADBE Position").value, S0 = k * 100 * (a.scale || 1);
+        for (i = 0; T.na && i < T.na.length; i++) {
+            var na = T.na[i], nk = [];
+            for (j = 0; j < na.k.length; j++) { nk.push([na.k[j][0] + (na.d || 0), na.k[j][1]]); }
+            if (na.p === "dp") { tplKeys(NT.property("ADBE Position"), t0, nk, na.ez, function (v) { return [P0[0] + v[0] * k * (a.scale || 1), P0[1] + v[1] * k * (a.scale || 1)]; }); }
+            else if (na.p === "sc") { tplKeys(NT.property("ADBE Scale"), t0, nk, na.ez, function (v) { return [S0 * v / 100, S0 * v / 100]; }); }
+            else if (na.p === "op") { tplKeys(NT.property("ADBE Opacity"), t0, nk, na.ez, function (v) { return v; }); }
+        }
+        if (T.out !== false) {
+            var ot = Math.min(c.duration, t0 + dur), od = 0.35;
+            tplKeys(NT.property("ADBE Opacity"), 0, [[ot - od, 100], [ot, 0]], "i", function (v) { return v; });
+            var sc0 = k * 100 * (a.scale || 1);
+            tplKeys(NT.property("ADBE Scale"), 0, [[ot - od, sc0], [ot, sc0 * 0.94]], "i", function (v) { return [v, v]; });
+        }
+        if (a.sfx) { try { var S3 = c.layers.add(importFile(new File(a.sfx))); S3.name = "HAMDY SFX | " + (T.en || T.id); S3.startTime = t0 + (T.sfxAt || 0); tuck(c, S3); } catch (es) {} }
+        return "OK";
+    }
+    function tplAnim(L, X, an, t0, sp) {
+        var d = an.d || 0, keys = [], q, prop, map;
+        for (q = 0; q < an.k.length; q++) { keys.push([an.k[q][0] + d, an.k[q][1]]); }
+        var base = sp.p || [0, 0];
+        switch (an.p) {
+            case "dp": prop = X.property("ADBE Position"); map = function (v) { return [base[0] + v[0], base[1] + v[1]]; }; break;
+            case "sc": prop = X.property("ADBE Scale"); map = function (v) { return v instanceof Array ? v : [v, v]; }; break;
+            case "sx": prop = X.property("ADBE Scale"); map = function (v) { return [v, 100]; }; break;
+            case "sy": prop = X.property("ADBE Scale"); map = function (v) { return [100, v]; }; break;
+            case "rot": prop = X.property("ADBE Rotate Z"); map = function (v) { return (sp.rot || 0) + v; }; break;
+            case "op": prop = X.property("ADBE Opacity"); map = function (v) { return v; }; break;
+            case "trim": prop = L.property("ADBE Root Vectors Group").property(1).property("ADBE Vectors Group").property("HAMDY Trim").property("ADBE Vector Trim End"); map = function (v) { return v; }; break;
+            case "w": prop = L.property("ADBE Root Vectors Group").property(1).property("ADBE Vectors Group").property(1).property("ADBE Vector Rect Size"); map = function (v) { return [v, sp.s[1]]; }; break;
+            default: return;
+        }
+        tplKeys(prop, t0, keys, an.ez, map);
+    }
+    function tplBg(L, sp, nm, cols) {
+        var e, C1 = 'thisComp.layer(' + J(nm) + ').effect("HAMDY Color ', W = L.width, H = L.height;
+        switch (sp.kind) {
+            case "grad":
+                e = addEffect(L, "ADBE 4ColorGradient", "HAMDY Gradient");
+                e.property(2).expression = C1 + '1")(1)'; e.property(4).expression = C1 + '2")(1)'; e.property(6).expression = C1 + '3")(1)'; e.property(8).expression = C1 + '1")(1)';
+                e.property(1).expression = '[' + W * 0.2 + ' + Math.sin(time * 0.4) * ' + W * 0.15 + ', ' + H * 0.2 + ' + Math.cos(time * 0.3) * ' + H * 0.15 + ']';
+                e.property(3).expression = '[' + W * 0.8 + ' + Math.cos(time * 0.35) * ' + W * 0.15 + ', ' + H * 0.25 + ' + Math.sin(time * 0.5) * ' + H * 0.15 + ']';
+                e.property(5).expression = '[' + W * 0.75 + ' + Math.sin(time * 0.3) * ' + W * 0.15 + ', ' + H * 0.8 + ' + Math.cos(time * 0.45) * ' + H * 0.12 + ']';
+                e.property(7).expression = '[' + W * 0.2 + ' + Math.cos(time * 0.5) * ' + W * 0.12 + ', ' + H * 0.8 + ' + Math.sin(time * 0.4) * ' + H * 0.12 + ']';
+                break;
+            case "grid":
+                e = addEffect(L, "ADBE Fill", "HAMDY Fill"); e.property(3).expression = C1 + '1")(1)';
+                e = addEffect(L, "ADBE Grid", "HAMDY Grid");
+                try { e.property(1).expression = '[' + W / 2 + ', ' + H / 2 + ' + (time * 30) % ' + Math.round(H / 12) + ']'; e.property(3).setValue([W / 2 + H / 12, H / 2 + H / 12]); e.property(5).setValue(1.5); e.property(8).expression = C1 + '2")(1)'; e.property(9).setValue(25); } catch (eg) {}
+                break;
+            case "paper":
+                e = addEffect(L, "ADBE Fractal Noise", "HAMDY Paper Grain"); try { e.property(4).setValue(140); e.property(5).setValue(-40); e.property(11).setValue(30); } catch (e1) {}
+                e = addEffect(L, "ADBE Tint", "HAMDY Paper Tint"); e.property(1).expression = C1 + '2")(1)'; e.property(2).expression = C1 + '1")(1)';
+                break;
+            case "dots":
+                e = addEffect(L, "ADBE Fill", "HAMDY Fill"); e.property(3).expression = C1 + '1")(1)';
+                try { e = addEffect(L, "CC Ball Action", "HAMDY Dots"); } catch (e2) {}
+                break;
+            case "noise":
+                e = addEffect(L, "ADBE Fractal Noise", "HAMDY Smoke"); try { e.property(1).setValue(4); e.property(4).setValue(160); e.property(5).setValue(-20); e.property(14).expression = 'time * 40'; } catch (e3) {}
+                e = addEffect(L, "ADBE Tint", "HAMDY Smoke Tint"); e.property(1).expression = C1 + '1")(1)'; e.property(2).expression = C1 + '2")(1)';
+                break;
+        }
+    }
+
     // ================================================ liquid glass (built-in effects only, one control null)
     function glassRect(c, nm, ctl, fill, stroke) {
         var S2 = c.layers.addShape(); S2.name = nm;
@@ -4770,7 +4947,7 @@ var NABD = (function () {
         libPick: libPick, libList: libList, libUse: libUse, libOpen: libOpen,
         capSource: capSource, captions: captions, saveText: saveText, openText: openText,
         look: look, textStyle: textStyle,
-        overlay: overlay, otrApply: otrApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
+        overlay: overlay, otrApply: otrApply, tplApply: tplApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,

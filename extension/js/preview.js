@@ -1258,6 +1258,128 @@ function drawDepth(el, t, o, acc){
     g.restore();
   });
 }
+
+/* ---------- templates preview: the same layer spec the host builds, drawn as SVG on a 1920x1080 frame ---------- */
+var TPL_UID = 0;
+function tplEase(ez, u){
+  u = clamp(u);
+  if(ez==='l') return u;
+  if(ez==='i') return u*u*u;
+  if(ez==='io') return u < .5 ? 4*u*u*u : 1 - Math.pow(-2*u + 2, 3)/2;
+  if(ez==='b'){ var c1 = 1.4, c3 = c1 + 1; return 1 + c3*Math.pow(u - 1, 3) + c1*Math.pow(u - 1, 2); }
+  return 1 - Math.pow(1 - u, 3);
+}
+function tplKey(keys, t, ez){
+  if(t <= keys[0][0]) return keys[0][1];
+  for(var i = 0; i < keys.length - 1; i++){
+    var a = keys[i], b = keys[i+1];
+    if(t <= b[0]){
+      var e = tplEase(ez, (t - a[0]) / Math.max(1e-4, b[0] - a[0]));
+      if(Array.isArray(a[1])) return [a[1][0] + (b[1][0]-a[1][0])*e, a[1][1] + (b[1][1]-a[1][1])*e];
+      return a[1] + (b[1] - a[1]) * e;
+    }
+  }
+  return keys[keys.length-1][1];
+}
+function tplPath(sp){
+  var v = sp.pts, d = 'M' + v[0][0] + ' ' + v[0][1], i;
+  if(!sp.smooth){ for(i = 1; i < v.length; i++) d += 'L' + v[i][0] + ' ' + v[i][1]; }
+  else {
+    for(i = 1; i < v.length; i++){
+      var p0 = v[Math.max(0, i-2)], p1 = v[i-1], p2 = v[i], p3 = v[Math.min(v.length-1, i+1)];
+      var c1 = [p1[0] + (p2[0]-p0[0])/6, p1[1] + (p2[1]-p0[1])/6], c2 = [p2[0] - (p3[0]-p1[0])/6, p2[1] - (p3[1]-p1[1])/6];
+      d += 'C' + c1[0] + ' ' + c1[1] + ' ' + c2[0] + ' ' + c2[1] + ' ' + p2[0] + ' ' + p2[1];
+    }
+  }
+  return d + (sp.closed ? 'Z' : '');
+}
+function mountTpl(box, T, o){
+  var id = 'tp' + (++TPL_UID), h = '<svg viewBox="0 0 1920 1080" class="tplsvg" preserveAspectRatio="xMidYMid slice"><defs>' +
+    '<filter id="' + id + 'sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-opacity=".45"/></filter>' +
+    '<filter id="' + id + 'rg"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>' +
+    '<filter id="' + id + 'gl"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+    '<linearGradient id="' + id + 'bgg" x1="0" y1="0" x2="1" y2="1"><stop offset="0"/><stop offset=".55"/><stop offset="1"/></linearGradient>' +
+    '<pattern id="' + id + 'grid" width="90" height="90" patternUnits="userSpaceOnUse"><path d="M90 0H0V90" fill="none" stroke-width="2"/></pattern>' +
+    '<filter id="' + id + 'noise"><feTurbulence type="fractalNoise" baseFrequency=".004" numOctaves="4" seed="7"/><feColorMatrix type="saturate" values="0"/></filter>' +
+    '</defs><rect width="1920" height="1080" class="tplback"/><g class="root"></g></svg>';
+  box.innerHTML = h;
+  var svg = box.firstChild, root = svg.querySelector('.root'), els = [];
+  var z = (o && o.zoom) || 1;
+  if(z > 1){ var an = T.anc || [0.5,0.5], vw = 1920/z, vh = 1080/z, vx = Math.max(0, Math.min(1920 - vw, an[0]*1920 - vw/2)), vy = Math.max(0, Math.min(1080 - vh, an[1]*1080 - vh/2)); svg.setAttribute('viewBox', vx.toFixed(0) + ' ' + vy.toFixed(0) + ' ' + vw.toFixed(0) + ' ' + vh.toFixed(0)); }
+  var NS = 'http://www.w3.org/2000/svg';
+  T.layers.forEach(function(sp){
+    var g = document.createElementNS(NS, 'g'), inner = document.createElementNS(NS, 'g'), e;
+    g.appendChild(inner);
+    if(sp.t==='rect'){ e = document.createElementNS(NS, 'rect'); var w = sp.s[0], hh = sp.s[1], x = sp.org==='l' ? 0 : (sp.org==='r' ? -w : -w/2); e.setAttribute('x', x); e.setAttribute('y', -hh/2); e.setAttribute('width', w); e.setAttribute('height', hh); e.setAttribute('rx', Math.min(sp.r||0, hh/2, w/2)); }
+    else if(sp.t==='ell'){ e = document.createElementNS(NS, 'ellipse'); e.setAttribute('rx', sp.s[0]/2); e.setAttribute('ry', sp.s[1]/2); }
+    else if(sp.t==='path'){ e = document.createElementNS(NS, 'path'); e.setAttribute('d', tplPath(sp)); if(sp.trim){ e.setAttribute('pathLength', 100); e.setAttribute('stroke-dasharray', '100 100'); } }
+    else if(sp.t==='text'){ e = document.createElementNS(NS, 'text'); e.setAttribute('text-anchor', sp.just==='l' ? 'start' : (sp.just==='r' ? 'end' : 'middle')); e.setAttribute('dominant-baseline', 'central'); e.setAttribute('font-size', sp.fs || 60); e.setAttribute('font-weight', '700'); e.setAttribute('direction', 'ltr'); if(sp.font==='sym') e.setAttribute('font-family', 'Arial, sans-serif'); }
+    else if(sp.t==='bg'){ e = document.createElementNS(NS, 'rect'); e.setAttribute('width', 1920); e.setAttribute('height', 1080); }
+    if(sp.sh) inner.setAttribute('filter', 'url(#' + id + 'sh)');
+    if(sp.rough && !sp.sh) inner.setAttribute('filter', 'url(#' + id + 'rg)');
+    if(sp.glow) inner.setAttribute('filter', 'url(#' + id + 'gl)');
+    inner.appendChild(e); root.appendChild(g);
+    els.push({sp:sp, g:g, e:e});
+  });
+  return {svg:svg, root:root, els:els, T:T, id:id};
+}
+function tplC(v, cols){ return (typeof v==='string' && /^c\d$/.test(v)) ? (cols[+v[1]-1] || '#fff') : (v || '#fff'); }
+function drawTpl(el, t, o){
+  var T = el.T, cols = o.cols || T.cols, f = o.fields || {}, dur = T.dur || 4, cyc = dur + 0.8, tt = t % cyc, id = el.id;
+  if(T.out === false) tt = t % 10;
+  var anc = o.anc || T.anc || [0.5, 0.5], P0 = [1920*anc[0], 1080*anc[1]], sc0 = o.scale || 1, op0 = 1;
+  (T.na || []).forEach(function(n){ var v = tplKey(n.k.map(function(q){ return [q[0] + (n.d||0), q[1]]; }), tt, n.ez); if(n.p==='dp'){ P0 = [P0[0] + v[0]*sc0, P0[1] + v[1]*sc0]; } else if(n.p==='sc') sc0 *= v/100; else if(n.p==='op') op0 = v/100; });
+  if(T.out !== false && tt > dur - 0.35){ var u = clamp((tt - (dur - 0.35)) / 0.35); op0 *= 1 - u*u*u; sc0 *= 1 - 0.06*u*u*u; }
+  el.root.setAttribute('transform', 'translate(' + P0[0].toFixed(1) + ' ' + P0[1].toFixed(1) + ') scale(' + sc0.toFixed(4) + ')');
+  el.root.setAttribute('opacity', op0.toFixed(3));
+  el.els.forEach(function(L, li){
+    var sp = L.sp, p = (sp.p || [0,0]).slice(), s = [1,1], r = sp.rot || 0, op = sp.o !== undefined ? sp.o/100 : 1, trim = 100, w = sp.s ? sp.s[0] : 0;
+    (sp.a || []).forEach(function(an){
+      var keys = an.k.map(function(q){ return [q[0] + (an.d||0), q[1]]; }), v = tplKey(keys, tt, an.ez);
+      switch(an.p){
+        case 'dp': p = [(sp.p||[0,0])[0] + v[0], (sp.p||[0,0])[1] + v[1]]; break;
+        case 'sc': if(Array.isArray(v)) s = [v[0]/100, v[1]/100]; else s = [v/100, v/100]; break;
+        case 'sx': s = [v/100, s[1]]; break;
+        case 'sy': s = [s[0], v/100]; break;
+        case 'rot': r = (sp.rot||0) + v; break;
+        case 'op': op = v/100; break;
+        case 'trim': trim = v; break;
+        case 'w': w = v; break;
+      }
+    });
+    if(sp.jit){ var fr = Math.floor(tt * (sp.jit[2]||8)), sd = li*13.7 + fr*7.1; p = [p[0] + (rnd(sd) - .5)*2*sp.jit[0], p[1] + (rnd(sd + 3) - .5)*2*sp.jit[0]]; r += (rnd(sd + 5) - .5)*2*sp.jit[1]; }
+    if(sp.pulse){ var k = 1 + Math.sin(tt*sp.pulse[1])*sp.pulse[0]; s = [s[0]*k, s[1]*k]; }
+    if(sp.spin) r += tt*sp.spin;
+    var e = L.e;
+    if(sp.t==='bg'){
+      var bgf = sp.kind==='grad' ? 'url(#' + id + 'bgg)' : (sp.kind==='grid' ? 'url(#' + id + 'grid)' : tplC('c1', cols));
+      if(sp.kind==='grad'){ var st = el.svg.querySelectorAll('#' + id + 'bgg stop'); st[0].setAttribute('stop-color', tplC('c1', cols)); st[1].setAttribute('stop-color', tplC('c2', cols)); st[2].setAttribute('stop-color', tplC('c3', cols)); var gg = el.svg.querySelector('#' + id + 'bgg'); var a = tt*0.4; gg.setAttribute('x1', (0.5 + Math.cos(a)*0.5).toFixed(3)); gg.setAttribute('y1', (0.5 + Math.sin(a)*0.5).toFixed(3)); gg.setAttribute('x2', (0.5 - Math.cos(a)*0.5).toFixed(3)); gg.setAttribute('y2', (0.5 - Math.sin(a)*0.5).toFixed(3)); }
+      if(sp.kind==='grid'){ el.svg.querySelector('.tplback').setAttribute('fill', tplC('c1', cols)); var gp = el.svg.querySelector('#' + id + 'grid'); gp.querySelector('path').setAttribute('stroke', tplC('c2', cols)); gp.setAttribute('patternTransform', 'translate(0 ' + ((tt*30) % 90).toFixed(1) + ')'); }
+      if(sp.kind==='paper' || sp.kind==='noise'){ e.setAttribute('filter', 'url(#' + id + 'noise)'); e.setAttribute('opacity', sp.kind==='paper' ? .18 : .55); el.svg.querySelector('.tplback').setAttribute('fill', tplC(sp.kind==='paper' ? 'c1' : 'c2', cols)); if(sp.kind==='noise') e.setAttribute('transform', 'translate(' + (-(tt*20)%200).toFixed(1) + ' 0) scale(1.2)'); }
+      e.setAttribute('fill', bgf);
+      if(sp.kind==='grad') el.svg.querySelector('.tplback').setAttribute('fill', tplC('c1', cols));
+      return;
+    }
+    if(sp.f) e.setAttribute('fill', tplC(sp.f, cols)); else if(sp.t!=='text') e.setAttribute('fill', 'none');
+    if(sp.st){ e.setAttribute('stroke', tplC(sp.st[0], cols)); e.setAttribute('stroke-width', sp.st[1]||4); e.setAttribute('stroke-linecap', 'round'); e.setAttribute('stroke-linejoin', 'round'); }
+    if(sp.trim) e.setAttribute('stroke-dashoffset', (100 - trim).toFixed(2));
+    if(sp.t==='rect' && w !== sp.s[0]){ e.setAttribute('width', Math.max(0, w)); }
+    if(sp.t==='text'){
+      var str = (f[sp.fld] !== undefined && f[sp.fld] !== '') ? String(f[sp.fld]) : sp.def;
+      if(sp.count){ var to = sp.count[1]; if(sp.cfld && f[sp.cfld] !== undefined && f[sp.cfld] !== '' && !isNaN(parseFloat(String(f[sp.cfld]).replace(/,/g,'')))) to = parseFloat(String(f[sp.cfld]).replace(/,/g,'')); var cu = clamp((tt - sp.count[2]) / sp.count[3]); cu = 1 - Math.pow(1 - cu, 3); str = (sp.pre||'') + Math.round(sp.count[0] + (to - sp.count[0])*cu).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (sp.suf||''); }
+      if(sp.typ){ var n = Math.round(str.length * clamp((tt - sp.typ[0]) / sp.typ[1])); str = str.slice(0, n); }
+      var lines = str.split('\n');
+      if(e._s !== str){
+        e._s = str; e.textContent = '';
+        lines.forEach(function(ln, i){ var ts = document.createElementNS('http://www.w3.org/2000/svg', 'tspan'); ts.setAttribute('x', 0); ts.setAttribute('dy', i ? (sp.fs||60)*1.2 : -((lines.length - 1)*(sp.fs||60)*0.6)); ts.textContent = ln || ' '; e.appendChild(ts); });
+      }
+      e.setAttribute('fill', tplC(sp.fc || '#fff', cols));
+      if(sp.scroll){ var tw = 0; try{ tw = e.getComputedTextLength(); }catch(x){} var wrap = (tw || 1200) + (sp.gap||200); p = [p[0] - ((tt*Math.abs(sp.scroll)) % wrap) * (sp.scroll < 0 ? -1 : 1), p[1]]; }
+    }
+    L.g.setAttribute('transform', 'translate(' + p[0].toFixed(1) + ' ' + p[1].toFixed(1) + ') rotate(' + r.toFixed(2) + ') scale(' + s[0].toFixed(4) + ' ' + s[1].toFixed(4) + ')');
+    L.g.setAttribute('opacity', clamp(op).toFixed(3));
+  });
+}
 function mountTrim(box, it, o){
   var h = '<svg viewBox="0 0 160 100" class="lnsvg"><rect width="160" height="100" fill="#141418"/>';
   TRIM_PATHS.forEach(function(d, i){
@@ -1371,5 +1493,5 @@ function injectFilters(){
 return {mountTr:mountTr, drawTr:drawTr, mountMp:mountMp, drawMp:drawMp, mountTx:mountTx, drawTx:drawTx,
         mountEz:mountEz, drawEz:drawEz, easeFn:easeFn, mountTitle:mountTitle, drawTitle:drawTitle, elSVG:E, injectFilters:injectFilters,
         mountCap:mountCap, drawCap:drawCap, waveSVG:waveSVG, mountLook:mountLook, drawLook:drawLook, mountStyle:mountStyle,
-        clamp:clamp, rnd:rnd, mountSprite:mountSprite, drawSprite:drawSprite, mountLine:mountLine, drawLine:drawLine, mountCar:mountCar, drawCar:drawCar, mountTrim:mountTrim, drawTrim:drawTrim, mountDepth:mountDepth, drawDepth:drawDepth, trkSVG:trkSVG, gfSVG:gfSVG};
+        clamp:clamp, rnd:rnd, mountSprite:mountSprite, drawSprite:drawSprite, mountLine:mountLine, drawLine:drawLine, mountCar:mountCar, drawCar:drawCar, mountTrim:mountTrim, drawTrim:drawTrim, mountTpl:mountTpl, drawTpl:drawTpl, mountDepth:mountDepth, drawDepth:drawDepth, trkSVG:trkSVG, gfSVG:gfSVG};
 })();
