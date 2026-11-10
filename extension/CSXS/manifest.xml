@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="com.hamdy.motionkit" ExtensionBundleVersion="1.8.0" ExtensionBundleName="Hamdy Motion Kit" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.hamdy.motionkit" ExtensionBundleVersion="1.9.0" ExtensionBundleName="Hamdy Motion Kit" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.hamdy.motionkit.panel" Version="1.8.0"/>
+    <Extension Id="com.hamdy.motionkit.panel" Version="1.9.0"/>
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
@@ -39,6 +39,12 @@
             <MinSize><Height>380</Height><Width>360</Width></MinSize>
             <MaxSize><Height>3000</Height><Width>4000</Width></MaxSize>
           </Geometry>
+          <Icons>
+            <Icon Type="Normal">./assets/brand/icon_normal.png</Icon>
+            <Icon Type="RollOver">./assets/brand/icon_rollover.png</Icon>
+            <Icon Type="DarkNormal">./assets/brand/icon_dark.png</Icon>
+            <Icon Type="DarkRollOver">./assets/brand/icon_dark_rollover.png</Icon>
+          </Icons>
         </UI>
       </DispatchInfo>
     </Extension>

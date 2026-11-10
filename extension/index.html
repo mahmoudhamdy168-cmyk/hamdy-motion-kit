@@ -13,8 +13,8 @@
 @font-face{font-family:Plex;src:url(fonts/plex-latin-700.woff2) format("woff2");font-weight:700;unicode-range:U+0000-024F}
 
 :root{
-  --bg:#18181b; --panel:#1f1f23; --card:#26262b; --card2:#2d2d33; --line:#34343b;
-  --tx:#ececf1; --mut:#9a9aa6; --acc:#ff6b3d; --acc2:#ffb03d; --ok:#3ddc97; --bad:#ff5470;
+  --bg:#0c0c0d; --panel:#121214; --card:#1b1b1e; --card2:#242428; --line:#2c2c31;
+  --tx:#ececf1; --mut:#9a9aa6; --acc:#b0101c; --acc2:#e0303c; --ok:#3ddc97; --bad:#ff5470;
   --r:10px;
 }
 *{box-sizing:border-box}
@@ -26,8 +26,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* header */
 header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel);flex:none}
 .brand{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
-.brand .dot{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center}
-.brand .dot svg{width:14px;height:14px}
+.brand .dot{width:26px;height:26px;border-radius:7px;background:var(--acc);display:grid;place-items:center;overflow:hidden}
+.brand .dot img{width:25px;height:25px;display:block}
 .brand small{color:var(--mut);font-weight:400}
 nav{display:flex;gap:3px 2px;flex-wrap:wrap;flex:1 1 360px;min-width:160px}
 nav::-webkit-scrollbar{display:none}
@@ -70,7 +70,7 @@ input{user-select:text}
 .check input{accent-color:var(--acc);width:15px;height:15px;margin:0}
 .btn{border:0;border-radius:9px;padding:9px 12px;font-weight:700;cursor:pointer;background:var(--card2);color:var(--tx);box-shadow:inset 0 0 0 1px var(--line)}
 .btn:hover{box-shadow:inset 0 0 0 1px var(--mut)}
-.btn.primary{background:linear-gradient(135deg,var(--acc),#ff8a3d);color:#1a0d05;box-shadow:none}
+.btn.primary{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;box-shadow:none}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn.warn{color:var(--bad)}
 .btn:disabled{opacity:.5;cursor:default}
@@ -78,7 +78,7 @@ input{user-select:text}
 .toast{font-size:12px;border-radius:8px;padding:7px 9px;display:none}
 .toast.ok{display:block;background:rgba(61,220,151,.12);color:var(--ok)}
 .toast.bad{display:block;background:rgba(255,84,112,.12);color:var(--bad)}
-.toast.info{display:block;background:rgba(255,176,61,.12);color:var(--acc2)}
+.toast.info{display:block;background:rgba(224,48,60,.12);color:var(--acc2)}
 
 /* grid */
 .toolbar{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
@@ -208,7 +208,7 @@ body.dragout,body.dragout *{cursor:grabbing!important;user-select:none}
 body.dragready::after{background:#3ddc84!important;content:'سيبه دلوقتي ✓ هيتطبق على اللاير المحدد'!important}
 body.en.dragready::after{content:'Release now ✓ it will apply to the selected layer'!important}
 .card.dragging{opacity:.45;outline:2px dashed var(--acc)}
-body.dragout::after{content:'اسحب الكارت لبرة البانل على After Effects وسيبه';position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:var(--acc);color:#111;font-weight:700;padding:8px 14px;border-radius:10px;font-size:12px;z-index:50;pointer-events:none}
+body.dragout::after{content:'اسحب الكارت لبرة البانل على After Effects وسيبه';position:fixed;left:50%;bottom:14px;transform:translateX(-50%);background:var(--acc);color:#fff;font-weight:700;padding:8px 14px;border-radius:10px;font-size:12px;z-index:50;pointer-events:none}
 /* carousel */
 .car3d{position:absolute;inset:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#2b2e3b,#121216 70%)}
 .carw{position:absolute;inset:0;transform-style:preserve-3d}
@@ -231,7 +231,7 @@ body.aitab #cardSize, body.aitab #count{display:none}
 .aiscope{font-size:12px;color:#a9a9b6;background:#1b1b22;border:1px solid #2a2a33;border-radius:8px;padding:6px 10px}
 .ailog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px}
 .aib{max-width:88%;padding:9px 12px;border-radius:12px;line-height:1.7;font-size:13px;white-space:normal;word-wrap:break-word}
-.aib.user{align-self:flex-start;background:var(--acc);color:#111}
+.aib.user{align-self:flex-start;background:var(--acc);color:#fff}
 .aib.bot{align-self:flex-end;background:#22222b;color:#e8e8ee}
 .aib.tool{align-self:flex-end;background:#16161c;border:1px dashed #33333d;color:#9a9aa8;font-size:12px}
 .aib.tool.bad{border-color:#a33;color:#f08a8a}
@@ -241,14 +241,14 @@ body.aitab #cardSize, body.aitab #count{display:none}
 .aiact{display:flex;gap:6px;margin-top:6px}.aiact .btn{width:auto;padding:4px 14px}
 .aiin textarea{width:100%;box-sizing:border-box;background:#141419;color:#eee;border:1px solid #2c2c36;border-radius:10px;padding:10px;font:inherit;resize:vertical}
 .aibtns{display:flex;gap:8px;align-items:center;margin-top:6px}.aibtns .btn{width:auto;padding:6px 18px}
-.algrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.algrid .btn{padding:8px 0;font-size:16px}.algrid .btn.on{background:var(--acc);color:#111}
+.algrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.algrid .btn{padding:8px 0;font-size:16px}.algrid .btn.on{background:var(--acc);color:#fff}
 .cved{position:relative}.cved svg{width:100%;max-width:300px;display:block;margin:0 auto;touch-action:none}.cvnum{text-align:center;font:12px monospace;color:#9a9aa8;direction:ltr;margin-top:4px}
 .cvpre{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;margin:10px 0}.cvpre .btn{padding:5px 4px;font-size:11px;direction:ltr}
 .grid.brgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-min,170px),1fr));gap:10px;align-content:start}
 .brgrid .edempty,.brgrid .brmore{grid-column:1/-1;text-align:center}
 .brth{aspect-ratio:16/9;background-size:cover;background-position:center;position:relative;border-radius:8px 8px 0 0;background-color:#16161c}
 .brth.wave{background-size:100% 100%;background-color:#e9e9ef}
-.brplay{position:absolute;inset:auto auto 6px 6px;width:30px;height:30px;border-radius:50%;border:0;background:var(--acc);color:#111;cursor:pointer}
+.brplay{position:absolute;inset:auto auto 6px 6px;width:30px;height:30px;border-radius:50%;border:0;background:var(--acc);color:#fff;cursor:pointer}
 .brtag{position:absolute;top:6px;right:6px;background:#000a;color:#fff;font-size:10px;padding:2px 6px;border-radius:6px}
 .brc .meta{padding:6px 8px;display:flex;flex-direction:column;gap:2px;font-size:11px}.brc .meta span{color:#8b8b97}
 .tplsvg{width:100%;height:100%;display:block}.tplback{fill:#15161c}
@@ -291,7 +291,7 @@ nav#tabs button[data-t=ed]{color:var(--acc)}
 <div class="app">
   <header>
     <div class="brand">
-      <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="#1a0d05" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg></div>
+      <div class="dot"><img src="assets/brand/logo_black.png" alt=""></div>
       <span>Hamdy</span><small>Motion Kit <b id="verTxt"></b></small>
     </div>
     <nav id="tabs"></nav>
@@ -333,6 +333,7 @@ nav#tabs button[data-t=ed]{color:var(--acc)}
 <script src="js/otr_data.js"></script>
 <script src="js/tpl_data.js"></script>
 <script src="js/tpl_data2.js"></script>
+<script src="js/tpl_en.js"></script>
 <script src="js/data5.js"></script>
 <script src="js/sfx_data.js"></script>
 <script src="js/preview.js"></script>

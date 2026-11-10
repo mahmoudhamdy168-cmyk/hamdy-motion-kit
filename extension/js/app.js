@@ -103,7 +103,7 @@ var OKMSG = {
 
 /* =============================================================== state */
 var DEF = {
-  tab:'tr', paused:false, acc:'#ff6b3d', lang:'ar', hide:true, perf:'full', ui:{side:300, nav:0, card:132},
+  tab:'tr', paused:false, acc:'#b0101c', lang:'ar', hide:true, perf:'full', ui:{side:300, nav:0, card:132},
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:'', tp:'uiSub'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
@@ -117,7 +117,7 @@ var DEF = {
   ed:{auto:true},
   trk:{smooth:0, rot:true, scale:true, text:'اكتب هنا', size:60, side:'r', amount:40, zoom:6, swap:false, stabRot:true},
   ez:{curve:[0.65,0,0.35,1], str:1, clip:null},
-  fav:{}, recent:[], keys:[], brand:{name:'', cols:['#FF6A3D','#FFFFFF','#14151A'], font:''},
+  fav:{}, recent:[], keys:[], brand:{name:'', cols:['#B0101C','#FFFFFF','#0C0C0D'], font:''},
   tp:{f:{}, c:{}, dur:0, place:'def', size:1, sfx:true},
   br:{src:'video', orient:'any', quality:'hd', fit:true, pxKey:'', fsKey:''},
   ai:{key:'', model:'claude-sonnet-5-5', auto:true, frame:false, t0:null, t1:null, bridge:false, port:47811},
@@ -137,6 +137,7 @@ function load(){
   if(!Array.isArray(s.lib.paths)) s.lib.paths = [];
   if(!s.cap.keys) s.cap.keys = {deepgram:'', groq:'', openai:''};
   if(!Array.isArray(s.sfx.gen)) s.sfx.gen = [];
+  if(!s.theme2){ if(s.acc === '#ff6b3d') s.acc = '#b0101c'; s.theme2 = 1; } // new brand colours: black + dark red
   return s;
 }
 function save(){ try{ localStorage.setItem('hmk_state', JSON.stringify(S)); }catch(e){} }
@@ -207,7 +208,8 @@ var $ = function(id){ return document.getElementById(id); };
 function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 function hexRGB(h){ h = String(h).replace('#',''); return [parseInt(h.substr(0,2),16)/255, parseInt(h.substr(2,2),16)/255, parseInt(h.substr(4,2),16)/255]; }
 function byId(list, id){ for(var i=0;i<list.length;i++) if(list[i].id===id) return list[i]; return null; }
-function setAcc(){ document.documentElement.style.setProperty('--acc', S.acc); }
+function setAcc(){ var r = document.documentElement.style, c = hexRGB(S.acc).map(function(v){ return Math.round(Math.min(1, v*1.25 + 0.12)*255); });
+  r.setProperty('--acc', S.acc); r.setProperty('--acc2', 'rgb(' + c.join(',') + ')'); }
 var TLABEL = {ffx:'FX', video:'VIDEO', image:'IMG', audio:'SFX'};
 function typeName(t){ return {ffx:'بريسيتس', video:'فيديو', image:'صور', audio:'أصوات'}[t] || t; }
 function folderName(p){ var s = String(p).replace(/[\\\/]+$/,''); return s.split(/[\\\/]/).pop(); }
@@ -388,10 +390,10 @@ function guideSVG(g, opt){
 
 var TICON = {
   cutout:'<rect x="20" y="16" width="120" height="68" rx="6" fill="#2f2f38"/><g fill="none" stroke="#55555f" stroke-width="2" stroke-dasharray="4 4"><rect x="20" y="16" width="120" height="68" rx="6"/></g><circle cx="80" cy="40" r="13" fill="var(--acc)"/><path d="M56 84q4-28 24-28t24 28z" fill="var(--acc)"/>',
-  tbreak:'<g font-family="sans-serif" font-size="20" fill="#fff" text-anchor="middle"><rect x="18" y="34" width="38" height="30" rx="4" fill="#2f2f38"/><text x="37" y="55">أهلاً</text><rect x="62" y="34" width="38" height="30" rx="4" fill="var(--acc)"/><text x="81" y="55" fill="#111">بيك</text><rect x="106" y="34" width="38" height="30" rx="4" fill="#2f2f38"/><text x="125" y="55">هنا</text></g>',
+  tbreak:'<g font-family="sans-serif" font-size="20" fill="#fff" text-anchor="middle"><rect x="18" y="34" width="38" height="30" rx="4" fill="#2f2f38"/><text x="37" y="55">' + (S.lang==='en' ? 'Hi' : 'أهلاً') + '</text><rect x="62" y="34" width="38" height="30" rx="4" fill="var(--acc)"/><text x="81" y="55" fill="#111">' + (S.lang==='en' ? 'and' : 'بيك') + '</text><rect x="106" y="34" width="38" height="30" rx="4" fill="#2f2f38"/><text x="125" y="55">' + (S.lang==='en' ? 'bye' : 'هنا') + '</text></g>',
   rekey:'<g fill="var(--acc)"><path d="M40 50l10-10 10 10-10 10z"/><path d="M75 50l10-10 10 10-10 10z"/><path d="M110 50l10-10 10 10-10 10z"/></g><path d="M50 66q35 24 70 0" fill="none" stroke="#fff" stroke-width="3"/><circle cx="120" cy="66" r="4" fill="#fff"/>',
   brand:'<g><rect x="28" y="28" width="30" height="44" rx="6" fill="var(--acc)"/><rect x="65" y="28" width="30" height="44" rx="6" fill="#ffffff"/><rect x="102" y="28" width="30" height="44" rx="6" fill="#2a2a31" stroke="#55555f"/></g>',
-  glass:'<defs><linearGradient id="tg" x1="0" x2="1"><stop offset="0" stop-color="#ff6a3d"/><stop offset="1" stop-color="#5a6cff"/></linearGradient></defs><rect x="10" y="10" width="140" height="80" fill="url(#tg)" opacity=".55"/><rect x="34" y="36" width="92" height="30" rx="15" fill="#ffffff" fill-opacity=".22" stroke="#fff" stroke-opacity=".8"/><text x="80" y="56" font-size="12" fill="#fff" text-anchor="middle" font-family="sans-serif">glass</text>',
+  glass:'<defs><linearGradient id="tg" x1="0" x2="1"><stop offset="0" stop-color="#b0101c"/><stop offset="1" stop-color="#5a6cff"/></linearGradient></defs><rect x="10" y="10" width="140" height="80" fill="url(#tg)" opacity=".55"/><rect x="34" y="36" width="92" height="30" rx="15" fill="#ffffff" fill-opacity=".22" stroke="#fff" stroke-opacity=".8"/><text x="80" y="56" font-size="12" fill="#fff" text-anchor="middle" font-family="sans-serif">glass</text>',
   fixAr:'<text x="80" y="62" font-size="34" fill="var(--acc)" text-anchor="middle" font-family="sans-serif" direction="rtl">عربي</text><path d="M40 78h80" stroke="#55555f" stroke-width="2"/><path d="M48 74l-8 4 8 4" fill="none" stroke="#fff" stroke-width="2"/>',
   beat:'<g fill="var(--acc)"><rect x="22" y="44" width="6" height="12"/><rect x="34" y="30" width="6" height="40"/><rect x="46" y="40" width="6" height="20"/><rect x="58" y="18" width="6" height="64"/><rect x="70" y="38" width="6" height="24"/><rect x="82" y="26" width="6" height="48"/><rect x="94" y="42" width="6" height="16"/><rect x="106" y="20" width="6" height="60"/><rect x="118" y="36" width="6" height="28"/><rect x="130" y="44" width="6" height="12"/></g><g fill="#fff"><path d="M61 10l-4-6h8z"/><path d="M109 10l-4-6h8z"/></g>',
   align:'<line x1="40" y1="14" x2="40" y2="86" stroke="var(--acc)" stroke-width="3"/><rect x="40" y="22" width="80" height="16" rx="3" fill="#55555f"/><rect x="40" y="44" width="50" height="16" rx="3" fill="#77777f"/><rect x="40" y="66" width="96" height="16" rx="3" fill="#99999f"/>',
@@ -430,12 +432,12 @@ function mountThumb(box, it, big){
       o = {k:'tr', it:it, el:P.mountTr(box)}; break;
     case 'mp': o = {k:'mp', it:it, el:P.mountMp(box)}; break;
     case 'tx':
-      var txt = big ? (S.tx.text || ' ') : (it.latin ? 'MOTION' : 'حركة النص');
-      var fs = big ? Math.max(18, Math.min(46, 260/Math.max(4, (S.tx.text||'').length*0.75))) : 24;
+      var txt = big ? (S.tx.text || ' ') : (it.latin ? 'MOTION' : (S.lang==='en' ? 'Text Animation' : 'حركة النص'));
+      var fs = big ? Math.max(18, Math.min(46, 260/Math.max(4, (S.tx.text||'').length*0.75))) : (S.lang==='en' && !it.latin ? 16 : 24);
       o = {k:'tx', it:it, el:P.mountTx(box, txt, (it.src||it.tw) ? 'chars' : (it.by || S.tx.based), fs)}; break;
     case 'ti': o = {k:'ti', it:it, el:P.mountTitle(box, it, tiTexts(it), {side:it.side || S.ti.side})}; break;
     case 'cap': o = {k:'cap', it:it, el:P.mountCap(box, it, capOpt(big))}; break;
-    case 'ts': P.mountStyle(box, it, big ? (S.tx.text || 'حمدي') : 'حمدي', S.acc); break;
+    case 'ts': P.mountStyle(box, it, big ? (S.tx.text || SAMPLE_NAME()) : SAMPLE_NAME(), S.acc); break;
     case 'fx': o = {k:'fx', it:it, el:P.mountLook(box, it, big)}; break;
     case 'sfx': box.classList.add('svgth'); box.innerHTML = P.waveSVG(it.pk || [], undefined, S.acc) + '<span class="badge">' + (it.dur ? it.dur.toFixed(1) + 's' : 'AI') + '</span>'; if(big) o = {k:'sfx', it:it, box:box}; break;
     case 'el':
@@ -562,7 +564,7 @@ function renderSide(){
       h += '<div class="hint">الستايل بيغيّر لون النص والإطار وبيضيف إفكتات اسمها HAMDY STYLE (ظل، توهج، جرادينت، لمعة، بوكس). لو طبّقت ستايل تاني بيحل مكان القديم. وتقدر تحط عليه أي حركة من تاب حركة النص.</div>';
       break;
     case 'fx':
-      h += '<div class="stage" id="stage"></div>' + head(it, {look:'فلتر ألوان', vfx:'إفكت فيديو', afx:'إفكت صوت'}[it.kind] + ' · ' + it.g);
+      h += '<div class="stage" id="stage"></div>' + head(it, trText({look:'فلتر ألوان', vfx:'إفكت فيديو', afx:'إفكت صوت'}[it.kind]) + ' · ' + trText(it.g));
       if(it.kind !== 'afx'){
         h += '<div class="field"><span class="lbl">يتحط على</span>' + seg('fx.mode', [['playhead','أدجستمنت من البلاي هيد'],['whole','أدجستمنت للكومب كله'],['selected','اللايرات المحددة']], S.fx.mode) + '</div>';
         if(S.fx.mode !== 'selected') h += '<div class="field"><span class="lbl">القوة</span>' + seg('fx.amount', [[25,'25%'],[50,'50%'],[75,'75%'],[100,'100%']], S.fx.amount) + '</div>';
@@ -1277,7 +1279,7 @@ function capSide(it){
   h += '<div class="row">' + num('cap.size','الحجم',S.cap.size) + num('cap.y','المكان من فوق %',S.cap.y) + '</div>';
   h += '<div class="row"><div class="field"><label>لون الكلام</label><input type="color" data-k="cap.color" value="' + S.cap.color + '"></div><div class="field"><label>الخط (PostScript)</label><input type="text" data-k="cap.font" dir="ltr" placeholder="Cairo-Bold" value="' + esc(S.cap.font) + '"></div></div>';
   h += '<div class="row">' + chk('cap.shadow','ظل',S.cap.shadow) + chk('cap.stroke','إطار',S.cap.stroke) + chk('cap.box','بوكس ورا',S.cap.box) + chk('cap.upper','CAPS للإنجليزي',S.cap.upper) + chk('cap.nopunct','شيل الترقيم',S.cap.nopunct) + '</div>';
-  h += '<div class="sect">٣. راجع الكلام (' + S.cap.caps.length + ')</div>';
+  h += '<div class="sect">' + (S.lang==='en' ? '3. Review the words' : '٣. راجع الكلام') + ' (' + S.cap.caps.length + ')</div>';
   if(S.cap.caps.length){
     h += '<div class="caplist">' + S.cap.caps.map(function(c,i){ return '<div class="capline"><span class="ct">' + fmtT(c.s) + '</span><input type="text" class="capedit" data-ci="' + i + '" dir="auto" value="' + esc(c.text) + '"></div>'; }).join('') + '</div>';
     h += '<div class="row"><button class="btn" id="capRe">قسّم تاني</button><button class="btn warn" id="capClear">امسح</button></div>';
@@ -1318,7 +1320,7 @@ function playSfx(it){
   try{ if(AUD){ AUD.pause(); } AUD = new Audio(sfxURL(it)); AUD._id = it.id; AUD.play().catch(function(){}); }catch(e){}
 }
 function sfxSide(it){
-  var h = '<div class="stage svgth" id="stage"></div>' + head(it, (it.g||'') + (it.dur ? ' · ' + it.dur.toFixed(2) + ' ثانية' : ''));
+  var h = '<div class="stage svgth" id="stage"></div>' + head(it, trText(it.g||'') + (it.dur ? ' · ' + it.dur.toFixed(2) + (S.lang==='en' ? ' s' : ' ثانية') : ''));
   h += '<div class="row"><button class="btn" id="sfxPlay">▶ اسمع</button><button class="btn primary" id="go">ضيف عند البلاي هيد</button></div>';
   h += '<div class="hint">الأصوات دي متولّدة بالكود جوه الكيت، يعني ملكك وتستخدمها في أي شغل من غير حقوق. ولأي صوت تاني ضيف فولدراتك من تاب المكتبة.</div>';
   h += '<div class="sect">ولّد صوت بالذكاء الاصطناعي (ElevenLabs)</div>';
@@ -1908,8 +1910,13 @@ function trNode(root){
   list.forEach(function(x){ var p = x.parentNode; if(p && p.closest && p.closest('.captxt, .tsstage, textarea, .tstext, .u, .nmUser')) return; var nv = trText(x.data); if(nv !== x.data) x.data = nv; });
   Array.prototype.forEach.call(root.querySelectorAll ? root.querySelectorAll('[placeholder],[title]') : [], function(el){ ['placeholder','title'].forEach(function(a){ var v = el.getAttribute(a); if(v && /[؀-ۿ]/.test(v)){ var nv = trText(v); if(nv !== v) el.setAttribute(a, nv); } }); });
 }
+function SAMPLE_NAME(){ return S.lang==='en' ? 'Hamdy' : 'حمدي'; }
 function applyLang(){
   window.HMK_LANG = S.lang;
+  if(typeof HMK_TPL_LOCALIZE==='function') HMK_TPL_LOCALIZE(window.HMK_TPL, S.lang==='en');
+  // sample texts follow the panel language (only while they are still the untouched defaults)
+  var sf = SAMPLE[S.lang==='en' ? 'ar' : 'en'], st = SAMPLE[S.lang==='en' ? 'en' : 'ar'];
+  ['tx','trk','ln'].forEach(function(k){ if(S[k] && S[k].text === sf[k]) S[k].text = st[k]; });
   document.documentElement.setAttribute('dir', S.lang === 'en' ? 'ltr' : 'rtl');
   document.documentElement.setAttribute('lang', S.lang === 'en' ? 'en' : 'ar');
   document.body.classList.toggle('en', S.lang === 'en');
@@ -1977,7 +1984,8 @@ function edRefresh(force){
 }
 function renderSideIfEd(){ if(S.tab==='ed'){ var a = document.activeElement; if(!(a && $('side').contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) renderSide(); } }
 function edMock(){
-  return {layer:{idx:1, name:'حركة النص', inF:0, outF:90, op:100}, fps:30, kids:[], text:{text:'حركة النص', size:110, fill:[1,1,1], stroke:null, sw:0, trk:0, font:'Cairo-Bold'},
+  var nm = S.lang==='en' ? 'Text Animation' : 'حركة النص';
+  return {layer:{idx:1, name:nm, inF:0, outF:90, op:100}, fps:30, kids:[], text:{text:nm, size:110, fill:[1,1,1], stroke:null, sw:0, trk:0, font:'Cairo-Bold'},
     groups:[{g:'HAMDY IN overBottom', t0:0, fr:18, items:[{n:'HAMDY IN overBottom', path:[4,1], kind:'fx', on:true, props:[{n:'Position', path:[4,1,2], t:'2', nk:2, k0:[960,1300], k1:[960,540]}, {n:'Opacity', path:[4,1,9], t:'1', nk:2, k0:0, k1:100}]}]},
             {g:'HAMDY TYPE', items:[{n:'HAMDY TYPE Speed', path:[4,2], kind:'fx', on:true, props:[{n:'Slider', path:[4,2,1], t:'1', nk:0, v:14}]}, {n:'HAMDY TYPE Cursor', path:[4,3], kind:'fx', on:true, props:[{n:'Checkbox', path:[4,3,1], t:'1', nk:0, v:1}]}]},
             {g:'HAMDY STYLE', items:[{n:'HAMDY STYLE Glow', path:[4,4], kind:'fx', on:true, props:[{n:'Glow Radius', path:[4,4,3], t:'1', nk:0, v:30}, {n:'Color A', path:[4,4,8], t:'c', nk:0, v:[1,0.4,0.2,1]}]}]}]};

@@ -1977,5 +1977,17 @@ var I18N_EN = {
 "بحط النتيجة في الكومب…":"Placing the result in the comp…",
 "بفصل الخلفية…":"Removing the background…",
 "بجهّز الموديل…":"Loading the model…",
-"حدد لاير صورة أو فيديو الأول.":"Select an image or video layer first."
+"حدد لاير صورة أو فيديو الأول.":"Select an image or video layer first.",
+"من الأول":"From start",
+"من النص":"From center",
+"من الأطراف":"From edges",
+"متابع جديد":"New follower",
+"ووش":"Whoosh",
+"سوايب":"Swipe",
+"واجهة":"UI",
+"ضربات":"Hits",
+"رايزر":"Riser",
+"نغمات":"Tones",
+"ميكانيكي":"Mechanical",
+"إيقاع":"Rhythm"
 };

@@ -339,6 +339,7 @@ function drawMp(el, sp, t, opt){
 
 /* ========================================================== text preview */
 var AR = /[؀-ۿ]/;
+function PL(ar, en){ return window.HMK_LANG==='en' ? en : ar; }
 function unitsOf(text, based){
   if(based==='auto') based = AR.test(text) ? 'words' : 'chars';
   var parts;
@@ -621,7 +622,7 @@ function mountTitle(box, ti, texts, opt){
 }
 function titleText(el, p, t){
   var tx = el.texts;
-  if(p.raw) return p.raw;
+  if(p.raw) return (window.HMK_LANG==='en' && window.I18N_EN && I18N_EN[p.raw]) || p.raw;
   if(p.key==='count'){ var a=parseFloat(tx[0])||0, b=parseFloat(tx[1])||0, u=clamp((t-0.25)/1.5); u = 1-Math.pow(1-u,3); return Math.round(a+(b-a)*u).toLocaleString('en-US') + (tx[2]||''); }
   if(p.key==='down'){ var N=parseFloat(tx[0])||10; return String(Math.max(0, Math.ceil(N - t*3))); }
   if(p.key==='pct'){ var P=parseFloat(tx[0])||0, u2=clamp((t-0.4)/1.2); u2 = bez(.25,0,.25,1)(u2); return Math.round(P*u2) + '%'; }
@@ -723,7 +724,7 @@ function E(id, t, acc){
       break;
     case 'underline':
       u = clamp(c/0.5); var st0 = clamp((c-1.6)/0.5);
-      s += '<text x="80" y="48" text-anchor="middle" font-size="18" font-weight="700" fill="#fff" font-family="Plex,sans-serif">كلمة مهمة</text>';
+      s += '<text x="80" y="48" text-anchor="middle" font-size="18" font-weight="700" fill="#fff" font-family="Plex,sans-serif">' + PL('كلمة مهمة','Key word') + '</text>';
       s += draw('M40 62 C70 60 100 63 120 58', 0, bez(.85,0,.2,1)(u), 3.5, st0>0 ? ' opacity="' + (1-st0) + '"' : '');
       break;
     case 'arrow':
@@ -734,7 +735,7 @@ function E(id, t, acc){
       u = clamp(c/0.8);
       var d0 = '', k;
       for(k=0;k<=70;k++){ a = -Math.PI/2 + k/70*Math.PI*2.15; var rr = 1 + 0.06*Math.sin(k*0.9) + k*0.0012; d0 += (k?'L':'M') + (80+Math.cos(a)*44*rr).toFixed(1) + ' ' + (50+Math.sin(a)*24*rr).toFixed(1); }
-      s += '<text x="80" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="Plex,sans-serif">مهم</text>';
+      s += '<text x="80" y="56" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="Plex,sans-serif">' + PL('مهم','Key') + '</text>';
       s += draw(d0, 0, bez(.85,0,.2,1)(u), 2.2);
       break;
     case 'check':
@@ -745,7 +746,7 @@ function E(id, t, acc){
       break;
     case 'highlight':
       u = clamp(c/0.45); u = bez(.1,0,.15,1)(u);
-      s += '<rect x="34" y="40" width="' + (92*u) + '" height="20" rx="2" fill="' + acc + '" opacity=".75"/><text x="80" y="56" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Plex,sans-serif">هايلايت</text>';
+      s += '<rect x="34" y="40" width="' + (92*u) + '" height="20" rx="2" fill="' + acc + '" opacity=".75"/><text x="80" y="56" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Plex,sans-serif">' + PL('هايلايت','Highlight') + '</text>';
       break;
     case 'dots':
       for(i=0;i<3;i++){ var y = -Math.abs(Math.sin((t*1.6 - i*0.18)*Math.PI))*12; s += '<circle cx="' + (66+i*14) + '" cy="' + (56+y) + '" r="5" fill="' + acc + '"/>'; }
@@ -808,7 +809,7 @@ function E(id, t, acc){
       break;
     case 'zigzag':
       var zz = 'M32 55'; for(i=1;i<=12;i++) zz += ' L' + (32+i*8) + ' ' + (i%2 ? 47 : 55);
-      s += '<text x="80" y="40" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Plex,sans-serif">مهم جداً</text>';
+      s += '<text x="80" y="40" text-anchor="middle" font-size="15" font-weight="700" fill="#fff" font-family="Plex,sans-serif">' + PL('مهم جداً','So important') + '</text>';
       s += draw(zz, 0, bez(.85,0,.2,1)(clamp(c/0.5)), 2.5);
       break;
     case 'cursor':
@@ -872,7 +873,7 @@ function drawCap(el, t){
     el.box.querySelector('.capstage').style.alignItems = 'center';
     el.bx.style.top = (el.opt.y || 72) + '%';
   }
-  var acc = el.opt.acc || '#ff6b3d', n = el.spans.length;
+  var acc = el.opt.acc || '#b0101c', n = el.spans.length;
   el.spans.forEach(function(sp, k){
     var s = k*wdur, e = (k+1)*wdur, o = 1, tf = '', f = '', col = '';
     switch(st.word){
@@ -899,7 +900,7 @@ var PHOTO = svgURL('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100
 function mountLook(box, it, big){
   var isA = it.kind==='afx';
   if(isA){ box.innerHTML = '<div class="lkstage afx"></div>'; return {box:box, it:it, afx:true, el:box.firstChild}; }
-  box.innerHTML = '<div class="lkstage"><div class="lkimg base"></div><div class="lkfx"><div class="lkimg"></div><div class="lkov"></div><div class="lkvig"></div><div class="lkgrain"></div><div class="lkscan"></div><svg class="lkpart" viewBox="0 0 160 100" preserveAspectRatio="none"></svg><div class="lkball"></div></div>' + (big ? '<div class="lkdiv"></div><span class="lkl">قبل</span><span class="lkr">بعد</span>' : '') + '</div>';
+  box.innerHTML = '<div class="lkstage"><div class="lkimg base"></div><div class="lkfx"><div class="lkimg"></div><div class="lkov"></div><div class="lkvig"></div><div class="lkgrain"></div><div class="lkscan"></div><svg class="lkpart" viewBox="0 0 160 100" preserveAspectRatio="none"></svg><div class="lkball"></div></div>' + (big ? '<div class="lkdiv"></div><span class="lkl">' + PL('قبل','Before') + '</span><span class="lkr">' + PL('بعد','After') + '</span>' : '') + '</div>';
   var st = box.firstChild, fx = st.querySelector('.lkfx'), img = fx.querySelector('.lkimg'), pv = it.pv || {};
   [st.querySelector('.base'), img].forEach(function(x){ x.style.backgroundImage = PHOTO; });
   img.style.filter = pv.f || '';
@@ -928,7 +929,7 @@ function drawLook(el, t){
   if(pv.trail || pv.step || pv.strobe){
     var tt = pv.step ? Math.floor(t*pv.step)/pv.step : t, bx = 10 + ((tt*0.5)%1)*80;
     var sh = '';
-    if(pv.trail){ for(i=1;i<=6;i++){ var bt = t - i*0.033, bxx = 10 + ((bt*0.5)%1)*80; sh += ', ' + ((bxx-bx)*1.6).toFixed(1) + 'px 0 0 rgba(255,107,61,' + (0.6*Math.pow(0.6,i)).toFixed(2) + ')'; } }
+    if(pv.trail){ for(i=1;i<=6;i++){ var bt = t - i*0.033, bxx = 10 + ((bt*0.5)%1)*80; sh += ', ' + ((bxx-bx)*1.6).toFixed(1) + 'px 0 0 rgba(176,16,28,' + (0.6*Math.pow(0.6,i)).toFixed(2) + ')'; } }
     el.ball.style.left = bx + '%'; el.ball.style.boxShadow = '0 0 0 transparent' + sh;
     if(pv.strobe) el.fx.style.filter = (Math.floor(t*6)%5===0) ? 'brightness(2.4)' : '';
   }
@@ -1027,7 +1028,7 @@ function lnD(p){
   }
   return d + (p.cl ? 'Z' : '');
 }
-var LN_TEXT = 'حمدي';
+function LN_TEXT(){ return PL('حمدي','Hamdy'); }
 function mountLine(box, it, o){
   var W = 160, H = 90, G = NABD_LINES, h = '<svg class="lnsvg" viewBox="-80 -45 160 90" preserveAspectRatio="xMidYMid slice">';
   h += '<defs><linearGradient id="lnA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a5a"/><stop offset="1" stop-color="#7a2a5a"/></linearGradient><linearGradient id="lnB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d2b55"/><stop offset="1" stop-color="#3f86b8"/></linearGradient></defs>';
@@ -1036,7 +1037,7 @@ function mountLine(box, it, o){
   else h += '<rect x="-80" y="-45" width="160" height="90" fill="#141418"/>';
   var paths = [];
   if(it.mode==='attach'){
-    h += '<text x="0" y="9" text-anchor="middle" font-size="30" font-weight="700" fill="#fff" direction="rtl">' + LN_TEXT + '</text>';
+    h += '<text x="0" y="9" text-anchor="middle" font-size="30" font-weight="700" fill="#fff" direction="' + PL('rtl','ltr') + '">' + LN_TEXT() + '</text>';
     paths = attachPaths(it.id);
   } else if(it.mode==='path'){
     paths = G.geo(it.id, W, H);
@@ -1049,7 +1050,7 @@ function mountLine(box, it, o){
     h += '<path id="lnp' + i + el.uid + '" d="' + lnD(p) + '" fill="none" stroke="' + col + '" stroke-width="' + w.toFixed(2) + '" stroke-linecap="round" stroke-linejoin="round"' + (p.dash ? '' : ' pathLength="100"') + dash + (p.op ? ' opacity="' + (p.op/100) + '"' : '') + (it.mode==='path' ? ' opacity=".55"' : '') + '/>';
   });
   if(it.mode==='path'){
-    h += '<text font-size="11" font-weight="700" fill="#fff" direction="ltr"><textPath href="#lnp0' + el.uid + '" startOffset="0">' + escX(o.text || 'نص ماشي على خط') + '</textPath></text>';
+    h += '<text font-size="11" font-weight="700" fill="#fff" direction="ltr"><textPath href="#lnp0' + el.uid + '" startOffset="0">' + escX(o.text || PL('نص ماشي على خط','Text moving on a line')) + '</textPath></text>';
   }
   h += '</svg>';
   box.innerHTML = h;
@@ -1434,7 +1435,7 @@ function trkSVG(it, t, acc){
     case 'tCam': for(var i=0;i<14;i++){ var px = (i*37 + t*12) % 160, py = 30 + (i*23)%55; h += '<circle cx="' + px.toFixed(1) + '" cy="' + py + '" r="1.8" fill="' + (i%3 ? '#5bd36b' : acc) + '"/>'; } h += '<path d="M60 70 L80 52 L100 70 Z" fill="none" stroke="' + acc + '"/>'; break;
     case 'tWarp': var j = Math.sin(t*9)*2*(1-clamp(((t%3)-1)/0.8)); h += '<rect x="' + (40+j) + '" y="' + (25-j) + '" width="80" height="50" rx="3" fill="none" stroke="#fff" stroke-width="1.2"/><text x="80" y="55" text-anchor="middle" fill="' + acc + '" font-size="11" font-weight="700">STABLE</text>'; break;
     case 'tNull': case 'tAttach': h += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#c9a47a"/><rect x="' + (x-8) + '" y="' + (y-8) + '" width="16" height="16" fill="none" stroke="#ff4f4f" stroke-width="1.4"/>' + (it.id==='tAttach' ? '<rect x="' + (x+12) + '" y="' + (y-30) + '" width="34" height="14" rx="3" fill="' + acc + '"/><path d="M' + x + ' ' + y + 'L' + (x+12) + ' ' + (y-16) + '" stroke="#fff" stroke-dasharray="2 2"/>' : ''); break;
-    case 'tText': h += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#c9a47a"/><text x="' + x + '" y="' + (y-14) + '" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">حمدي</text>'; break;
+    case 'tText': h += '<circle cx="' + x + '" cy="' + y + '" r="6" fill="#c9a47a"/><text x="' + x + '" y="' + (y-14) + '" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">' + PL('حمدي','Hamdy') + '</text>'; break;
     case 'tCall': h += '<circle cx="' + x + '" cy="' + y + '" r="4" fill="' + acc + '"/><circle cx="' + x + '" cy="' + y + '" r="8" fill="none" stroke="#fff"/><path d="M' + x + ' ' + y + 'L' + (x+14) + ' ' + (y-20) + 'H' + (x+42) + '" fill="none" stroke="#fff"/><text x="' + (x+44) + '" y="' + (y-24) + '" fill="#fff" font-size="9" font-weight="700">LABEL</text>'; break;
     case 'tBlur': case 'tPixel': case 'tDark':
       h += '<ellipse cx="' + x + '" cy="' + y + '" rx="15" ry="19" fill="' + (it.id==='tDark' ? '#222' : '#c9a47a') + '"' + (it.id==='tBlur' ? ' style="filter:blur(4px)"' : '') + '/>';
