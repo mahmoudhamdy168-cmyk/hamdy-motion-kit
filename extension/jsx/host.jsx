@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.10.3";
+    var VER = "1.10.4";
 
     // ================================================================ JSON
     function J(v) {
@@ -1110,10 +1110,12 @@ var NABD = (function () {
     // Like Animation Composer: a layer marker "HAMDY IN" (end of the in-animation) and "HAMDY OUT" (start of the
     // out-animation). Drag them on the layer bar and the animation stretches to match \u2014 keys stay where they are,
     // an expression re-times them.
-    function setMarker(L, label, t) {
+    function setMarker(L, label, t, params) {
         var M = L.property("ADBE Marker"), k;
         for (k = M.numKeys; k >= 1; k--) { try { if (M.keyValue(k).comment === label) { M.removeKey(k); } } catch (e) {} }
-        try { M.setValueAtTime(t, new MarkerValue(label)); } catch (e2) {}
+        var mv = new MarkerValue(label);
+        if (params) { try { mv.setParameters({ hmk: params }); } catch (ep) {} }
+        try { M.setValueAtTime(t, mv); } catch (e2) {}
     }
     function timingHead(dir, ref, lab) {
         if (dir === "in") {
@@ -1150,11 +1152,11 @@ var NABD = (function () {
             var an = L.property("ADBE Text Properties").property("ADBE Text Animators");
             for (i = 1; i <= an.numProperties; i++) { if (an.property(i).name.indexOf(tag) === 0) { timingWalk(an.property(i), dir, ref, lab); } }
         } catch (e) {}
-        if (!kid) { clearMarkers(L, MK_DIR_RE[dir]); setMarker(L, lab, dir === "in" ? t1 : t0); }
+        if (!kid) { clearMarkers(L, MK_DIR_RE[dir]); setMarker(L, lab, dir === "in" ? t1 : t0, RECIPE ? J(RECIPE) : null); }
     }
 
     // optional bounce at the end of any in-animation; strength / count live on layer sliders so they stay editable
-    var BNC = null, LOOPK = 100;
+    var BNC = null, LOOPK = 100, RECIPE = null; // RECIPE: the exact settings an animation was applied with (kept on its marker)
     function bncCtl(L) {
         var p = parade(L), i, has1 = false, has2 = false;
         for (i = 1; i <= p.numProperties; i++) { if (p.property(i).name === "HAMDY Bounce Strength") { has1 = true; } if (p.property(i).name === "HAMDY Bounce Count") { has2 = true; } }
@@ -1336,6 +1338,7 @@ var NABD = (function () {
     function motion(a) {
         var c = comp(), sel = needSel(c), sp = a.spec, d = Math.max(2, a.frames || 18) * c.frameDuration, n = 0, j, L, t;
         PIVOT = a.pivot || "el";
+        RECIPE = { k: "mp", spec: a.spec, frames: a.frames, bounce: a.bounce || null, pivot: a.pivot || "el", loopAmt: a.loopAmt === undefined ? 100 : a.loopAmt, mkName: a.mkName || "" };
         BNC = (a.bounce && a.bounce.on) ? { amt: a.bounce.amt === undefined ? 50 : a.bounce.amt, n: a.bounce.n || 2 } : null;
         t = snap(c, c.time);
         for (j = 0; j < sel.length; j++) {
@@ -1527,6 +1530,7 @@ var NABD = (function () {
     }
     function textApply(a) {
         var c = comp(), sel = c.selectedLayers, n = 0, j;
+        RECIPE = { k: "tx" }; (function () { var q0; for (q0 in a) { if (a.hasOwnProperty(q0) && q0 !== "cmd" && q0 !== "text") { RECIPE[q0] = a[q0]; } } })();
         var kids, q;
         for (j = 0; j < sel.length; j++) {
             if (!(sel[j] instanceof TextLayer)) { continue; }
@@ -3895,7 +3899,9 @@ var NABD = (function () {
             if (/^HAMDY (?:Bounce Strength|Bounce Count|LOOP Strength)$/.test(nm)) { extra.push({ kind: "fx", d: serProp(p.property(k)) }); }
         }
         var ctr = null; try { ctr = fxPt(L, layerCenter(L, base)); } catch (ec) {}
-        return { which: a.which, srcBase: base, items: items, extra: extra, mk: mk, ctr: ctr, fd: c.frameDuration };
+        var recipe = null;
+        for (k = 1; k <= M.numKeys; k++) { try { var mvk = M.keyValue(k); if (MK_DIR_RE[a.which].test(mvk.comment)) { var pp = mvk.getParameters(); if (pp && pp.hmk) { recipe = String(pp.hmk); } } } catch (er) {} }
+        return { recipe: recipe, which: a.which, srcBase: base, items: items, extra: extra, mk: mk, ctr: ctr, fd: c.frameDuration };
     }
     function JSON_has(d, str) {
         if (!d || !str) { return false; }
@@ -3946,7 +3952,8 @@ var NABD = (function () {
             if (!animatable(L)) { continue; }
             var base = D.which === "out" ? L.outPoint : L.inPoint, shift = base - (D.srcBase || 0), dOff = null;
             try { var ct = fxPt(L, layerCenter(L, base)); if (D.ctr) { dOff = [ct[0] - D.ctr[0], ct[1] - D.ctr[1]]; } } catch (ec) {}
-            var p = parade(L), have = {};
+            var p = parade(L), have = {}, fx0 = p.numProperties, k0 = REB.k, an0 = -1;
+            try { an0 = L.property("ADBE Text Properties").property("ADBE Text Animators").numProperties; } catch (ean) {}
             for (k = 1; k <= p.numProperties; k++) { have[p.property(k).name] = true; }
             var all = (D.extra || []).concat(D.items);
             for (i = 0; i < all.length; i++) {
@@ -3969,11 +3976,17 @@ var NABD = (function () {
                     rebuild(P, d, shift, null, false);
                 }
             }
-            for (i = 0; i < (D.mk || []).length; i++) { setMarker(L, D.mk[i].c, base + D.mk[i].t); }
+            if (REB.k === k0 && D.recipe) {
+                // nothing with keyframes came across: undo the empty copies, the panel re-applies the recorded settings instead
+                for (k = p.numProperties; k > fx0; k--) { try { p.property(k).remove(); } catch (erm) {} }
+                if (an0 >= 0) { try { var anx = L.property("ADBE Text Properties").property("ADBE Text Animators"); for (k = anx.numProperties; k > an0; k--) { anx.property(k).remove(); } } catch (erm2) {} }
+                n++; continue;
+            }
+            for (i = 0; i < (D.mk || []).length; i++) { setMarker(L, D.mk[i].c, base + D.mk[i].t, (D.recipe && MK_DIR_RE[D.which].test(D.mk[i].c)) ? D.recipe : null); }
             n++;
         }
         if (!n) { throw Err("NO_ANIM_LAYER"); }
-        return { layers: n, fx: nfx, keys: REB.k, props: REB.p, err: REB.err };
+        return { layers: n, fx: nfx, keys: REB.k, props: REB.p, err: REB.err, recipe: REB.k ? null : (D.recipe || null) };
     }
     function inspect() {
         var c = comp(), sel = c.selectedLayers;
@@ -5454,7 +5467,7 @@ var NABD = (function () {
             TUCK = a.tuck !== false;
             TIMING = a.timing !== false;
             MKN = a.mkName ? String(a.mkName) : ""; MKAR = a.mkLang !== "en";
-            BNC = null; PIVOT = "el"; LOOPK = a.loopAmt === undefined ? 100 : a.loopAmt;
+            BNC = null; PIVOT = "el"; RECIPE = null; LOOPK = a.loopAmt === undefined ? 100 : a.loopAmt;
             if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("Hamdy: " + a.cmd); undo = true; }
             res = CMDS[a.cmd](a);
             if (undo) { app.endUndoGroup(); }

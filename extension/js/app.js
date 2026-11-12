@@ -2192,6 +2192,15 @@ function clipPaste(){
     if(!r.ok){ say(r); return; }
     var d = r.data || {}, t = $('toast');
     // if nothing animatable came across, fall back to re-applying the same preset (same frames) on the selected layers
+    if(!d.keys && d.recipe){
+      var rc = null; try{ rc = JSON.parse(d.recipe); }catch(e){}
+      if(rc){
+        var w = CLIP.which, a2 = {}, q; for(q in rc) if(q !== 'k') a2[q] = rc[q];
+        var p2 = rc.k === 'mp' ? host('motion', Object.assign(a2, {dir:w, at:'layer'})) : host('textApply', Object.assign(a2, {doIn:w === 'in', doOut:w === 'out'}));
+        p2.then(function(r2){ say(r2); if(r2.ok) edRefresh(true); });
+        return;
+      }
+    }
     if(!d.keys && CLIP.pre){
       var it = CLIP.pre.src === 'mp' ? byId(D.MOTION, CLIP.pre.id) : byId(D.TEXTS, CLIP.pre.id), p, nm = it ? ((S.lang === 'en' ? (it.en || it.ar) : (it.ar || it.en)) || '') : '';
       if(it && CLIP.pre.src === 'mp') p = host('motion', {spec:mpSpec(it), dir:CLIP.which, frames:CLIP.pre.fr || S.mp.frames, at:'layer', mkName:nm});
