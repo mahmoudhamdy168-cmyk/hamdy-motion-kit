@@ -2,8 +2,8 @@
     The panel calls:  NABD.run('<json string>')  and gets a JSON string back.
     Errors are returned as codes; the panel shows them in Arabic.            */
 
-// <<LINES_GEO (generated from js/lines_geo.js by tools/inject_geo.py — edit that file)
-/* NABD lines — shared geometry (ES3: used by the panel previews AND injected into host.jsx) */
+// <<LINES_GEO (generated from js/lines_geo.js by tools/inject_geo.py \u2014 edit that file)
+/* NABD lines \u2014 shared geometry (ES3: used by the panel previews AND injected into host.jsx) */
 var NABD_LINES = (function () {
     var PI = Math.PI;
 
@@ -206,53 +206,53 @@ var NABD_LINES = (function () {
         return out;
     }
 
-    var G1 = "ترانزيشن خطوط", G2 = "رسم خطوط", G3 = "لوب خطوط", G4 = "خطوط على اللاير", G5 = "نص على مسار";
+    var G1 = "\u062a\u0631\u0627\u0646\u0632\u064a\u0634\u0646 \u062e\u0637\u0648\u0637", G2 = "\u0631\u0633\u0645 \u062e\u0637\u0648\u0637", G3 = "\u0644\u0648\u0628 \u062e\u0637\u0648\u0637", G4 = "\u062e\u0637\u0648\u0637 \u0639\u0644\u0649 \u0627\u0644\u0644\u0627\u064a\u0631", G5 = "\u0646\u0635 \u0639\u0644\u0649 \u0645\u0633\u0627\u0631";
     var LIST = [
-        { id: "trZig", ar: "فرشاة متعرجة", en: "Brush Zigzag", g: G1, mode: "cover" },
-        { id: "trDiag", ar: "خطوط مايلة", en: "Diagonal Lines", g: G1, mode: "cover" },
-        { id: "trCross", ar: "خطوط متقاطعة", en: "Cross Lines", g: G1, mode: "cover" },
-        { id: "trVert", ar: "خطوط طولية", en: "Vertical Lines", g: G1, mode: "cover" },
-        { id: "trSpiral", ar: "حلزون", en: "Spiral Wipe", g: G1, mode: "cover" },
-        { id: "trRings", ar: "دواير", en: "Ring Lines", g: G1, mode: "cover" },
-        { id: "trWave", ar: "موجات", en: "Wave Lines", g: G1, mode: "cover" },
-        { id: "elUnderline", ar: "خط تحت", en: "Swoosh Underline", g: G2, mode: "draw" },
-        { id: "elDouble", ar: "خطين سووش", en: "Double Swoosh", g: G2, mode: "draw" },
-        { id: "elCircle", ar: "دايرة بالقلم", en: "Hand Circle", g: G2, mode: "draw" },
-        { id: "elZigzag", ar: "زجزاج", en: "Zigzag", g: G2, mode: "draw" },
-        { id: "elWave", ar: "موجة", en: "Wave", g: G2, mode: "draw" },
-        { id: "elSpiral", ar: "حلزونة", en: "Spiral", g: G2, mode: "draw" },
-        { id: "elRays", ar: "أشعة", en: "Rays", g: G2, mode: "draw" },
-        { id: "elArrow", ar: "سهم منحني", en: "Curved Arrow", g: G2, mode: "draw" },
-        { id: "elScribble", ar: "شخبطة", en: "Scribble", g: G2, mode: "draw" },
-        { id: "elEmph", ar: "خطوط تنبيه", en: "Emphasis Marks", g: G2, mode: "draw" },
-        { id: "elFrame", ar: "إطار", en: "Frame", g: G2, mode: "draw" },
-        { id: "elCorners", ar: "أركان", en: "Corners", g: G2, mode: "draw" },
-        { id: "elInfinity", ar: "لا نهاية", en: "Infinity", g: G2, mode: "draw" },
-        { id: "elHeart", ar: "قلب خط", en: "Line Heart", g: G2, mode: "draw" },
-        { id: "elStar", ar: "نجمة خط", en: "Line Star", g: G2, mode: "draw" },
-        { id: "elLightning", ar: "برق", en: "Lightning", g: G2, mode: "draw" },
-        { id: "lpCircle", ar: "مذنب في دايرة", en: "Circle Comet", g: G3, mode: "travel" },
-        { id: "lpInfinity", ar: "مذنب لا نهاية", en: "Infinity Comet", g: G3, mode: "travel" },
-        { id: "lpHeart", ar: "قلب بيلف", en: "Heart Chase", g: G3, mode: "travel" },
-        { id: "lpOrbit", ar: "مدارات", en: "Orbits", g: G3, mode: "travel" },
-        { id: "lpWave", ar: "موج ماشي", en: "Flowing Waves", g: G3, mode: "travel" },
-        { id: "lpDash", ar: "دواير متقطعة", en: "Dashed Rings", g: G3, mode: "travel" },
-        { id: "atUnder", ar: "خط تحت اللاير", en: "Underline", g: G4, mode: "attach" },
-        { id: "atStrike", ar: "شطب", en: "Strike", g: G4, mode: "attach" },
-        { id: "atBox", ar: "بوكس حواليه", en: "Box Outline", g: G4, mode: "attach" },
-        { id: "atCorners", ar: "أركان حواليه", en: "Corner Marks", g: G4, mode: "attach" },
-        { id: "atCircle", ar: "دايرة حواليه", en: "Circle Around", g: G4, mode: "attach" },
-        { id: "atBrackets", ar: "أقواس [ ]", en: "Brackets", g: G4, mode: "attach" },
-        { id: "atSide", ar: "خط جنبه", en: "Side Bar", g: G4, mode: "attach" },
-        { id: "atDouble", ar: "خطين تحت", en: "Double Underline", g: G4, mode: "attach" },
-        { id: "tpWave", ar: "نص على موجة", en: "Text on Wave", g: G5, mode: "path" },
-        { id: "tpArc", ar: "نص على قوس", en: "Text on Arc", g: G5, mode: "path" },
-        { id: "tpCircle", ar: "نص بيلف في دايرة", en: "Text on Circle", g: G5, mode: "path" },
-        { id: "tpS", ar: "نص على S", en: "Text on S-Curve", g: G5, mode: "path" },
-        { id: "tpLoop", ar: "نص على لا نهاية", en: "Text on Infinity", g: G5, mode: "path" },
-        { id: "tpSpiral", ar: "نص حلزوني", en: "Text on Spiral", g: G5, mode: "path" },
-        { id: "tpRise", ar: "نص طالع", en: "Text Rising Curve", g: G5, mode: "path" },
-        { id: "tpLine", ar: "نص على خط", en: "Text on Line", g: G5, mode: "path" }
+        { id: "trZig", ar: "\u0641\u0631\u0634\u0627\u0629 \u0645\u062a\u0639\u0631\u062c\u0629", en: "Brush Zigzag", g: G1, mode: "cover" },
+        { id: "trDiag", ar: "\u062e\u0637\u0648\u0637 \u0645\u0627\u064a\u0644\u0629", en: "Diagonal Lines", g: G1, mode: "cover" },
+        { id: "trCross", ar: "\u062e\u0637\u0648\u0637 \u0645\u062a\u0642\u0627\u0637\u0639\u0629", en: "Cross Lines", g: G1, mode: "cover" },
+        { id: "trVert", ar: "\u062e\u0637\u0648\u0637 \u0637\u0648\u0644\u064a\u0629", en: "Vertical Lines", g: G1, mode: "cover" },
+        { id: "trSpiral", ar: "\u062d\u0644\u0632\u0648\u0646", en: "Spiral Wipe", g: G1, mode: "cover" },
+        { id: "trRings", ar: "\u062f\u0648\u0627\u064a\u0631", en: "Ring Lines", g: G1, mode: "cover" },
+        { id: "trWave", ar: "\u0645\u0648\u062c\u0627\u062a", en: "Wave Lines", g: G1, mode: "cover" },
+        { id: "elUnderline", ar: "\u062e\u0637 \u062a\u062d\u062a", en: "Swoosh Underline", g: G2, mode: "draw" },
+        { id: "elDouble", ar: "\u062e\u0637\u064a\u0646 \u0633\u0648\u0648\u0634", en: "Double Swoosh", g: G2, mode: "draw" },
+        { id: "elCircle", ar: "\u062f\u0627\u064a\u0631\u0629 \u0628\u0627\u0644\u0642\u0644\u0645", en: "Hand Circle", g: G2, mode: "draw" },
+        { id: "elZigzag", ar: "\u0632\u062c\u0632\u0627\u062c", en: "Zigzag", g: G2, mode: "draw" },
+        { id: "elWave", ar: "\u0645\u0648\u062c\u0629", en: "Wave", g: G2, mode: "draw" },
+        { id: "elSpiral", ar: "\u062d\u0644\u0632\u0648\u0646\u0629", en: "Spiral", g: G2, mode: "draw" },
+        { id: "elRays", ar: "\u0623\u0634\u0639\u0629", en: "Rays", g: G2, mode: "draw" },
+        { id: "elArrow", ar: "\u0633\u0647\u0645 \u0645\u0646\u062d\u0646\u064a", en: "Curved Arrow", g: G2, mode: "draw" },
+        { id: "elScribble", ar: "\u0634\u062e\u0628\u0637\u0629", en: "Scribble", g: G2, mode: "draw" },
+        { id: "elEmph", ar: "\u062e\u0637\u0648\u0637 \u062a\u0646\u0628\u064a\u0647", en: "Emphasis Marks", g: G2, mode: "draw" },
+        { id: "elFrame", ar: "\u0625\u0637\u0627\u0631", en: "Frame", g: G2, mode: "draw" },
+        { id: "elCorners", ar: "\u0623\u0631\u0643\u0627\u0646", en: "Corners", g: G2, mode: "draw" },
+        { id: "elInfinity", ar: "\u0644\u0627 \u0646\u0647\u0627\u064a\u0629", en: "Infinity", g: G2, mode: "draw" },
+        { id: "elHeart", ar: "\u0642\u0644\u0628 \u062e\u0637", en: "Line Heart", g: G2, mode: "draw" },
+        { id: "elStar", ar: "\u0646\u062c\u0645\u0629 \u062e\u0637", en: "Line Star", g: G2, mode: "draw" },
+        { id: "elLightning", ar: "\u0628\u0631\u0642", en: "Lightning", g: G2, mode: "draw" },
+        { id: "lpCircle", ar: "\u0645\u0630\u0646\u0628 \u0641\u064a \u062f\u0627\u064a\u0631\u0629", en: "Circle Comet", g: G3, mode: "travel" },
+        { id: "lpInfinity", ar: "\u0645\u0630\u0646\u0628 \u0644\u0627 \u0646\u0647\u0627\u064a\u0629", en: "Infinity Comet", g: G3, mode: "travel" },
+        { id: "lpHeart", ar: "\u0642\u0644\u0628 \u0628\u064a\u0644\u0641", en: "Heart Chase", g: G3, mode: "travel" },
+        { id: "lpOrbit", ar: "\u0645\u062f\u0627\u0631\u0627\u062a", en: "Orbits", g: G3, mode: "travel" },
+        { id: "lpWave", ar: "\u0645\u0648\u062c \u0645\u0627\u0634\u064a", en: "Flowing Waves", g: G3, mode: "travel" },
+        { id: "lpDash", ar: "\u062f\u0648\u0627\u064a\u0631 \u0645\u062a\u0642\u0637\u0639\u0629", en: "Dashed Rings", g: G3, mode: "travel" },
+        { id: "atUnder", ar: "\u062e\u0637 \u062a\u062d\u062a \u0627\u0644\u0644\u0627\u064a\u0631", en: "Underline", g: G4, mode: "attach" },
+        { id: "atStrike", ar: "\u0634\u0637\u0628", en: "Strike", g: G4, mode: "attach" },
+        { id: "atBox", ar: "\u0628\u0648\u0643\u0633 \u062d\u0648\u0627\u0644\u064a\u0647", en: "Box Outline", g: G4, mode: "attach" },
+        { id: "atCorners", ar: "\u0623\u0631\u0643\u0627\u0646 \u062d\u0648\u0627\u0644\u064a\u0647", en: "Corner Marks", g: G4, mode: "attach" },
+        { id: "atCircle", ar: "\u062f\u0627\u064a\u0631\u0629 \u062d\u0648\u0627\u0644\u064a\u0647", en: "Circle Around", g: G4, mode: "attach" },
+        { id: "atBrackets", ar: "\u0623\u0642\u0648\u0627\u0633 [ ]", en: "Brackets", g: G4, mode: "attach" },
+        { id: "atSide", ar: "\u062e\u0637 \u062c\u0646\u0628\u0647", en: "Side Bar", g: G4, mode: "attach" },
+        { id: "atDouble", ar: "\u062e\u0637\u064a\u0646 \u062a\u062d\u062a", en: "Double Underline", g: G4, mode: "attach" },
+        { id: "tpWave", ar: "\u0646\u0635 \u0639\u0644\u0649 \u0645\u0648\u062c\u0629", en: "Text on Wave", g: G5, mode: "path" },
+        { id: "tpArc", ar: "\u0646\u0635 \u0639\u0644\u0649 \u0642\u0648\u0633", en: "Text on Arc", g: G5, mode: "path" },
+        { id: "tpCircle", ar: "\u0646\u0635 \u0628\u064a\u0644\u0641 \u0641\u064a \u062f\u0627\u064a\u0631\u0629", en: "Text on Circle", g: G5, mode: "path" },
+        { id: "tpS", ar: "\u0646\u0635 \u0639\u0644\u0649 S", en: "Text on S-Curve", g: G5, mode: "path" },
+        { id: "tpLoop", ar: "\u0646\u0635 \u0639\u0644\u0649 \u0644\u0627 \u0646\u0647\u0627\u064a\u0629", en: "Text on Infinity", g: G5, mode: "path" },
+        { id: "tpSpiral", ar: "\u0646\u0635 \u062d\u0644\u0632\u0648\u0646\u064a", en: "Text on Spiral", g: G5, mode: "path" },
+        { id: "tpRise", ar: "\u0646\u0635 \u0637\u0627\u0644\u0639", en: "Text Rising Curve", g: G5, mode: "path" },
+        { id: "tpLine", ar: "\u0646\u0635 \u0639\u0644\u0649 \u062e\u0637", en: "Text on Line", g: G5, mode: "path" }
     ];
     return { geo: geo, LIST: LIST, smooth: smooth, ellipse: ellipse };
 })();
@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.2";
+    var VER = "1.9.3";
 
     // ================================================================ JSON
     function J(v) {
@@ -272,7 +272,7 @@ var NABD = (function () {
         if (t === "number") { return isFinite(v) ? String(v) : "null"; }
         if (t === "boolean") { return v ? "true" : "false"; }
         if (t === "string") {
-            return "\"" + v.replace(/[\\"\u0000-\u001f\u007f-￿]/g, function (c) {
+            return "\"" + v.replace(/[\\"\u0000-\u001f\u007f-\uffff]/g, function (c) {
                 return "\\u" + ("0000" + c.charCodeAt(0).toString(16)).slice(-4);
             }) + "\"";
         }
@@ -1060,7 +1060,7 @@ var NABD = (function () {
 
     // ===================================================== timing markers
     // Like Animation Composer: a layer marker "HAMDY IN" (end of the in-animation) and "HAMDY OUT" (start of the
-    // out-animation). Drag them on the layer bar and the animation stretches to match — keys stay where they are,
+    // out-animation). Drag them on the layer bar and the animation stretches to match \u2014 keys stay where they are,
     // an expression re-times them.
     function setMarker(L, label, t) {
         var M = L.property("ADBE Marker"), k;
@@ -1366,7 +1366,7 @@ var NABD = (function () {
         if (a.based === "chars") { based = 1; }
         else if (a.based === "words") { based = 3; }
         else if (a.based === "lines") { based = 4; }
-        else { based = /[؀-ۿ]/.test(layerText(L)) ? 3 : 1; }
+        else { based = /[\u0600-\u06ff]/.test(layerText(L)) ? 3 : 1; }
         var d = Math.max(2, a.frames || 20) * c.frameDuration;
         try { L.property("ADBE Text Properties").property("ADBE Text More Options").property("ADBE Text Anchor Point Align").setValue([0, -50]); } catch (e) {}
         if (sp.loop) { addTextAnim(L, sp, false, 0, 0, based); return; }
@@ -2823,7 +2823,7 @@ var NABD = (function () {
             var sel = c.selectedLayers, i, moved = 0;
             for (i = 0; i < sel.length; i++) { if (sel[i].matchName === "ADBE Text Layer") { sel[i].moveAfter(C); moved++; } }
             if (!moved) {
-                var tx = c.layers.addText(a.text || "حمدي"); tx.name = "HAMDY BEHIND TEXT";
+                var tx = c.layers.addText(a.text || "\u062d\u0645\u062f\u064a"); tx.name = "HAMDY BEHIND TEXT";
                 var d = tx.property("ADBE Text Properties").property("ADBE Text Document"), td = d.value;
                 td.fontSize = Math.round(c.height * 0.22); td.fillColor = [1, 1, 1]; td.justification = ParagraphJustification.CENTER_JUSTIFY; if (a.font) { try { td.font = a.font; } catch (ef) {} }
                 d.setValue(td);
@@ -2982,7 +2982,7 @@ var NABD = (function () {
 
     // ================================================ templates (UI, explainer/collage, news, scenes)
     // A template is a list of layer specs designed on a 1920x1080 canvas around an anchor point.
-    // Every layer is parented to one control null ("HAMDY TPL …") that holds the colours, so the whole
+    // Every layer is parented to one control null ("HAMDY TPL \u2026") that holds the colours, so the whole
     // template can be moved, scaled and recoloured after it lands. Same spec drives the panel preview.
     var TEZ = { o: [10, 85], i: [85, 10], io: [60, 60], b: [10, 85] };
     function tplHex(h) { h = String(h).replace("#", ""); return [parseInt(h.substr(0, 2), 16) / 255, parseInt(h.substr(2, 2), 16) / 255, parseInt(h.substr(4, 2), 16) / 255]; }
@@ -3522,7 +3522,7 @@ var NABD = (function () {
         return "OK";
     }
 
-    // ================================================ overlay transitions (film burn, leaks, spray, ink…)
+    // ================================================ overlay transitions (film burn, leaks, spray, ink\u2026)
     function otrApply(a) {
         var c = comp(), f = new File(a.file || ""), sel = c.selectedLayers, fd = c.frameDuration, i;
         if (!f.exists) { throw Err("NO_FILE"); }
@@ -4029,7 +4029,7 @@ var NABD = (function () {
             var T = sel[j];
             if (!animatable(T) || /^(?:NABD|HAMDY) /.test(T.name)) { continue; }
             var r = layerRect(T, T.inPoint) || { width: 200, height: 100 };
-            var rtl = /[؀-ۿ]/.test(layerText(T));
+            var rtl = /[\u0600-\u06ff]/.test(layerText(T));
             var L = shapeLayer(c, "HAMDY STYLE LINE | " + a.kind + " | " + T.name, [0, 0]);
             tuck(c, L);
             L.parent = T;
@@ -4507,7 +4507,7 @@ var NABD = (function () {
         var c = comp(), N = findTrackNull(c, a.nullName);
         if (!N) { throw Err("NO_TRACK_NULL"); }
         var K = c.height / 1080, fd = c.frameDuration, t = snap(c, c.time);
-        var T = makeText(c, a.text || "اكتب هنا", (a.size || 60) * K, [1, 1, 1], "c", a.font, 0);
+        var T = makeText(c, a.text || "\u0627\u0643\u062a\u0628 \u0647\u0646\u0627", (a.size || 60) * K, [1, 1, 1], "c", a.font, 0);
         T.name = "HAMDY TRACK TEXT | " + (a.text || "text");
         T.inPoint = Math.max(N.inPoint, t); T.outPoint = N.outPoint;
         centerAnchor(T, T.inPoint);
@@ -4921,7 +4921,7 @@ var NABD = (function () {
     }
     function myPathText(a) {
         var c = comp(), U = pickUserPath(c), fd = c.frameDuration;
-        var T = makeText(c, a.text || "اكتب هنا", a.size || 80, [1, 1, 1], "l", a.font, 0);
+        var T = makeText(c, a.text || "\u0627\u0643\u062a\u0628 \u0647\u0646\u0627", a.size || 80, [1, 1, 1], "l", a.font, 0);
         T.name = "HAMDY PATH TEXT | " + (a.text || "text");
         T.inPoint = snap(c, c.time); T.outPoint = Math.min(c.duration, T.inPoint + Math.max(0.5, a.secs || 4));
         T.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);

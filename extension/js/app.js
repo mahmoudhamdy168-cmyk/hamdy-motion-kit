@@ -163,12 +163,28 @@ function extPath(){
   var p = decodeURI(window.__adobe_cep__.getSystemPath('extension'));
   return /^Win/i.test(navigator.platform) ? p.replace('file:///','') : p.replace('file://','');
 }
+var ENG_ERR = '';
 function ensureEngine(){
   if(!CEP) return Promise.resolve(null);
   return host('ping').then(function(r){
     if(r.ok && r.data && r.data.ver===HMK.ver) return r;
-    var f = (extPath() + '/jsx/host.jsx').replace(/\\/g,'/');
-    return rawEval('$.evalFile("' + f.replace(/"/g,'\\"') + '")').then(function(){ return host('ping'); });
+    var f = (extPath() + '/jsx/host.jsx').replace(/\\/g,'/'), err = '';
+    // 1) load the file from disk and report the exact error (line + message) if it fails
+    var s1 = '(function(){ try { var f = new File(' + asciiJSON(f) + '); if(!f.exists) return "ERR:file not found: " + f.fsName; $.evalFile(f); return (typeof NABD === "undefined") ? "ERR:NABD missing" : "OK"; } catch(e) { return "ERR:line " + (e.line || "?") + ": " + e.message; } })()';
+    return rawEval(s1, 60000).then(function(o){
+      if(String(o).indexOf('ERR:') === 0) err = String(o).slice(4);
+      return host('ping');
+    }).then(function(r2){
+      if(r2.ok || !NODE) return r2;
+      // 2) fallback: read the engine with Node and send it straight to After Effects (avoids path/encoding problems)
+      var src = ''; try{ src = NODE('fs').readFileSync(f, 'utf8'); }catch(e){ err = err || ('read: ' + e.message); }
+      if(!src) return {ok:false, code:'NO_ENGINE', msg:err};
+      src = src.replace(/[\u0080-\uffff]/g, function(c){ return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4); });
+      return rawEval(src + '\n"HMK_LOADED"', 60000).then(function(o){
+        if(String(o) !== 'HMK_LOADED' && !err) err = String(o);
+        return host('ping');
+      });
+    }).then(function(r3){ if(!r3.ok) r3.msg = err || r3.msg; ENG_ERR = r3.ok ? '' : (err || r3.msg || ''); return r3; });
   });
 }
 function mock(p){
@@ -195,6 +211,7 @@ function say(r){
     el.className='toast ok'; el.textContent = trText(m || 'تم ✓');
   } else {
     el.className='toast bad'; el.textContent = MSG[r.code] ? trText(MSG[r.code]) : (trText('حصل خطأ:') + ' ' + (r.msg || r.code));
+    if(r.code === 'NO_ENGINE'){ if(ENG_ERR) el.textContent += ' — ' + ENG_ERR.slice(0, 160); if(!PINGING) engineRetry(false); }
   }
   clearTimeout(el._t); el._t = setTimeout(function(){ el.className='toast'; }, 5500);
 }
