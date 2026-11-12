@@ -164,10 +164,10 @@ function extPath(){
   return /^Win/i.test(navigator.platform) ? p.replace('file:///','') : p.replace('file://','');
 }
 var ENG_ERR = '';
-function ensureEngine(){
+function ensureEngine(force){
   if(!CEP) return Promise.resolve(null);
   return host('ping').then(function(r){
-    if(r.ok && r.data && r.data.ver===HMK.ver) return r;
+    if(!force && r.ok && r.data && r.data.ver===HMK.ver) return r;
     var f = (extPath() + '/jsx/host.jsx').replace(/\\/g,'/'), err = '';
     // 1) load the file from disk and report the exact error (line + message) if it fails
     var s1 = '(function(){ try { var f = new File(' + asciiJSON(f) + '); if(!f.exists) return "ERR:file not found: " + f.fsName; $.evalFile(f); return (typeof NABD === "undefined") ? "ERR:NABD missing" : "OK"; } catch(e) { return "ERR:line " + (e.line || "?") + ": " + e.message; } })()';
@@ -2217,7 +2217,7 @@ initLayout();
 renderAll();
 if(S.tab==='ed') edRefresh(true);
 requestAnimationFrame(tick);
-ensureEngine().then(function(r){ setStatus(r); if(CEP && S.lib.paths.length) refreshLib(); });
+ensureEngine(true).then(function(r){ setStatus(r); if(CEP && S.lib.paths.length) refreshLib(); }); // always reload the engine when the panel opens, so an update takes effect right away
 if($('verTxt')) $('verTxt').textContent = HMK.ver;
 if($('langBtn')) $('langBtn').onclick = function(){ setLang(S.lang === 'en' ? 'ar' : 'en'); };
 if($('hideBtn')){ $('hideBtn').classList.toggle('on', S.hide !== false); $('hideBtn').onclick = function(){ S.hide = S.hide === false; save(); $('hideBtn').classList.toggle('on', S.hide !== false); say({ok:true, data: S.hide !== false ? 'OK_HIDE_ON' : 'OK_HIDE_OFF'}); }; }

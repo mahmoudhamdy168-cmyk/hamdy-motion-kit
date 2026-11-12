@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.5";
+    var VER = "1.9.6";
 
     // ================================================================ JSON
     function J(v) {
@@ -332,7 +332,17 @@ var NABD = (function () {
         p.addProperty(mn);
         var e = p.property(p.numProperties);
         if (name) { try { e.name = name; } catch (x) {} }
+        // Transform effect: always follow the comp's motion-blur switch (its own forced blur makes previews heavy and soft)
+        if (mn === "ADBE Geometry2") { try { compShutterOn(e); } catch (x2) {} }
         return e;
+    }
+    function compShutterOn(e) {
+        var k, pr, done = false;
+        for (k = 1; k <= e.numProperties; k++) {
+            pr = e.property(k);
+            if (/Shutter Angle/i.test(pr.name) && /Comp/i.test(pr.name)) { pr.setValue(1); done = true; }
+        }
+        if (!done) { e.property(10).setValue(1); }
     }
     function fxIdx(L) { return parade(L).numProperties; }
     function FX(L, i) { return parade(L).property(i); }
@@ -575,7 +585,7 @@ var NABD = (function () {
     }
     function addTransform(L, T, ease, tracks, opts) {
         var e = addEffect(L, "ADBE Geometry2", "HAMDY Transform"), i = e.propertyIndex, k;
-        try { FX(L, i).property(TR.compShutter).setValue(0); FX(L, i).property(TR.shutter).setValue(200); } catch (x) {}
+        try { compShutterOn(FX(L, i)); } catch (x) {}
         if (opts && opts.nonUniform) { try { FX(L, i).property(TR.uni).setValue(0); } catch (x2) {} }
         for (k in tracks) { if (tracks.hasOwnProperty(k)) { animate4(FX(L, i).property(TR[k]), T, tracks[k], ease); } }
         return i;
@@ -920,7 +930,7 @@ var NABD = (function () {
                         break;
                     case "glitch":
                         li = addEffect(L, "ADBE Geometry2", "HAMDY Jitter").propertyIndex;
-                        try { FX(L, li).property(TR.compShutter).setValue(0); FX(L, li).property(TR.shutter).setValue(0); } catch (x7) {}
+                        try { compShutterOn(FX(L, li)); } catch (x7) {}
                         FX(L, li).property(TR.position).expression = jitterExpr(W * 0.075);
                         li = addEffect(L, "ADBE Wave Warp", "HAMDY Wave").propertyIndex;
                         try { FX(L, li).property(1).setValue(2); FX(L, li).property(3).setValue(60); FX(L, li).property(4).setValue(0); FX(L, li).property(5).setValue(4); } catch (x8) {}
@@ -937,7 +947,7 @@ var NABD = (function () {
                         }
                         for (k2 = 1; k2 <= FX(L, li).property(1).numKeys; k2++) { setHold(FX(L, li).property(1), k2); setHold(FX(L, li).property(2), k2); }
                         li = addEffect(L, "ADBE Geometry2", "HAMDY Jitter").propertyIndex;
-                        try { FX(L, li).property(TR.compShutter).setValue(0); FX(L, li).property(TR.shutter).setValue(0); } catch (x9) {}
+                        try { compShutterOn(FX(L, li)); } catch (x9) {}
                         FX(L, li).property(TR.position).expression = jitterExpr(W * 0.06, 0.1);
                         break;
                     case "burn":
@@ -1127,7 +1137,7 @@ var NABD = (function () {
             i = e.propertyIndex;
             FX(L, i).property(1).setValue(center);
             FX(L, i).property(2).setValue(center);
-            try { FX(L, i).property(10).setValue(1); } catch (x) {}
+            try { compShutterOn(FX(L, i)); } catch (x) {}
             if (has(tr, "sx") || has(tr, "sy")) { FX(L, i).property(3).setValue(0); }
             if (has(tr, "op") && !has(tr, "flick")) { pair(FX(L, i).property(9), tr.op, 100); }
             if (has(tr, "x") || has(tr, "y")) {
@@ -1200,7 +1210,7 @@ var NABD = (function () {
         var i = addEffect(L, "ADBE Geometry2", "HAMDY FX " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
-        try { FX(L, i).property(10).setValue(1); } catch (x) {}
+        try { compShutterOn(FX(L, i)); } catch (x) {}
         if (keys.sx || keys.sy) { FX(L, i).property(3).setValue(0); }
         function put(idx, list, fn) {
             var times = [], vals = [], q;
@@ -1222,7 +1232,7 @@ var NABD = (function () {
         var i = addEffect(L, "ADBE Geometry2", "HAMDY LOOP " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
-        try { FX(L, i).property(10).setValue(1); } catch (x) {}
+        try { compShutterOn(FX(L, i)); } catch (x) {}
         if (ex.sx || ex.sy) { FX(L, i).property(3).setValue(0); }
         if (ex.pos) { FX(L, i).property(2).expression = ex.pos; }
         if (ex.s) { FX(L, i).property(4).expression = ex.s; }
