@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.4";
+    var VER = "1.9.5";
 
     // ================================================================ JSON
     function J(v) {
@@ -1127,7 +1127,7 @@ var NABD = (function () {
             i = e.propertyIndex;
             FX(L, i).property(1).setValue(center);
             FX(L, i).property(2).setValue(center);
-            try { FX(L, i).property(10).setValue(0); FX(L, i).property(11).setValue(180); } catch (x) {}
+            try { FX(L, i).property(10).setValue(1); } catch (x) {}
             if (has(tr, "sx") || has(tr, "sy")) { FX(L, i).property(3).setValue(0); }
             if (has(tr, "op") && !has(tr, "flick")) { pair(FX(L, i).property(9), tr.op, 100); }
             if (has(tr, "x") || has(tr, "y")) {
@@ -1200,7 +1200,7 @@ var NABD = (function () {
         var i = addEffect(L, "ADBE Geometry2", "HAMDY FX " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
-        try { FX(L, i).property(10).setValue(0); FX(L, i).property(11).setValue(180); } catch (x) {}
+        try { FX(L, i).property(10).setValue(1); } catch (x) {}
         if (keys.sx || keys.sy) { FX(L, i).property(3).setValue(0); }
         function put(idx, list, fn) {
             var times = [], vals = [], q;
@@ -1222,7 +1222,7 @@ var NABD = (function () {
         var i = addEffect(L, "ADBE Geometry2", "HAMDY LOOP " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
-        try { FX(L, i).property(10).setValue(0); FX(L, i).property(11).setValue(180); } catch (x) {}
+        try { FX(L, i).property(10).setValue(1); } catch (x) {}
         if (ex.sx || ex.sy) { FX(L, i).property(3).setValue(0); }
         if (ex.pos) { FX(L, i).property(2).expression = ex.pos; }
         if (ex.s) { FX(L, i).property(4).expression = ex.s; }
