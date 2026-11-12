@@ -2017,5 +2017,8 @@ var I18N_EN = {
 "🕘 مؤخراً":"🕘 Recent",
 "＋ ضيفه في النهاية":"＋ Add at the end too",
 "＋ ضيفه في البداية":"＋ Add at the start too",
-"اعكس الحركة (جوه ↔ برا)":"Reverse the move (in ↔ out)"
+"اعكس الحركة (جوه ↔ برا)":"Reverse the move (in ↔ out)",
+"الحركة بتبدأ من (الأنكر)":"Animate from (anchor)",
+"نص العنصر":"Element center",
+"نص الكومب":"Comp center"
 };

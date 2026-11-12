@@ -334,6 +334,7 @@ function drawMp(el, sp, t, opt){
       if(!doOut) st = mpState(sp, 'in', 99, d);
     }
   }
+  el.obj.style.transformOrigin = {top:'50% 0%', bottom:'50% 100%', left:'0% 50%', right:'100% 50%'}[opt.pivot] || '50% 50%';
   applyState(el.obj, st, sc, sp);
 }
 

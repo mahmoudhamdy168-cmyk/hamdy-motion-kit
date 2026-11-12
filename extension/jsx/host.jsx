@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.23";
+    var VER = "1.9.24";
 
     // ================================================================ JSON
     function J(v) {
@@ -363,6 +363,32 @@ var NABD = (function () {
             try { return L.property("ADBE Transform Group").property("ADBE Anchor Point").value.slice(0, 2); } catch (e) { return [0, 0]; }
         }
         return [r.left + r.width / 2, r.top + r.height / 2];
+    }
+    // pivot for the motion presets' Transform effect, in the layer's own space
+    var PIVOT = "el";
+    function pivotPoint(L, t) {
+        var r = layerRect(L, t), cx, cy;
+        if (PIVOT === "comp") {
+            try {
+                var tg = L.property("ADBE Transform Group"), pos = tg.property("ADBE Position").valueAtTime(t, false), anc = tg.property("ADBE Anchor Point").valueAtTime(t, false), sc = tg.property("ADBE Scale").valueAtTime(t, false), cc = comp();
+                return [(cc.width / 2 - pos[0]) / ((sc[0] || 100) / 100) + anc[0], (cc.height / 2 - pos[1]) / ((sc[1] || 100) / 100) + anc[1]];
+            } catch (e) {}
+        }
+        if (!r || (r.width === 0 && r.height === 0)) { return layerCenter(L, t); }
+        cx = r.left + r.width / 2; cy = r.top + r.height / 2;
+        if (PIVOT === "top") { return [cx, r.top]; }
+        if (PIVOT === "bottom") { return [cx, r.top + r.height]; }
+        if (PIVOT === "left") { return [r.left, cy]; }
+        if (PIVOT === "right") { return [r.left + r.width, cy]; }
+        return [cx, cy];
+    }
+    // effect point controls on text & shape layers are measured from the top-left of a comp-sized buffer whose
+    // middle is the layer's own (0,0) - so a layer-space point needs half the layer size added
+    function fxPt(L, p) {
+        var mn = "";
+        try { mn = L.matchName; } catch (e) {}
+        if (mn === "ADBE Text Layer" || mn === "ADBE Vector Layer") { try { return [p[0] + L.width / 2, p[1] + L.height / 2]; } catch (e2) {} }
+        return p;
     }
     function layerScale(L) {
         try {
@@ -1131,7 +1157,7 @@ var NABD = (function () {
         var CR = (kid && L.parent) ? L.parent : L;
         var K = c.height / 1080, ls = layerScale(CR), tr = sp.tr || {}, ez = sp.ease || "cubic";
         var tag = "HAMDY " + (dir === "in" ? "IN " : "OUT ") + sp.id;
-        var center = layerCenter(CR, dir === "in" ? t1 : t0);
+        var center = fxPt(L, pivotPoint(CR, dir === "in" ? t1 : t0));
         function pair(prop, from, rest) {
             if (dir === "in") {
                 keyPair(prop, t0, from, t1, rest, ez, "in");
@@ -1218,7 +1244,7 @@ var NABD = (function () {
 
     function mpEmph(c, L, sp, t0, dur, kid) {
         var CR = (kid && L.parent) ? L.parent : L;
-        var K = c.height / 1080, ls = layerScale(CR), keys = sp.keys || {}, center = layerCenter(CR, t0);
+        var K = c.height / 1080, ls = layerScale(CR), keys = sp.keys || {}, center = fxPt(L, pivotPoint(CR, t0));
         var i = addEffect(L, "ADBE Geometry2", "HAMDY FX " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
@@ -1240,7 +1266,7 @@ var NABD = (function () {
     }
 
     function mpLoop(c, L, sp, kid) {
-        var ex = sp.ex || {}, center = layerCenter((kid && L.parent) ? L.parent : L, c.time);
+        var ex = sp.ex || {}, center = fxPt(L, pivotPoint((kid && L.parent) ? L.parent : L, c.time));
         var i = addEffect(L, "ADBE Geometry2", "HAMDY LOOP " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
@@ -1257,6 +1283,7 @@ var NABD = (function () {
 
     function motion(a) {
         var c = comp(), sel = needSel(c), sp = a.spec, d = Math.max(2, a.frames || 18) * c.frameDuration, n = 0, j, L, t;
+        PIVOT = a.pivot || "el";
         t = snap(c, c.time);
         for (j = 0; j < sel.length; j++) {
             L = sel[j];
