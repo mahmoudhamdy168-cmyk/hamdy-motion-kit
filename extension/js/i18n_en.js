@@ -2039,5 +2039,12 @@ var I18N_EN = {
 "مرايا عند الأطراف (لو أطراف الصورة مش بتركب على بعض)":"Mirror edges (if the picture's edges don't tile)",
 "طبّق على اللاير المحدد":"Apply to selected layer",
 "حدد لاير الخلفية (صورة أو فيديو) ودوس طبّق. بينزل عليه إفكت Motion Tile اسمه HAMDY BG Scroll، وسلايدر HAMDY BG Speed للسرعة (بكسل في الثانية) وHAMDY BG Angle للاتجاه، تقدر تغيّرهم بعدين. لو الصورة صورة ثابتة اللاير بيتمد لآخر الكومب.":"Select the background layer (image or video) and apply. It gets a Motion Tile effect (HAMDY BG Scroll), a HAMDY BG Speed slider (px/sec) and a HAMDY BG Angle control you can change later. A still image is extended to the end of the comp.",
-"تقدر تغيّرها بعدين من سلايدر HAMDY LOOP Strength على اللاير (0 = واقف).":"Change it later with the HAMDY LOOP Strength slider on the layer (0 = still)."
+"تقدر تغيّرها بعدين من سلايدر HAMDY LOOP Strength على اللاير (0 = واقف).":"Change it later with the HAMDY LOOP Strength slider on the layer (0 = still).",
+"اتنسخ ✓ حدد لاير تاني ودوس «الصق»":"Copied ✓ select another layer and press Paste",
+"(خروج)":"(out)",
+"(دخول)":"(in)",
+"على اللايرات المحددة":"onto the selected layers",
+"📋 نسخ ":"📋 Copy ",
+"الدخول":"in",
+"الخروج":"out"
 };

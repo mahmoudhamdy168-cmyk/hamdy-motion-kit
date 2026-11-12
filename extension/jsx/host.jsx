@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.10.0";
+    var VER = "1.10.1";
 
     // ================================================================ JSON
     function J(v) {
@@ -3843,6 +3843,133 @@ var NABD = (function () {
             groups[g].items.push(it);
         }
     }
+    // ------------------------------------------- copy / paste one kit animation (an IN or OUT group) between layers
+    function serProp(P) {
+        var o = { mn: P.matchName, nm: P.name }, i;
+        if (P.propertyType === PropertyType.PROPERTY) {
+            o.t = "p";
+            try { if (P.canSetExpression && P.expressionEnabled && P.expression) { o.ex = P.expression; } } catch (e0) {}
+            var vt = -1; try { vt = P.propertyValueType; } catch (e1) {}
+            if (vt === PropertyValueType.NO_VALUE || vt === PropertyValueType.CUSTOM_VALUE || vt === PropertyValueType.SHAPE || vt === PropertyValueType.TEXT_DOCUMENT || vt === PropertyValueType.MARKER || vt === PropertyValueType.LAYER_INDEX || vt === PropertyValueType.MASK_INDEX) { return o; }
+            try {
+                if (P.numKeys > 0) {
+                    o.k = [];
+                    for (i = 1; i <= P.numKeys; i++) {
+                        var kk = { t: P.keyTime(i), v: P.keyValue(i) };
+                        try { kk.ii = P.keyInInterpolationType(i); kk.oi = P.keyOutInterpolationType(i); } catch (e2) {}
+                        try {
+                            var ie = P.keyInTemporalEase(i), oe = P.keyOutTemporalEase(i), q;
+                            kk.ie = []; kk.oe = [];
+                            for (q = 0; q < ie.length; q++) { kk.ie.push([ie[q].speed, ie[q].influence]); }
+                            for (q = 0; q < oe.length; q++) { kk.oe.push([oe[q].speed, oe[q].influence]); }
+                        } catch (e3) {}
+                        o.k.push(kk);
+                    }
+                } else { o.v = P.value; }
+            } catch (e4) {}
+            return o;
+        }
+        o.t = P.propertyType === PropertyType.INDEXED_GROUP ? "ig" : "g";
+        try { o.en = P.enabled; } catch (e5) {}
+        o.c = [];
+        for (i = 1; i <= P.numProperties; i++) { try { o.c.push(serProp(P.property(i))); } catch (e6) { o.c.push(null); } }
+        return o;
+    }
+    function fxCopy(a) {
+        var c = comp(), L = a.idx ? c.layer(a.idx) : c.selectedLayers[0];
+        if (!L) { throw Err("NO_LAYERS"); }
+        var base = a.which === "out" ? L.outPoint : L.inPoint, items = [], i, k;
+        for (i = 0; i < a.items.length; i++) {
+            var it = a.items[i], P = byPath(L, it.path);
+            items.push({ kind: it.kind, d: serProp(P) });
+        }
+        // the markers that time this animation (and the bounce / loop sliders its expressions read)
+        var mk = [], M = L.property("ADBE Marker");
+        for (k = 1; k <= M.numKeys; k++) {
+            try { var cm = M.keyValue(k).comment, used = false; for (i = 0; i < items.length; i++) { if (JSON_has(items[i].d, cm)) { used = true; } } if (used) { mk.push({ t: M.keyTime(k) - base, c: cm }); } } catch (em) {}
+        }
+        var extra = [], p = parade(L);
+        for (k = 1; k <= p.numProperties; k++) {
+            var nm = p.property(k).name;
+            if (/^HAMDY (?:Bounce Strength|Bounce Count|LOOP Strength)$/.test(nm)) { extra.push({ kind: "fx", d: serProp(p.property(k)) }); }
+        }
+        var ctr = null; try { ctr = fxPt(L, layerCenter(L, base)); } catch (ec) {}
+        return { which: a.which, srcBase: base, items: items, extra: extra, mk: mk, ctr: ctr, fd: c.frameDuration };
+    }
+    function JSON_has(d, str) {
+        if (!d || !str) { return false; }
+        if (d.ex && d.ex.indexOf(str) >= 0) { return true; }
+        if (d.c) { var i; for (i = 0; i < d.c.length; i++) { if (JSON_has(d.c[i], str)) { return true; } } }
+        return false;
+    }
+    function rebuild(P, d, shift, dOff, isGeo) {
+        var i, j;
+        if (!d) { return; }
+        if (d.t === "p") {
+            try {
+                var off = (isGeo && (P.propertyIndex === 1 || P.propertyIndex === 2) && dOff) ? dOff : null;
+                var fixV = function (v) { if (off && v instanceof Array && v.length >= 2) { var w = v.slice(0); w[0] += off[0]; w[1] += off[1]; return w; } return v; };
+                if (d.k && d.k.length) {
+                    for (i = 0; i < d.k.length; i++) { P.setValueAtTime(d.k[i].t + shift, fixV(d.k[i].v)); }
+                    for (i = 0; i < d.k.length; i++) {
+                        var ki = P.nearestKeyIndex(d.k[i].t + shift), K = d.k[i];
+                        try { if (K.ie && K.oe) { var ie = [], oe = []; for (j = 0; j < K.ie.length; j++) { ie.push(new KeyframeEase(K.ie[j][0], K.ie[j][1])); } for (j = 0; j < K.oe.length; j++) { oe.push(new KeyframeEase(K.oe[j][0], K.oe[j][1])); } P.setTemporalEaseAtKey(ki, ie, oe); } } catch (e1) {}
+                        try { if (K.ii) { P.setInterpolationTypeAtKey(ki, K.ii, K.oi); } } catch (e2) {}
+                    }
+                } else if (d.v !== undefined) { P.setValue(fixV(d.v)); }
+            } catch (e3) {}
+            try { if (d.ex) { P.expression = d.ex; } } catch (e4) {}
+            return;
+        }
+        for (i = 0; i < d.c.length; i++) {
+            var cd = d.c[i], ch = null;
+            if (!cd) { continue; }
+            if (d.t === "ig") {
+                try { ch = P.property(i + 1); } catch (e5) {}
+                if (!ch) { try { ch = P.addProperty(cd.mn); } catch (e6) { ch = null; } }
+                if (ch) { try { ch.name = cd.nm; } catch (e7) {} }
+            } else {
+                try { ch = P.property(cd.mn); } catch (e8) {}
+                if (!ch) { try { ch = P.property(i + 1); } catch (e9) {} }
+            }
+            if (ch) { rebuild(ch, cd, shift, dOff, isGeo); }
+        }
+    }
+    function fxPaste(a) {
+        var c = comp(), sel = needSel(c), D = a.data, n = 0, j, i, k;
+        if (!D || !D.items) { throw Err("UNKNOWN"); }
+        for (j = 0; j < sel.length; j++) {
+            var L = sel[j];
+            if (!animatable(L)) { continue; }
+            var base = D.which === "out" ? L.outPoint : L.inPoint, shift = base - (D.srcBase || 0), dOff = null;
+            try { var ct = fxPt(L, layerCenter(L, base)); if (D.ctr) { dOff = [ct[0] - D.ctr[0], ct[1] - D.ctr[1]]; } } catch (ec) {}
+            var p = parade(L), have = {};
+            for (k = 1; k <= p.numProperties; k++) { have[p.property(k).name] = true; }
+            var all = (D.extra || []).concat(D.items);
+            for (i = 0; i < all.length; i++) {
+                var it = all[i], d = it.d, P = null;
+                if (it.kind === "fx") {
+                    if (have[d.nm] && /^HAMDY (?:Bounce|LOOP Strength)/.test(d.nm)) { continue; }
+                    P = p.addProperty(d.mn); try { P.name = d.nm; } catch (en) {}
+                    P = p.property(p.numProperties);
+                    if (d.mn === "ADBE Geometry2") { try { compShutterOn(P); } catch (eg) {} }
+                    rebuild(P, d, shift, dOff, d.mn === "ADBE Geometry2");
+                    try { if (d.en === false) { P.enabled = false; } } catch (ee) {}
+                } else {
+                    if (!(L instanceof TextLayer)) { continue; }
+                    var an = L.property("ADBE Text Properties").property("ADBE Text Animators");
+                    an.addProperty("ADBE Text Animator");
+                    P = an.property(an.numProperties);
+                    try { P.name = d.nm; } catch (en2) {}
+                    rebuild(P, d, shift, null, false);
+                }
+            }
+            for (i = 0; i < (D.mk || []).length; i++) { setMarker(L, D.mk[i].c, base + D.mk[i].t); }
+            n++;
+        }
+        if (!n) { throw Err("NO_ANIM_LAYER"); }
+        return "OK";
+    }
     function inspect() {
         var c = comp(), sel = c.selectedLayers;
         if (!sel.length) { return { layer: null }; }
@@ -5267,7 +5394,7 @@ var NABD = (function () {
     }
 
     // ============================================================ dispatch
-    var NO_UNDO = { ping: 1, inspect: 1, carPick: 1, trkInfo: 1, gfPhotoshop: 1, gfPSBack: 1, libPick: 1, libList: 1, libOpen: 1, capSource: 1, saveText: 1, openText: 1, aiContext: 1, aiFrame: 1, aiSetTime: 1, renderNow: 1, saveFramePng: 1, openFolder: 1, easeCopy: 1, keySave: 1 };
+    var NO_UNDO = { ping: 1, inspect: 1, fxCopy: 1, carPick: 1, trkInfo: 1, gfPhotoshop: 1, gfPSBack: 1, libPick: 1, libList: 1, libOpen: 1, capSource: 1, saveText: 1, openText: 1, aiContext: 1, aiFrame: 1, aiSetTime: 1, renderNow: 1, saveFramePng: 1, openFolder: 1, easeCopy: 1, keySave: 1 };
     var CMDS = {
         ping: function () {
             var c = null, w = 0, h = 0;
@@ -5284,7 +5411,7 @@ var NABD = (function () {
         libPick: libPick, libList: libList, libUse: libUse, libOpen: libOpen,
         capSource: capSource, captions: captions, saveText: saveText, openText: openText,
         look: look, textStyle: textStyle,
-        bgScroll: bgScroll, overlay: overlay, otrApply: otrApply, layerFrame: layerFrame, placeCutout: placeCutout, tplApply: tplApply, easeCopy: easeCopy, easePaste: easePaste, autoAnim: autoAnim, textBreak: textBreak, keySave: keySave, keyApply: keyApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
+        bgScroll: bgScroll, fxCopy: fxCopy, fxPaste: fxPaste, overlay: overlay, otrApply: otrApply, layerFrame: layerFrame, placeCutout: placeCutout, tplApply: tplApply, easeCopy: easeCopy, easePaste: easePaste, autoAnim: autoAnim, textBreak: textBreak, keySave: keySave, keyApply: keyApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,

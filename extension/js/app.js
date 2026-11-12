@@ -2148,11 +2148,11 @@ function renderEdit(){
   var grid = $('grid'); grid.className = 'grid edgrid';
   $('count').textContent = ED && ED.layer ? ED.layer.name : '';
   if(!ED || !ED.layer){ grid.innerHTML = '<div class="edempty">حدد لاير في After Effects عليه حاجة من الكيت (حركة، ستايل، آلة كاتبة، فلتر، ترانزيشن أو أوفرلي)<br>وهتلاقي كل حاجة اتطبقت عليه هنا تقدر تعدلها من غير ما تدخل Effect Controls.</div>'; return; }
-  if(!ED.groups.length){ grid.innerHTML = '<div class="edempty">اللاير ده مفيهوش حاجات من الكيت لسه.<br>طبّق أي حاجة من التابات التانية وارجع هنا.</div>'; return; }
-  var h = '<div class="edwrap">';
+  if(!ED.groups.length){ grid.innerHTML = (CLIP ? '<div class="edclip">' + clipPasteBtn('edPaste2') + '</div>' : '') + '<div class="edempty">اللاير ده مفيهوش حاجات من الكيت لسه.<br>طبّق أي حاجة من التابات التانية وارجع هنا.</div>'; if($('edPaste2')) $('edPaste2').onclick = clipPaste; return; }
+  var h = '<div class="edwrap">' + (CLIP ? '<div class="edclip">' + clipPasteBtn('edPaste2') + '</div>' : '');
   ED.groups.forEach(function(G, gi){
     h += '<div class="edcard" data-g="' + gi + '"><h3><span>' + esc(edTitle(G.g)) + ' <span class="tag">' + esc(G.g) + '</span></span><span class="acts">' +
-      edOtherEndBtn(G) + '<button data-gact="off">إيقاف/تشغيل</button><button class="del" data-gact="del">' + (G.g==='LAYER' ? 'امسح اللاير' : 'امسح') + '</button></span></h3>';
+      (edWhich(G) ? '<button class="cpy" data-gact="copy">📋 نسخ ' + (edWhich(G) === 'in' ? 'الدخول' : 'الخروج') + '</button>' : '') + edOtherEndBtn(G) + '<button data-gact="off">إيقاف/تشغيل</button><button class="del" data-gact="del">' + (G.g==='LAYER' ? 'امسح اللاير' : 'امسح') + '</button></span></h3>';
     if(G.fr) h += '<div class="edtime">يبدأ من فريم <input type="number" data-gt="t0" value="' + G.t0 + '"> المدة <input type="number" data-gt="fr" min="1" value="' + G.fr + '"> فريم <button class="btn" data-gact="retime" style="padding:2px 10px;width:auto">طبّق التوقيت</button></div>';
     G.items.forEach(function(it, ii){
       h += '<div class="edsub"><span>' + esc(it.n) + '</span><label><input type="checkbox" data-on="' + ii + '"' + (it.on?' checked':'') + '> on</label></div>';
@@ -2170,6 +2170,7 @@ function renderEdit(){
   });
   h += '</div>';
   grid.innerHTML = h;
+  if($('edPaste2')) $('edPaste2').onclick = clipPaste;
   bindEditGrid(grid);
 }
 /* a motion preset / text animation that is only on one end of the layer can be added to the other end too */
@@ -2182,6 +2183,10 @@ function edOther(G){
   if((ED.groups || []).some(function(x){ return x.g.indexOf(other) === 0 || x.g.indexOf('NABD ' + dir.toUpperCase() + ' ' + m[2]) === 0; })) return null;
   return {it:it, src:src, dir:dir};
 }
+var CLIP = null; // copied kit animation (one IN or OUT group), pasted onto other layers
+function edWhich(G){ var m = /^(?:HAMDY|NABD) (IN|OUT) /.exec(G.g || ''); return m ? m[1].toLowerCase() : (G.fr ? 'in' : null); }
+function clipPasteBtn(id){ return CLIP ? '<button class="btn primary" id="' + id + '">📥 ' + trText('الصق') + ' «' + esc(CLIP.label) + '» ' + trText(CLIP.which === 'out' ? '(خروج)' : '(دخول)') + ' ' + trText('على اللايرات المحددة') + '</button>' : ''; }
+function clipPaste(){ if(!CLIP) return; host('fxPaste', {data:CLIP.data}).then(function(r){ say(r); if(r.ok) edRefresh(true); }); }
 function edOtherEndBtn(G){
   var o = edOther(G); if(!o) return '';
   return '<button class="addo" data-gact="addOther">' + (o.dir === 'out' ? '＋ ضيفه في النهاية' : '＋ ضيفه في البداية') + '</button>';
@@ -2221,6 +2226,14 @@ function bindEditGrid(grid){
         } else if(act==='off'){
           var on = !G.items.every(function(it){ return !it.on; }) ? false : true, ps = G.items.map(function(it){ return edSend('toggleItem', {path:it.path, on:on}); });
           Promise.all(ps).then(function(){ edRefresh(true); });
+        } else if(act==='copy'){
+          var w = edWhich(G);
+          edSend('fxCopy', {which:w, items:G.items.map(function(x){ return {path:x.path, kind:x.kind}; })}).then(function(r){
+            if(!r.ok) return;
+            CLIP = {data:r.data, label:edTitle(G.g), which:w};
+            var t = $('toast'); if(t){ t.className = 'toast ok'; t.textContent = trText('اتنسخ ✓ حدد لاير تاني ودوس «الصق»'); clearTimeout(t._t); t._t = setTimeout(function(){ t.className = 'toast'; }, 3500); }
+            renderEdit(); renderSide();
+          });
         } else if(act==='addOther'){
           var o = edOther(G); if(!o) return;
           var nm = (S.lang === 'en' ? (o.it.en || o.it.ar) : (o.it.ar || o.it.en)) || '';
@@ -2238,7 +2251,7 @@ function bindEditGrid(grid){
 function editSide(){
   var h = '<div class="stage svgth" id="stage"><svg viewBox="0 0 160 100"><rect width="160" height="100" fill="#121216"/><rect x="34" y="30" width="92" height="8" rx="4" fill="#3b3b44"/><circle cx="70" cy="34" r="7" fill="var(--acc)"/><rect x="34" y="50" width="92" height="8" rx="4" fill="#3b3b44"/><circle cx="104" cy="54" r="7" fill="var(--acc)"/><rect x="34" y="70" width="92" height="8" rx="4" fill="#3b3b44"/><circle cx="52" cy="74" r="7" fill="var(--acc)"/></svg></div>';
   h += '<h2 class="fname">صفحة التعديل</h2><p class="desc">كل اللي الكيت حطه على اللاير المحدد: قيم، ألوان، توقيت، وتقدر توقف أو تمسح أي حاجة.</p>';
-  h += '<div class="row"><button class="btn primary" id="edRead">اقرأ اللاير المحدد</button></div>';
+  h += '<div class="row"><button class="btn primary" id="edRead">اقرأ اللاير المحدد</button></div>' + clipPasteBtn('edPaste');
   h += chk('ed.auto', 'تحديث تلقائي لما أغيّر التحديد', S.ed.auto);
   if(ED && ED.layer){
     var L = ED.layer;
@@ -2259,6 +2272,7 @@ function editSide(){
 }
 function bindEditSide(){
   if($('edRead')) $('edRead').onclick = function(){ edRefresh(true); };
+  if($('edPaste')) $('edPaste').onclick = clipPaste;
   if(!ED || !ED.layer) return;
   function on(id, ev, fn){ var e = $(id); if(e) e.addEventListener(ev, fn); }
   on('edOp', 'change', function(){ edSend('setLayer', {op:+this.value}); });
