@@ -12,6 +12,7 @@ var TABS = [
   {id:'ln',  ar:'〰 خطوط'},
   {id:'car', ar:'🎠 كاروسيل'},
   {id:'dp',  ar:'🧊 عمق 3D'},
+  {id:'bg',  ar:'🌀 خلفية متحركة'},
   {id:'trk', ar:'🎯 تراكينج'},
   {id:'trim', ar:'✂ تريم باث'},
   {id:'gf', ar:'✨ جنريتيف فيل'},
@@ -107,7 +108,7 @@ var DEF = {
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:'', tp:'uiSub'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
-  mp:{dir:'both', frames:20, at:'layer', side:'def', rev:false, pivot:'el', bnc:false, bncN:2, bncAmt:50},
+  mp:{dir:'both', frames:20, at:'layer', side:'def', rev:false, pivot:'el', bnc:false, bncN:2, bncAmt:50, loopAmt:100},
   tx:{text:'حركة النص', based:'auto', frames:20, size:110, secs:3, doIn:true, doOut:true, font:'', pattern:'normal', cps:14, cursor:true, typeSfx:true},
   cap:{provider:'local', q:'best', keys:{deepgram:'', groq:'', openai:''}, lang:'ar-EG', maxWords:3, maxChars:26, size:70, y:72, font:'', upper:false, stroke:false, shadow:true, box:false, boxOp:75, color:'#ffffff', words:[], caps:[], src:''},
   sfx:{key:'', prompt:'', dur:2, gen:[]},
@@ -121,6 +122,7 @@ var DEF = {
   tp:{f:{}, c:{}, dur:0, place:'def', size:1, sfx:true},
   br:{src:'video', orient:'any', quality:'hd', fit:true, pxKey:'', fsKey:''},
   ai:{key:'', model:'claude-sonnet-5-5', auto:true, frame:false, t0:null, t1:null, bridge:false, port:47811},
+  bg:{speed:100, mirror:false},
   dp:{order:'stack', spread:600, pivot:'front', secs:4, amt:100, at:'playhead', fog:false, dof:false, over:0},
   trim:{frames:24, stagger:0, width:4, stroke:'fill', snappy:true, at:'layer', seg:25, speed:100, addStroke:false, fillAfter:false, strokeFade:false},
   gf:{provider:'stability', key:'', prompt:'', search:'', grow:12, feather:14, hold:'layer', patch:true, follow:false, out:'916', lastPS:null},
@@ -257,6 +259,7 @@ function itemsOf(tab){
     case 'gf': return NABD_TOOLS2.GF;
     case 'trim': return NABD_TOOLS2.TRIM;
     case 'dp': return NABD_TOOLS2.DEPTH;
+    case 'bg': return BG_DIRS;
     case 'lib': return LIBFILES.map(function(f){ return {id:f.path, ar:f.name, en:TLABEL[f.type], g:typeName(f.type), f:f}; });
   }
   return [];
@@ -495,6 +498,7 @@ function mountThumb(box, it, big){
     case 'trim': o = {k:'trim', el:P.mountTrim(box, trimItem(it), {acc:S.acc})}; break;
     case 'tp': o = {k:'tpl', it:it, el:P.mountTpl(box, it, {zoom:/^(واجهات UI|ستايل شرح وكولاج|كول آوت وتوضيح|إنفوجرافيك|عروض وتسويق|تعليم وتقديم|عناوين)$/.test(it.g) && it.id!=='edBeforeAfter' && it.id!=='edVs' && it.id!=='tiLetterbox' ? (big ? 1.3 : 1.6) : 1})}; break;
     case 'dp': o = {k:'dp', el:P.mountDepth(box, it)}; break;
+    case 'bg': o = {k:'bg', it:it, el:mountBg(box)}; break;
     case 'ln': var lc = lnColors();
       if(big){ var car = COMP.w / COMP.h; box.style.aspectRatio = COMP.w + ' / ' + COMP.h; box.style.alignSelf = 'center'; box.style.maxWidth = '100%';
         if(car >= 1.3){ box.style.width = '100%'; box.style.height = 'auto'; } else { box.style.height = 'min(28vh, 210px)'; box.style.width = 'auto'; box.style.minHeight = '120px'; } }
@@ -563,6 +567,7 @@ function renderSide(){
           '<div class="field"><span class="lbl">قوة الارتداد</span>' + seg('mp.bncAmt', [[20,'خفيف'],[50,'عادي'],[80,'قوي'],[110,'قوي جداً']], S.mp.bncAmt || 50) + '</div>';
       }
       h += '<div class="field"><span class="lbl">الحركة بتبدأ من (الأنكر)</span>' + seg('mp.pivot', [['el','نص العنصر'],['comp','نص الكومب'],['top','فوق'],['bottom','تحت'],['right','يمين'],['left','شمال']], S.mp.pivot || 'el') + '</div>';
+      if(it.kind==='loop') h += '<div class="field"><span class="lbl">قوة الحركة</span>' + seg('mp.loopAmt', [[25,'25%'],[50,'50%'],[100,'100%'],[150,'150%'],[200,'200%'],[300,'300%']], S.mp.loopAmt || 100) + '</div><div class="hint">تقدر تغيّرها بعدين من سلايدر HAMDY LOOP Strength على اللاير (0 = واقف).</div>';
       if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[5,'5'],[10,'10'],[15,'15'],[20,'20'],[25,'25'],[30,'30'],[45,'45']], S.mp.frames) + '</div>';
       h += '<button class="btn primary" id="go">طبّق على اللايرات المحددة</button>';
       h += '<button class="btn warn" id="clear">شيل حركات الكيت من المحدد</button>';
@@ -661,6 +666,7 @@ function renderSide(){
     case 'trim': h += trimSide(it); break;
     case 'tp': h += tpSide(it); break;
     case 'dp': h += dpSide(it); break;
+    case 'bg': h += bgSide(it); break;
     case 'tl':
       h += '<div class="stage svgth" id="stage">' + (it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id)) + '</div>' + head(it, it.d);
       h += toolControls(it);
@@ -822,7 +828,7 @@ function bindSide(){
         var k = g.dataset.seg;
         if(k==='cap.maxWords' && S.cap.words.length) rechunk();
         if(/^(ln|car|trim|trk|gf|dp)\./.test(k) || k==='tx.based' || k==='tx.cps' || k==='ti.side' || k==='tl.plat' || k==='tx.pattern' || /^(cap|fx)\./.test(k)){ renderSide(); renderGrid(); }
-        else if(k==='tr.frames' || k==='tr.snappy' || k==='mp.dir' || k==='mp.frames' || k==='mp.side' || k==='mp.pivot' || k==='mp.bncN' || k==='mp.bncAmt'){ /* previews read state live */ }
+        else if(k==='tr.frames' || k==='tr.snappy' || k==='mp.dir' || k==='mp.frames' || k==='mp.side' || k==='mp.pivot' || k==='mp.bncN' || k==='mp.bncAmt' || k==='mp.loopAmt'){ /* previews read state live */ }
       };
     });
   });
@@ -877,7 +883,7 @@ function apply(){
       if(it.otr){ p = host('otrApply', otrArgs(it)); break; }
       if(it.matte){ p = host('matteTr', {file:assetPath(it.matte.file), frames:S.tr.mframes, flip:S.tr.flip, sfx:S.tr.sfx ? sfxPath({id:'whoosh_soft'}) : null}); break; }
       p = host('transition', {type:it.id, frames:S.tr.frames, snappy:S.tr.snappy, sfx:S.tr.sfx, libPaths:S.lib.paths, acc:acc}); break;
-    case 'mp': p = host('motion', {bounce:{on:!!S.mp.bnc, amt:S.mp.bncAmt || 50, n:S.mp.bncN || 2}, pivot:S.mp.pivot || 'el', spec:mpSpec(mpSided(it)), dir:S.mp.dir, frames:S.mp.frames, at:S.mp.at}); break;
+    case 'mp': p = host('motion', {loopAmt:S.mp.loopAmt || 100, bounce:{on:!!S.mp.bnc, amt:S.mp.bncAmt || 50, n:S.mp.bncN || 2}, pivot:S.mp.pivot || 'el', spec:mpSpec(mpSided(it)), dir:S.mp.dir, frames:S.mp.frames, at:S.mp.at}); break;
     case 'tx': if(S.tab==='tx' && S.sel.tx){ p = host('textCreate', txArgs()); } break;
     case 'ti': p = host('title', titleArgs(it)); break;
     case 'el':
@@ -897,6 +903,7 @@ function apply(){
     case 'trim': p = host('trimApply', trimArgs(it)); break;
     case 'tp': p = host('tplApply', tpArgs(it)); break;
     case 'dp': p = host('dpRig', dpArgs(it)); break;
+    case 'bg': p = host('bgScroll', {ang:it.ang, speed:+S.bg.speed || 100, mirror:!!S.bg.mirror}); break;
     case 'gf': gfRun(it); return;
     case 'ez': if(it.auto){ p = host('autoAnim', {kind:it.auto, strength:S.ez.str}); break; }
       if(it.curve){ var cv = S.ez.curve; p = host('easeCurve', {x1:cv[0], y1:cv[1], x2:cv[2], y2:cv[3]}); break; }
@@ -1723,6 +1730,35 @@ function trimArgs(it){
 }
 
 /* ============================================================ depth 3D tab */
+/* ===================================================== endless background */
+var BG_DIRS = [
+  {id:'bgLeft',  ar:'يمشي شمال',       en:'Scroll Left',  g:'أفقي وطولي', ang:180},
+  {id:'bgRight', ar:'يمشي يمين',       en:'Scroll Right', g:'أفقي وطولي', ang:0},
+  {id:'bgUp',    ar:'يطلع لفوق',       en:'Scroll Up',    g:'أفقي وطولي', ang:270},
+  {id:'bgDown',  ar:'ينزل لتحت',       en:'Scroll Down',  g:'أفقي وطولي', ang:90},
+  {id:'bgUR',    ar:'مايل فوق يمين',   en:'Diagonal ↗',   g:'مايل', ang:315},
+  {id:'bgDR',    ar:'مايل تحت يمين',   en:'Diagonal ↘',   g:'مايل', ang:45},
+  {id:'bgDL',    ar:'مايل تحت شمال',   en:'Diagonal ↙',   g:'مايل', ang:135},
+  {id:'bgUL',    ar:'مايل فوق شمال',   en:'Diagonal ↖',   g:'مايل', ang:225}
+];
+var BG_PAT = 'url("data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#1c1c22"/><circle cx="20" cy="20" r="9" fill="#b0101c"/><rect x="48" y="46" width="18" height="18" rx="4" fill="#ececf1" opacity=".85"/><path d="M8 66 L22 52 L36 66" stroke="#e0303c" stroke-width="4" fill="none"/><circle cx="62" cy="16" r="4" fill="#ececf1" opacity=".5"/></svg>') + '")';
+function mountBg(box){
+  box.innerHTML = '<div class="bgscroll" style="position:absolute;inset:0;background-size:40px 40px"></div>';
+  box.firstChild.style.backgroundImage = BG_PAT;
+  return {pat:box.firstChild};
+}
+function drawBg(el, it, t){
+  var a = it.ang * Math.PI/180, sp = (+S.bg.speed || 100) * 0.12;
+  el.pat.style.backgroundPosition = (Math.cos(a)*sp*t).toFixed(1) + 'px ' + (Math.sin(a)*sp*t).toFixed(1) + 'px';
+}
+function bgSide(it){
+  var h = '<div class="stage" id="stage"></div>' + head(it, 'الصورة بتتكرر جنب نفسها وتفضل ماشية في الاتجاه ده لآخر الكومب من غير ما تخلص.');
+  h += '<div class="field"><span class="lbl">السرعة</span>' + seg('bg.speed', [[40,'بطيء'],[100,'عادي'],[220,'سريع'],[400,'سريع جداً']], +S.bg.speed || 100) + '</div>';
+  h += chk('bg.mirror', 'مرايا عند الأطراف (لو أطراف الصورة مش بتركب على بعض)', !!S.bg.mirror);
+  h += '<button class="btn primary" id="go">طبّق على اللاير المحدد</button>';
+  h += '<div class="hint">حدد لاير الخلفية (صورة أو فيديو) ودوس طبّق. بينزل عليه إفكت Motion Tile اسمه HAMDY BG Scroll، وسلايدر HAMDY BG Speed للسرعة (بكسل في الثانية) وHAMDY BG Angle للاتجاه، تقدر تغيّرهم بعدين. لو الصورة صورة ثابتة اللاير بيتمد لآخر الكومب.</div>';
+  return h;
+}
 function dpSide(it){
   var d = S.dp, h = '<div class="stage" id="stage"></div>' + head(it, it.d);
   h += '<div class="field"><span class="lbl">ترتيب الطبقات (الأول = الأقرب)</span>' + seg('dp.order', [['stack','زي التايملاين'],['reverse','بالعكس'],['random','عشوائي']], d.order) + '</div>';
@@ -2272,7 +2308,7 @@ function step(o, now){
   var t = (now - o.t0)/1000;
   switch(o.k){
     case 'tr': P.drawTr(o.el, o.it.id, t, S.tr.frames, S.tr.snappy, S.acc); break;
-    case 'mp': P.drawMp(o.el, mpSided(o.it), t, {dir:S.mp.dir, frames:S.mp.frames, pivot:S.mp.pivot, bnc:S.mp.bnc ? {n:S.mp.bncN || 2, amt:S.mp.bncAmt || 50} : null}); break;
+    case 'mp': P.drawMp(o.el, mpSided(o.it), t, {dir:S.mp.dir, frames:S.mp.frames, pivot:S.mp.pivot, loopAmt:S.mp.loopAmt || 100, bnc:S.mp.bnc ? {n:S.mp.bncN || 2, amt:S.mp.bncAmt || 50} : null}); break;
     case 'tx': P.drawTx(o.el, o.it, t, (o.it.tw ? S.tx.doIn : true), o.it.loop ? false : S.tx.doOut, S.acc, (o.it.random||o.it.overshoot) ? 'normal' : S.tx.pattern, S.tx.cps); break;
     case 'spr': P.drawSprite(o.el, t); break;
     case 'ln': P.drawLine(o.el, t); break;
@@ -2282,6 +2318,7 @@ function step(o, now){
     case 'trim': P.drawTrim(o.el, t); break;
     case 'tpl': P.drawTpl(o.el, t, tplOpts(o.it)); break;
     case 'dp': P.drawDepth(o.el, t, S.dp, S.acc); break;
+    case 'bg': drawBg(o.el, o.it, t); break;
     case 'ti': P.drawTitle(o.el, t); break;
     case 'el': o.box.innerHTML = P.elSVG(o.it.id, t, S.acc); break;
     case 'ez': P.drawEz(o.el, t); break;

@@ -325,7 +325,7 @@ function mountMp(box){
 function drawMp(el, sp, t, opt){
   var h = el.box.clientHeight || 80, sc = h/1080 * 0.9;
   var st;
-  if(sp.kind==='loop'){ st = loopState(sp, t); }
+  if(sp.kind==='loop'){ st = loopState(sp, t); var lk = (opt.loopAmt || 100)/100; for(var q in REST) if(typeof st[q] === 'number') st[q] = REST[q] + (st[q] - REST[q])*lk; }
   else if(sp.kind==='emph'){ var dE = Math.max(0.3,(opt.frames||18)/30)*1.4, cyc = dE + 0.9; var u = clamp(((t%cyc)-0.45)/dE); st = emphState(sp, u); }
   else {
     var d = Math.max(0.3, (opt.frames||18)/30) * 1.25, hold = 0.55 + (sp.ease==='bounce'||OVER[sp.ease] ? 0.6 : 0) + (opt.bnc ? opt.bnc.n/2.6 : 0), gap = 0.3;

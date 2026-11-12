@@ -2023,5 +2023,21 @@ var I18N_EN = {
 "نص الكومب":"Comp center",
 "ارتداد في آخر الحركة":"Bounce at the end",
 "عدد الارتدادات":"Number of bounces",
-"قوة الارتداد":"Bounce strength"
+"قوة الارتداد":"Bounce strength",
+"🌀 خلفية متحركة":"🌀 Endless BG",
+"يمشي شمال":"Scroll Left",
+"يمشي يمين":"Scroll Right",
+"يطلع لفوق":"Scroll Up",
+"ينزل لتحت":"Scroll Down",
+"مايل فوق يمين":"Diagonal up-right",
+"مايل تحت يمين":"Diagonal down-right",
+"مايل تحت شمال":"Diagonal down-left",
+"مايل فوق شمال":"Diagonal up-left",
+"أفقي وطولي":"Straight",
+"مايل":"Diagonal",
+"الصورة بتتكرر جنب نفسها وتفضل ماشية في الاتجاه ده لآخر الكومب من غير ما تخلص.":"The picture repeats next to itself and keeps moving this way until the end of the comp.",
+"مرايا عند الأطراف (لو أطراف الصورة مش بتركب على بعض)":"Mirror edges (if the picture's edges don't tile)",
+"طبّق على اللاير المحدد":"Apply to selected layer",
+"حدد لاير الخلفية (صورة أو فيديو) ودوس طبّق. بينزل عليه إفكت Motion Tile اسمه HAMDY BG Scroll، وسلايدر HAMDY BG Speed للسرعة (بكسل في الثانية) وHAMDY BG Angle للاتجاه، تقدر تغيّرهم بعدين. لو الصورة صورة ثابتة اللاير بيتمد لآخر الكومب.":"Select the background layer (image or video) and apply. It gets a Motion Tile effect (HAMDY BG Scroll), a HAMDY BG Speed slider (px/sec) and a HAMDY BG Angle control you can change later. A still image is extended to the end of the comp.",
+"تقدر تغيّرها بعدين من سلايدر HAMDY LOOP Strength على اللاير (0 = واقف).":"Change it later with the HAMDY LOOP Strength slider on the layer (0 = still)."
 };

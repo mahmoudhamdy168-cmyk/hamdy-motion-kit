@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.25";
+    var VER = "1.10.0";
 
     // ================================================================ JSON
     function J(v) {
@@ -1154,7 +1154,7 @@ var NABD = (function () {
     }
 
     // optional bounce at the end of any in-animation; strength / count live on layer sliders so they stay editable
-    var BNC = null;
+    var BNC = null, LOOPK = 100;
     function bncCtl(L) {
         var p = parade(L), i, has1 = false, has2 = false;
         for (i = 1; i <= p.numProperties; i++) { if (p.property(i).name === "HAMDY Bounce Strength") { has1 = true; } if (p.property(i).name === "HAMDY Bounce Count") { has2 = true; } }
@@ -1169,6 +1169,27 @@ var NABD = (function () {
             "var t = (n == 0) ? 0 : time - key(n).time;\n" +
             "if (n > 1 && t < nb / freq + 1) { var v = velocityAtTime(key(n).time - thisComp.frameDuration / 10);\n" +
             "  value + v * amp * Math.sin(freq * t * 2 * Math.PI) / Math.exp(decay * t); } else { value; }";
+    }
+    // endless scrolling background: Motion Tile repeats the picture forever, its Tile Center drifts at a set speed/angle
+    function bgScroll(a) {
+        var c = comp(), sel = needSel(c), n = 0, j, k, L;
+        for (j = 0; j < sel.length; j++) {
+            L = sel[j];
+            if (!animatable(L)) { continue; }
+            var p = parade(L);
+            for (k = p.numProperties; k >= 1; k--) { if (/^HAMDY BG /.test(p.property(k).name)) { p.property(k).remove(); } }
+            addSlider(L, "HAMDY BG Speed", a.speed === undefined ? 100 : a.speed);
+            addAngle(L, "HAMDY BG Angle", a.ang || 0);
+            var e = addEffect(L, "ADBE Tile", "HAMDY BG Scroll"), i = e.propertyIndex;
+            try { FX(L, i).property(6).setValue(a.mirror ? 1 : 0); } catch (em) {}
+            FX(L, i).property(1).expression = "// HAMDY BG: change HAMDY BG Speed (px/sec) and HAMDY BG Angle (0 = right, 90 = down, 180 = left, 270 = up)\n" +
+                "var s = effect(\"HAMDY BG Speed\")(1), a = degreesToRadians(effect(\"HAMDY BG Angle\")(1));\n" +
+                "value + [Math.cos(a), Math.sin(a)] * s * (time - inPoint)";
+            try { if (L.source && L.source.mainSource && L.source.mainSource.isStill) { L.outPoint = c.duration; } } catch (eo) {}
+            n++;
+        }
+        if (!n) { throw Err("NO_ANIM_LAYER"); }
+        return "OK";
     }
     function mpApply(c, L, sp, dir, t0, t1, kid) {
         if (BNC && dir === "in") { try { bncCtl((kid && L.parent) ? L : L); } catch (eb) {} }
@@ -1286,9 +1307,21 @@ var NABD = (function () {
 
     function mpLoop(c, L, sp, kid) {
         var ex = sp.ex || {}, center = fxPt(L, pivotPoint((kid && L.parent) ? L.parent : L, c.time));
+        // loop strength: one slider per layer scales every loop around its rest value (0 = still, 100 = original, 200 = double)
+        var p0 = parade(L), q0, hasK = false;
+        for (q0 = 1; q0 <= p0.numProperties; q0++) { if (p0.property(q0).name === "HAMDY LOOP Strength") { hasK = true; } }
+        if (!hasK) { addSlider(L, "HAMDY LOOP Strength", LOOPK); }
         var i = addEffect(L, "ADBE Geometry2", "HAMDY LOOP " + sp.id).propertyIndex;
         FX(L, i).property(1).setValue(center);
         FX(L, i).property(2).setValue(center);
+        function K(x) {
+            var ls = String(x).replace(/\s+$/, "").split("\n"), last = ls.pop().replace(/;\s*$/, "");
+            ls.push("var __r = (" + last + ");");
+            ls.push("var __k = 1; try { __k = thisLayer.effect(\"HAMDY LOOP Strength\")(1) / 100; } catch (err) {}");
+            ls.push("value + (__r - value) * __k");
+            return "// HAMDY LOOP (strength: HAMDY LOOP Strength slider)\n" + ls.join("\n");
+        }
+        var ex0 = ex; ex = {}; for (q0 in ex0) { if (ex0.hasOwnProperty(q0)) { ex[q0] = K(ex0[q0]); } }
         try { compShutterOn(FX(L, i)); } catch (x) {}
         if (ex.sx || ex.sy) { FX(L, i).property(3).setValue(0); }
         if (ex.pos) { FX(L, i).property(2).expression = ex.pos; }
@@ -2457,6 +2490,11 @@ var NABD = (function () {
     }
 
     // ========================================================= typewriter
+    function addAngle(L, name, v) {
+        var i = addEffect(L, "ADBE Angle Control", name).propertyIndex;
+        try { FX(L, i).property(1).setValue(v); } catch (e) {}
+        return i;
+    }
     function addSlider(L, name, v) {
         var i = addEffect(L, "ADBE Slider Control", name).propertyIndex;
         try { FX(L, i).property(1).setValue(v); } catch (e) {}
@@ -5246,7 +5284,7 @@ var NABD = (function () {
         libPick: libPick, libList: libList, libUse: libUse, libOpen: libOpen,
         capSource: capSource, captions: captions, saveText: saveText, openText: openText,
         look: look, textStyle: textStyle,
-        overlay: overlay, otrApply: otrApply, layerFrame: layerFrame, placeCutout: placeCutout, tplApply: tplApply, easeCopy: easeCopy, easePaste: easePaste, autoAnim: autoAnim, textBreak: textBreak, keySave: keySave, keyApply: keyApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
+        bgScroll: bgScroll, overlay: overlay, otrApply: otrApply, layerFrame: layerFrame, placeCutout: placeCutout, tplApply: tplApply, easeCopy: easeCopy, easePaste: easePaste, autoAnim: autoAnim, textBreak: textBreak, keySave: keySave, keyApply: keyApply, liquidGlass: liquidGlass, fixArabic: fixArabic, beatApply: beatApply, alignLayers: alignLayers, easeCurve: easeCurve, verticalize: verticalize, unusedItems: unusedItems, renderNow: renderNow, saveFramePng: saveFramePng, openFolder: openFolder, aiContext: aiContext, aiRun: aiRun, aiFrame: aiFrame, aiSetTime: aiSetTime, dpRig: dpRig, dpMove: dpMove, dpBake: dpBake, dpRemove: dpRemove, matteTr: matteTr, inspect: inspect, setProp: setProp, retime: retime, delGroup: delGroup, toggleItem: toggleItem, setText: setText, setLayer: setLayer,
         lineFx: lineFx, lineAttach: lineAttach, textPath: textPath,
         carousel: carousel, carPick: carPick, carSwap: carSwap,
         trkStart: trkStart, trkInfo: trkInfo, trkNull: trkNull, trkAttach: trkAttach, trkText: trkText, trkCover: trkCover, trkPin: trkPin, trkStab: trkStab, trkBake: trkBake,
@@ -5262,7 +5300,7 @@ var NABD = (function () {
             TUCK = a.tuck !== false;
             TIMING = a.timing !== false;
             MKN = a.mkName ? String(a.mkName) : ""; MKAR = a.mkLang !== "en";
-            BNC = null; PIVOT = "el";
+            BNC = null; PIVOT = "el"; LOOPK = a.loopAmt === undefined ? 100 : a.loopAmt;
             if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("Hamdy: " + a.cmd); undo = true; }
             res = CMDS[a.cmd](a);
             if (undo) { app.endUndoGroup(); }
