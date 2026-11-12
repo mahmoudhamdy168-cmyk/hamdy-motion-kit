@@ -2002,5 +2002,10 @@ var I18N_EN = {
 "يقف عند %":"Stops at %",
 "يوصل بعد (فريمات)":"Arrives after (frames)",
 "يستنى قبلها (فريمات)":"Delay (frames)",
-"0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. تقدر تغيّر الأرقام دي بعدين من Effect Controls (HAMDY PATH).":"0% is the start of the path and 100% its end. The word moves, then holds still; the layer runs to the end of the comp so you can trim it. You can change these numbers later in Effect Controls (HAMDY PATH)."
+"0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. تقدر تغيّر الأرقام دي بعدين من Effect Controls (HAMDY PATH).":"0% is the start of the path and 100% its end. The word moves, then holds still; the layer runs to the end of the comp so you can trim it. You can change these numbers later in Effect Controls (HAMDY PATH).",
+"آخر وقفة عند %":"Final stop at %",
+"يوصل للوقفة بعد (فريمات)":"Reaches the pause after (frames)",
+"يقف في النص شوية وبعدين يكمّل":"Pause midway, then continue",
+"يفضل واقف (فريمات)":"Hold for (frames)",
+"يكمّل للآخر في (فريمات)":"Continue to the end in (frames)"
 };

@@ -1106,9 +1106,14 @@ function drawLine(el, t){
     else if(el.o.flow==='static'){ off2 = (el.o.pStart === undefined ? 50 : el.o.pStart)/100 * Math.max(0, len - tl); }
     else {
       var ps = el.o.pStart === undefined ? 0 : +el.o.pStart, pe = el.o.pEnd === undefined ? 100 : +el.o.pEnd;
-      var mv = Math.max(1, +el.o.pFrames || 78)/30, dl = (+el.o.pDelay || 0)/30, cyc = dl + mv + 1.2;
-      var u = clamp(((t % cyc) - dl)/mv); u = u<.5 ? 4*u*u*u : 1-Math.pow(-2*u+2,3)/2;
-      off2 = (ps + (pe - ps)*u)/100 * Math.max(0, len - tl);
+      var mv = Math.max(1, +el.o.pFrames || 78)/30, dl = (+el.o.pDelay || 0)/30, pz = !!el.o.pPause, pm = +el.o.pMid || 0, hd = Math.max(0, +el.o.pHold || 0)/30, mv2 = Math.max(1, +el.o.pFrames2 || 30)/30;
+      var cyc = dl + mv + (pz ? hd + mv2 : 0) + 1.2, tt = (t % cyc) - dl, pv;
+      function ez(u){ u = clamp(u); return u<.5 ? 4*u*u*u : 1-Math.pow(-2*u+2,3)/2; }
+      if(!pz) pv = ps + (pe - ps)*ez(tt/mv);
+      else if(tt < mv) pv = ps + (pm - ps)*ez(tt/mv);
+      else if(tt < mv + hd) pv = pm;
+      else pv = pm + (pe - pm)*ez((tt - mv - hd)/mv2);
+      off2 = pv/100 * Math.max(0, len - tl);
     }
     el.tp.setAttribute('startOffset', off2.toFixed(1));
     if(el.o.guide===false) path.style.opacity = 0; else path.style.opacity = '';

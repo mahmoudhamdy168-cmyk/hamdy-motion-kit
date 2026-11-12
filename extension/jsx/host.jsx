@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.15";
+    var VER = "1.9.16";
 
     // ================================================================ JSON
     function J(v) {
@@ -4069,11 +4069,19 @@ var NABD = (function () {
         addSlider(L, "HAMDY PATH End %", a.pEnd === undefined ? 100 : a.pEnd);
         addSlider(L, "HAMDY PATH Move Frames", a.pFrames || 45);
         addSlider(L, "HAMDY PATH Delay Frames", a.pDelay || 0);
-        FX(L, ppi).property(1).expression = "// HAMDY PATH travel: edit Start % / End % / Move Frames / Delay Frames\n" +
-            "var s = effect(\"HAMDY PATH Start %\")(1), e = effect(\"HAMDY PATH End %\")(1), f = Math.max(1, effect(\"HAMDY PATH Move Frames\")(1)), dl = effect(\"HAMDY PATH Delay Frames\")(1);\n" +
-            "var k = clamp(((time - inPoint) / thisComp.frameDuration - dl) / f, 0, 1);\n" +
-            "k = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;\n" +
-            "s + (e - s) * k";
+        addCheck(L, "HAMDY PATH Pause", !!a.pPause);
+        addSlider(L, "HAMDY PATH Pause At %", a.pMid === undefined ? 50 : a.pMid);
+        addSlider(L, "HAMDY PATH Pause Frames", a.pHold === undefined ? 20 : a.pHold);
+        addSlider(L, "HAMDY PATH Move 2 Frames", a.pFrames2 || 30);
+        FX(L, ppi).property(1).expression = "// HAMDY PATH travel: Start % -> (Pause At %, hold Pause Frames) -> End %, then holds\n" +
+            "var s = effect(\"HAMDY PATH Start %\")(1), e = effect(\"HAMDY PATH End %\")(1), f1 = Math.max(1, effect(\"HAMDY PATH Move Frames\")(1)), dl = effect(\"HAMDY PATH Delay Frames\")(1);\n" +
+            "var on = effect(\"HAMDY PATH Pause\")(1), m = effect(\"HAMDY PATH Pause At %\")(1), hd = Math.max(0, effect(\"HAMDY PATH Pause Frames\")(1)), f2 = Math.max(1, effect(\"HAMDY PATH Move 2 Frames\")(1));\n" +
+            "function ez(k) { k = clamp(k, 0, 1); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }\n" +
+            "var t = (time - inPoint) / thisComp.frameDuration - dl;\n" +
+            "if (on < 0.5) { s + (e - s) * ez(t / f1); }\n" +
+            "else if (t < f1) { s + (m - s) * ez(t / f1); }\n" +
+            "else if (t < f1 + hd) { m; }\n" +
+            "else { m + (e - m) * ez((t - f1 - hd) / f2); }";
     }
     function textPath(a) {
         var c = comp(), targets = [], j, i, fd = c.frameDuration;
