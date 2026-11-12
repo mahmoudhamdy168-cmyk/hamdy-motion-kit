@@ -2016,5 +2016,6 @@ var I18N_EN = {
 "الإعدادات رجعت للأصل ✓":"Settings reset ✓",
 "🕘 مؤخراً":"🕘 Recent",
 "＋ ضيفه في النهاية":"＋ Add at the end too",
-"＋ ضيفه في البداية":"＋ Add at the start too"
+"＋ ضيفه في البداية":"＋ Add at the start too",
+"اعكس الحركة (جوه ↔ برا)":"Reverse the move (in ↔ out)"
 };

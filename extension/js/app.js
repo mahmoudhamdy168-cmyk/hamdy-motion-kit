@@ -107,7 +107,7 @@ var DEF = {
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:'', tp:'uiSub'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
-  mp:{dir:'both', frames:20, at:'layer', side:'def'},
+  mp:{dir:'both', frames:20, at:'layer', side:'def', rev:false},
   tx:{text:'حركة النص', based:'auto', frames:20, size:110, secs:3, doIn:true, doOut:true, font:'', pattern:'normal', cps:14, cursor:true, typeSfx:true},
   cap:{provider:'local', q:'best', keys:{deepgram:'', groq:'', openai:''}, lang:'ar-EG', maxWords:3, maxChars:26, size:70, y:72, font:'', upper:false, stroke:false, shadow:true, box:false, boxOp:75, color:'#ffffff', words:[], caps:[], src:''},
   sfx:{key:'', prompt:'', dur:2, gen:[]},
@@ -291,10 +291,16 @@ function txFxScale(fx, k){
 function mpSpec(m){ return {id:m.id, kind:m.kind, ease:m.ease, tr:m.tr, keys:m.keys, ex:m.ex, wa:m.wa, feather:m.feather, dbDir:m.dbDir}; }
 /* direction override for motion presets: same move, coming from (or leaving to) the chosen side */
 function mpSided(m){
-  var sd = S.mp.side;
-  if(!m || !sd || sd === 'def' || m.kind === 'loop' || m.kind === 'emph') return m;
+  var sd = S.mp.side, rv = !!S.mp.rev;
+  if(!m || m.kind === 'loop' || m.kind === 'emph' || ((!sd || sd === 'def') && !rv)) return m;
   var o = {}, k; for(k in m) o[k] = m[k];
   var t = {}; for(k in (m.tr || {})) t[k] = m.tr[k];
+  if(rv){ // reverse: inside-out becomes outside-in (scale mirrored around 100%, moves/rotations flipped)
+    ['s','sx','sy'].forEach(function(q){ if(t[q] !== undefined) t[q] = t[q] < 100 ? 100 + (100 - t[q]) : Math.max(0, 100 - (t[q] - 100)); });
+    ['x','y','r','sk','rx','ry'].forEach(function(q){ if(t[q] !== undefined) t[q] = -t[q]; });
+  }
+  o.tr = t;
+  if(!sd || sd === 'def') return o;
   var mag = Math.max(Math.abs(t.x || 0), Math.abs(t.y || 0)) || 160;
   delete t.x; delete t.y;
   if(sd === 'right') t.x = mag; else if(sd === 'left') t.x = -mag; else if(sd === 'top') t.y = -mag; else if(sd === 'bottom') t.y = mag;
@@ -549,7 +555,8 @@ function renderSide(){
         h += '<div class="field"><span class="lbl">استخدمها كـ</span>' + seg('mp.dir', [['in','دخول'],['out','خروج'],['both','الاتنين']], S.mp.dir) + '</div>';
         h += '<div class="field"><span class="lbl">مكانها</span>' + seg('mp.at', [['layer','أول وآخر اللاير'],['playhead','عند البلاي هيد']], S.mp.at) + '</div>';
       }
-      if(it.kind!=='loop' && it.kind!=='emph') h += '<div class="field"><span class="lbl">الاتجاه</span>' + seg('mp.side', [['def','الأصلي'],['right','يمين'],['left','شمال'],['top','فوق'],['bottom','تحت']], S.mp.side || 'def') + '</div>';
+      if(it.kind!=='loop' && it.kind!=='emph') h += '<div class="field"><span class="lbl">الاتجاه</span>' + seg('mp.side', [['def','الأصلي'],['right','يمين'],['left','شمال'],['top','فوق'],['bottom','تحت']], S.mp.side || 'def') + '</div>' +
+        chk('mp.rev', 'اعكس الحركة (جوه ↔ برا)', !!S.mp.rev);
       if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[5,'5'],[10,'10'],[15,'15'],[20,'20'],[25,'25'],[30,'30'],[45,'45']], S.mp.frames) + '</div>';
       h += '<button class="btn primary" id="go">طبّق على اللايرات المحددة</button>';
       h += '<button class="btn warn" id="clear">شيل حركات الكيت من المحدد</button>';
