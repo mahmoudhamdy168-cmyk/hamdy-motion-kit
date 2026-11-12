@@ -633,6 +633,7 @@ function renderSide(){
   }
   h += '<div class="toast" id="toast"></div>';
   side.innerHTML = h;
+  addResetBtn(side);
   var st = $('stage');
   if(st && it && S.tab!=='tl' && S.tab!=='ed') mountThumb(st, it, true);
   if(S.tab==='ed') bindEditSide();
@@ -749,6 +750,24 @@ function toolControls(it){
 }
 
 function setPath(path, v){ var p = path.split('.'); S[p[0]][p[1]] = v; save(); }
+/* reset button: puts this tab's settings back to the defaults (keeps lists, keys and other saved data) */
+function resetTab(){
+  var k = S.tab, d = DEF[k], n = 0;
+  if(!d || typeof d !== 'object' || !S[k]) return 0;
+  for(var j in d){ if(d[j] === null || typeof d[j] !== 'object'){ if(S[k][j] !== d[j]){ S[k][j] = d[j]; n++; } } }
+  var it = cur();
+  if(k === 'tp' && it){ if(S.tp.f) delete S.tp.f[it.id]; if(S.tp.c) delete S.tp.c[it.id]; n++; }
+  if(S.lang === 'en' && typeof SAMPLE !== 'undefined' && SAMPLE.en && SAMPLE.en[k] !== undefined && S[k].text === SAMPLE.ar[k]) S[k].text = SAMPLE.en[k];
+  save(); return n;
+}
+function addResetBtn(side){
+  if(/^(ed|ai|br|lib|cap)$/.test(S.tab) || !DEF[S.tab] || typeof DEF[S.tab] !== 'object') return;
+  var h2 = side.querySelector('h2'); if(!h2) return;
+  var b = document.createElement('button');
+  b.className = 'btn rstBtn'; b.type = 'button'; b.textContent = '↺ ' + trText('رجّع الإعدادات الأصلية');
+  b.onclick = function(){ resetTab(); renderSide(); renderGrid(); var t = $('toast'); if(t){ t.className = 'toast ok'; t.textContent = trText('الإعدادات رجعت للأصل ✓'); clearTimeout(t._t); t._t = setTimeout(function(){ t.className = 'toast'; }, 2500); } };
+  h2.parentNode.insertBefore(b, h2.nextSibling);
+}
 var LS_T = null, COMP = {w:1920, h:1080}; // size of the active comp (from the engine ping)
 function liveStage(){
   if(/^(tl|ed|ai|br)$/.test(S.tab)) return;
