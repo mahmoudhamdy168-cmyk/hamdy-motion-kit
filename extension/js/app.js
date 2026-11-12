@@ -107,7 +107,7 @@ var DEF = {
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:'', tp:'uiSub'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
-  mp:{dir:'both', frames:20, at:'layer'},
+  mp:{dir:'both', frames:20, at:'layer', side:'def'},
   tx:{text:'حركة النص', based:'auto', frames:20, size:110, secs:3, doIn:true, doOut:true, font:'', pattern:'normal', cps:14, cursor:true, typeSfx:true},
   cap:{provider:'local', q:'best', keys:{deepgram:'', groq:'', openai:''}, lang:'ar-EG', maxWords:3, maxChars:26, size:70, y:72, font:'', upper:false, stroke:false, shadow:true, box:false, boxOp:75, color:'#ffffff', words:[], caps:[], src:''},
   sfx:{key:'', prompt:'', dur:2, gen:[]},
@@ -289,6 +289,20 @@ function txFxScale(fx, k){
   });
 }
 function mpSpec(m){ return {id:m.id, kind:m.kind, ease:m.ease, tr:m.tr, keys:m.keys, ex:m.ex, wa:m.wa, feather:m.feather, dbDir:m.dbDir}; }
+/* direction override for motion presets: same move, coming from (or leaving to) the chosen side */
+function mpSided(m){
+  var sd = S.mp.side;
+  if(!m || !sd || sd === 'def' || m.kind === 'loop' || m.kind === 'emph') return m;
+  var o = {}, k; for(k in m) o[k] = m[k];
+  var t = {}; for(k in (m.tr || {})) t[k] = m.tr[k];
+  var mag = Math.max(Math.abs(t.x || 0), Math.abs(t.y || 0)) || 160;
+  delete t.x; delete t.y;
+  if(sd === 'right') t.x = mag; else if(sd === 'left') t.x = -mag; else if(sd === 'top') t.y = -mag; else if(sd === 'bottom') t.y = mag;
+  if(t.sk !== undefined && (sd === 'left' || sd === 'top')) t.sk = -Math.abs(t.sk);
+  if(t.sk !== undefined && (sd === 'right' || sd === 'bottom')) t.sk = Math.abs(t.sk);
+  o.tr = t; o.dbDir = (sd === 'right' || sd === 'left') ? 90 : 0;
+  return o;
+}
 var EN_LINES = ['YOUR TITLE', 'Subtitle goes here', 'Third line'];
 function tiTexts(ti){
   var saved = S.ti.texts[ti.id] || [];
@@ -535,6 +549,7 @@ function renderSide(){
         h += '<div class="field"><span class="lbl">استخدمها كـ</span>' + seg('mp.dir', [['in','دخول'],['out','خروج'],['both','الاتنين']], S.mp.dir) + '</div>';
         h += '<div class="field"><span class="lbl">مكانها</span>' + seg('mp.at', [['layer','أول وآخر اللاير'],['playhead','عند البلاي هيد']], S.mp.at) + '</div>';
       }
+      if(it.kind!=='loop' && it.kind!=='emph') h += '<div class="field"><span class="lbl">الاتجاه</span>' + seg('mp.side', [['def','الأصلي'],['right','يمين'],['left','شمال'],['top','فوق'],['bottom','تحت']], S.mp.side || 'def') + '</div>';
       if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[5,'5'],[10,'10'],[15,'15'],[20,'20'],[25,'25'],[30,'30'],[45,'45']], S.mp.frames) + '</div>';
       h += '<button class="btn primary" id="go">طبّق على اللايرات المحددة</button>';
       h += '<button class="btn warn" id="clear">شيل حركات الكيت من المحدد</button>';
@@ -794,7 +809,7 @@ function bindSide(){
         var k = g.dataset.seg;
         if(k==='cap.maxWords' && S.cap.words.length) rechunk();
         if(/^(ln|car|trim|trk|gf|dp)\./.test(k) || k==='tx.based' || k==='tx.cps' || k==='ti.side' || k==='tl.plat' || k==='tx.pattern' || /^(cap|fx)\./.test(k)){ renderSide(); renderGrid(); }
-        else if(k==='tr.frames' || k==='tr.snappy' || k==='mp.dir' || k==='mp.frames'){ /* previews read state live */ }
+        else if(k==='tr.frames' || k==='tr.snappy' || k==='mp.dir' || k==='mp.frames' || k==='mp.side'){ /* previews read state live */ }
       };
     });
   });
@@ -849,7 +864,7 @@ function apply(){
       if(it.otr){ p = host('otrApply', otrArgs(it)); break; }
       if(it.matte){ p = host('matteTr', {file:assetPath(it.matte.file), frames:S.tr.mframes, flip:S.tr.flip, sfx:S.tr.sfx ? sfxPath({id:'whoosh_soft'}) : null}); break; }
       p = host('transition', {type:it.id, frames:S.tr.frames, snappy:S.tr.snappy, sfx:S.tr.sfx, libPaths:S.lib.paths, acc:acc}); break;
-    case 'mp': p = host('motion', {spec:mpSpec(it), dir:S.mp.dir, frames:S.mp.frames, at:S.mp.at}); break;
+    case 'mp': p = host('motion', {spec:mpSpec(mpSided(it)), dir:S.mp.dir, frames:S.mp.frames, at:S.mp.at}); break;
     case 'tx': if(S.tab==='tx' && S.sel.tx){ p = host('textCreate', txArgs()); } break;
     case 'ti': p = host('title', titleArgs(it)); break;
     case 'el':
@@ -2244,7 +2259,7 @@ function step(o, now){
   var t = (now - o.t0)/1000;
   switch(o.k){
     case 'tr': P.drawTr(o.el, o.it.id, t, S.tr.frames, S.tr.snappy, S.acc); break;
-    case 'mp': P.drawMp(o.el, o.it, t, {dir:S.mp.dir, frames:S.mp.frames}); break;
+    case 'mp': P.drawMp(o.el, mpSided(o.it), t, {dir:S.mp.dir, frames:S.mp.frames}); break;
     case 'tx': P.drawTx(o.el, o.it, t, (o.it.tw ? S.tx.doIn : true), o.it.loop ? false : S.tx.doOut, S.acc, (o.it.random||o.it.overshoot) ? 'normal' : S.tx.pattern, S.tx.cps); break;
     case 'spr': P.drawSprite(o.el, t); break;
     case 'ln': P.drawLine(o.el, t); break;
