@@ -31,6 +31,14 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 1
 .brand small{color:var(--mut);font-weight:400}
 nav{display:flex;gap:3px 2px;flex-wrap:wrap;flex:1 1 360px;min-width:160px}
 nav::-webkit-scrollbar{display:none}
+/* slim dark scrollbars (thumb turns red on hover) */
+::-webkit-scrollbar{width:8px;height:8px;background:transparent}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#2e2e33;border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:var(--acc);background-clip:padding-box}
+::-webkit-scrollbar-thumb:active{background:var(--acc2);background-clip:padding-box}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+::-webkit-scrollbar-corner{background:transparent}
 nav button{border:0;background:transparent;padding:5px 9px;border-radius:8px;color:var(--mut);cursor:pointer;white-space:nowrap;font-weight:600}
 nav button:hover{background:var(--card);color:var(--tx)}
 nav button.on{background:var(--card2);color:var(--tx);box-shadow:inset 0 -2px 0 var(--acc)}
