@@ -1098,8 +1098,13 @@ function drawLine(el, t){
     if(!el._fit){ el._fit = true; var fs = 11; for(var g=0; g<6 && el.txt.getComputedTextLength && el.txt.getComputedTextLength() > len*0.6; g++){ fs *= 0.8; el.txt.setAttribute('font-size', fs.toFixed(1)); } }
     var tl = el.txt.getComputedTextLength ? el.txt.getComputedTextLength() : 60;
     if(el.o.flow==='loop'){ off2 = (t*40) % len; }
-    else if(el.o.flow==='static'){ off2 = Math.max(0, len - tl)/2; }
-    else { var c = t % 3.2, u = clamp(c/2.6); u = u<.5 ? 2*u*u : 1-Math.pow(-2*u+2,2)/2; off2 = u*Math.max(0, len - tl); }
+    else if(el.o.flow==='static'){ off2 = (el.o.pStart === undefined ? 50 : el.o.pStart)/100 * Math.max(0, len - tl); }
+    else {
+      var ps = el.o.pStart === undefined ? 0 : +el.o.pStart, pe = el.o.pEnd === undefined ? 100 : +el.o.pEnd;
+      var mv = Math.max(1, +el.o.pFrames || 78)/30, dl = (+el.o.pDelay || 0)/30, cyc = dl + mv + 1.2;
+      var u = clamp(((t % cyc) - dl)/mv); u = u<.5 ? 4*u*u*u : 1-Math.pow(-2*u+2,3)/2;
+      off2 = (ps + (pe - ps)*u)/100 * Math.max(0, len - tl);
+    }
     el.tp.setAttribute('startOffset', off2.toFixed(1));
     if(el.o.guide===false) path.style.opacity = 0; else path.style.opacity = '';
     return;

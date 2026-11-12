@@ -125,7 +125,7 @@ var DEF = {
   trim:{frames:24, stagger:0, width:4, stroke:'fill', snappy:true, at:'layer', seg:25, speed:100, addStroke:false, fillAfter:false, strokeFade:false},
   gf:{provider:'stability', key:'', prompt:'', search:'', grow:12, feather:14, hold:'layer', patch:true, follow:false, out:'916', lastPS:null},
   car:{count:8, content:'images', images:[], palette:0, colA:'#ff6b3d', colB:'#3d73ff', aspect:1, design:'clean', round:12, border:0, borderColor:'#ffffff', motion:0, speed:30, reverse:false, hold:1, tiltX:-12, backFade:35, backDim:30, blur:false, orbit:true, spokes:false, chain:false, lineStyle:'solid', lineColor:'#ffffff', intro:true, person:false, secs:8, size:100, radius:100, face:0},
-  ln:{frames:20, secs:3, col:'accW', width:100, erase:true, speed:100, flow:'travel', guide:true, reverse:false, text:'نص ماشي على خط', size:90, snappy:true, sfx:true, at:'layer'},
+  ln:{frames:20, secs:3, col:'accW', width:100, erase:true, speed:100, flow:'travel', guide:true, reverse:false, text:'نص ماشي على خط', pStart:0, pEnd:100, pFrames:45, pDelay:0, size:90, snappy:true, sfx:true, at:'layer'},
   lib:{paths:[], fit:true, screen:false},
   tl:{cutModel:'general', cutMode:'above', cutText:'', tbBy:'word', kSpeed:1, kMode:'relative', kName:'', gShape:'pill', gText:'', gBlur:30, gAnim:true, arRev:false, beatSens:'mid', beatBand:'bass', beatGap:0.25, beatMode:'zoom', beatAmt:100, beatDecay:10, align:'center', alignTo:'comp', vMode:'blur', vSize:'1080x1920', rfmt:'mp4', size:0, fps:30, secs:10, name:'', stagger:3, overlap:0, pct:150, nudge:1, deep:false, plat:'reels', zones:true, safe:true, thirds:false, center:false}
 };
@@ -468,7 +468,7 @@ function mountThumb(box, it, big){
     case 'trim': o = {k:'trim', el:P.mountTrim(box, trimItem(it), {acc:S.acc})}; break;
     case 'tp': o = {k:'tpl', it:it, el:P.mountTpl(box, it, {zoom:/^(واجهات UI|ستايل شرح وكولاج|كول آوت وتوضيح|إنفوجرافيك|عروض وتسويق|تعليم وتقديم|عناوين)$/.test(it.g) && it.id!=='edBeforeAfter' && it.id!=='edVs' && it.id!=='tiLetterbox' ? (big ? 1.3 : 1.6) : 1})}; break;
     case 'dp': o = {k:'dp', el:P.mountDepth(box, it)}; break;
-    case 'ln': var lc = lnColors(); o = {k:'ln', el:P.mountLine(box, it.mine ? it.pv : it, {c1:lc[0], c2:lc[1], width:S.ln.width, speed:S.ln.speed, erase:S.ln.erase, flow:S.ln.flow, guide:S.ln.guide, text:big ? S.ln.text : 'نص على خط'})}; break;
+    case 'ln': var lc = lnColors(); o = {k:'ln', el:P.mountLine(box, it.mine ? it.pv : it, {c1:lc[0], c2:lc[1], width:S.ln.width, speed:S.ln.speed, erase:S.ln.erase, flow:S.ln.flow, guide:S.ln.guide, pStart:S.ln.pStart, pEnd:S.ln.pEnd, pFrames:S.ln.pFrames, pDelay:S.ln.pDelay, text:big ? S.ln.text : 'نص على خط'})}; break;
     case 'tl': box.classList.add('svgth'); box.innerHTML = it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id); break;
     case 'lib': box.innerHTML = libThumb(it.f, big) + '<span class="badge">' + TLABEL[it.f.type] + '</span>'; break;
   }
@@ -769,7 +769,7 @@ function bindSide(){
       if(/^tl\.(zones|safe|thirds|center)$/.test(inp.dataset.k)){ $('stage').innerHTML = guideSVG(byId(D.GUIDES, S.tl.plat), S.tl); renderGrid(); }
       if(inp.dataset.k==='tx.size'){ /* no-op */ }
       if(/^ai\./.test(inp.dataset.k)) AI.onSet(inp.dataset.k);
-      if(/^ln\.(erase|guide|speed)$/.test(inp.dataset.k) && $('stage')) mountThumb($('stage'), cur(), true);
+      if(/^ln\.(erase|guide|speed|pStart|pEnd|pFrames|pDelay)$/.test(inp.dataset.k) && $('stage')) mountThumb($('stage'), cur(), true);
       if(/^car\./.test(inp.dataset.k)){ if(inp.dataset.k==='car.count') renderCarSlots(); renderGrid(); if($('stage')) mountThumb($('stage'), cur(), true); }
     });
   });
@@ -1389,13 +1389,20 @@ var MY_PATH = [
   {id:'myDraw',   ar:'خطك يترسم',          en:'Draw Your Path',      g:'خطك انت', mode:'mine', mine:'draw',   pv:{id:'elScribble', mode:'draw'}},
   {id:'myComet',  ar:'مذنب على خطك',       en:'Comet on Your Path',  g:'خطك انت', mode:'mine', mine:'comet',  pv:{id:'lpWave', mode:'travel'}}
 ];
+function travelCtl(){
+  if(S.ln.flow === 'static') return '<div class="row">' + num('ln.pStart','مكانه على الخط %',S.ln.pStart) + '</div>';
+  if(S.ln.flow !== 'travel') return '';
+  return '<div class="row">' + num('ln.pStart','يبدأ من %',S.ln.pStart) + num('ln.pEnd','يقف عند %',S.ln.pEnd) + '</div>' +
+    '<div class="row">' + num('ln.pFrames','يوصل بعد (فريمات)',S.ln.pFrames) + num('ln.pDelay','يستنى قبلها (فريمات)',S.ln.pDelay) + '</div>' +
+    '<div class="hint">0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. تقدر تغيّر الأرقام دي بعدين من Effect Controls (HAMDY PATH).</div>';
+}
 function mineSide(it){
   var h = '<div class="stage" id="stage"></div>' + head(it, it.g);
   h += '<div class="hint">ارسم الخط بنفسك: من غير ما تحدد أي لاير، خد أداة الـ Pen (حرف G) وارسم في الكومب، هيتعمل شيب لاير فيه الخط. أو ارسم ماسك على أي لاير. وبعدين حدد اللاير ده ودوس.</div>';
   if(it.mine==='text'){
     h += '<div class="field"><label>الكلام</label><textarea id="lnText" dir="auto">' + esc(S.ln.text) + '</textarea></div>';
     h += '<div class="field"><span class="lbl">الحركة</span>' + seg('ln.flow', [['travel','يمشي من أول الخط لآخره'],['loop','يلف على طول'],['static','ثابت']], S.ln.flow) + '</div>';
-    h += '<div class="row">' + num('ln.size','الحجم',S.ln.size) + num('ln.secs','ثواني',S.ln.secs) + '</div>' + chk('ln.reverse', 'اعكس الاتجاه', S.ln.reverse);
+    h += '<div class="row">' + num('ln.size','الحجم',S.ln.size) + (S.ln.flow==='travel' ? '' : num('ln.secs','ثواني',S.ln.secs)) + '</div>' + travelCtl() + chk('ln.reverse', 'اعكس الاتجاه', S.ln.reverse);
     h += '<div class="hint">لو عدّلت الخط بعدين (حركت نقطه)، النص بيمشي على الشكل الجديد لوحده.</div>';
   } else if(it.mine==='follow'){
     h += '<div class="hint">حدد اللاير اللي فيه الخط + اللاير (أو اللايرات) اللي عايزها تمشي عليه.</div>';
@@ -1411,7 +1418,7 @@ function mineSide(it){
 function mineApply(it){
   var l = S.ln, c1 = hexRGB(lnColors()[0]).concat([1]);
   switch(it.mine){
-    case 'text': return host('myPathText', {text:l.text, size:l.size, secs:l.secs, flow:l.flow, speed:l.speed, reverse:l.reverse, font:S.tx.font});
+    case 'text': return host('myPathText', {text:l.text, size:l.size, secs:l.secs, flow:l.flow, speed:l.speed, reverse:l.reverse, font:S.tx.font, pStart:+l.pStart||0, pEnd:(l.pEnd===''||l.pEnd==null)?100:+l.pEnd, pFrames:+l.pFrames||45, pDelay:+l.pDelay||0});
     case 'follow': return host('myPathFollow', {flow:l.flow==='static' ? 'travel' : l.flow, orient:l.orient !== false, speed:25});
     case 'draw': return host('myPathDraw', {style:'draw', frames:l.frames, width:Math.round(6*l.width/100), strokeColor:c1, addStroke:false, snappy:true});
     case 'comet': return host('myPathDraw', {style:'travel', seg:25, speed:100, frames:l.frames, width:Math.round(6*l.width/100), strokeColor:c1});
@@ -1423,7 +1430,7 @@ function lineSide(it){
   if(m==='path'){
     h += '<div class="field"><label>الكلام</label><textarea id="lnText" dir="auto">' + esc(S.ln.text) + '</textarea></div>';
     h += '<div class="field"><span class="lbl">الحركة</span>' + seg('ln.flow', [['travel','يمشي من أول الخط لآخره'],['loop','يلف على طول'],['static','ثابت على الخط']], S.ln.flow) + '</div>';
-    h += '<div class="row">' + num('ln.size','الحجم',S.ln.size) + num('ln.secs','ثواني',S.ln.secs) + (S.ln.flow==='loop' ? num('ln.speed','السرعة',S.ln.speed) : '') + '</div>';
+    h += '<div class="row">' + num('ln.size','الحجم',S.ln.size) + (S.ln.flow==='travel' ? '' : num('ln.secs','ثواني',S.ln.secs)) + (S.ln.flow==='loop' ? num('ln.speed','السرعة',S.ln.speed) : '') + '</div>' + travelCtl();
     h += '<div class="row">' + chk('ln.guide', 'ارسم الخط نفسه', S.ln.guide) + chk('ln.reverse', 'اعكس اتجاه المسار', S.ln.reverse) + '</div>';
     h += '<div class="field"><span class="lbl">لون الخط</span>' + seg('ln.col', LN_COLS, S.ln.col) + '</div>';
     h += '<button class="btn primary" id="go">اعمل نص جديد على المسار</button>';
@@ -1457,7 +1464,7 @@ function lineApply(it, selected){
     case 'draw': base.mode = 'draw'; base.frames = S.ln.frames; base.secs = S.ln.secs; base.erase = S.ln.erase; return host('lineFx', base);
     case 'travel': base.mode = 'travel'; base.secs = S.ln.secs; base.speed = S.ln.speed; return host('lineFx', base);
     case 'attach': base.frames = S.ln.frames; base.erase = S.ln.erase; base.at = S.ln.at; return host('lineAttach', base);
-    case 'path': return host('textPath', {kind:it.id, mode:selected ? 'selected' : 'new', text:S.ln.text, size:S.ln.size, secs:S.ln.secs, font:S.tx.font, flow:S.ln.flow, speed:S.ln.speed, guide:S.ln.guide, reverse:S.ln.reverse, colors:lc});
+    case 'path': return host('textPath', {kind:it.id, mode:selected ? 'selected' : 'new', text:S.ln.text, size:S.ln.size, secs:S.ln.secs, font:S.tx.font, flow:S.ln.flow, speed:S.ln.speed, guide:S.ln.guide, reverse:S.ln.reverse, colors:lc, pStart:+S.ln.pStart||0, pEnd:(S.ln.pEnd===''||S.ln.pEnd==null)?100:+S.ln.pEnd, pFrames:+S.ln.pFrames||45, pDelay:+S.ln.pDelay||0});
   }
 }
 

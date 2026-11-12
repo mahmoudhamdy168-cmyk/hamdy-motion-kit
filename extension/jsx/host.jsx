@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.11";
+    var VER = "1.9.12";
 
     // ================================================================ JSON
     function J(v) {
@@ -4063,6 +4063,18 @@ var NABD = (function () {
     }
 
     // ---------------------------------------------------------- text on a path
+    // travel on a path: the word starts at "Start %", reaches "End %" after "Move Frames" (after "Delay Frames"), then holds
+    function pathTravel(L, ppi, a) {
+        addSlider(L, "HAMDY PATH Start %", a.pStart === undefined ? 0 : a.pStart);
+        addSlider(L, "HAMDY PATH End %", a.pEnd === undefined ? 100 : a.pEnd);
+        addSlider(L, "HAMDY PATH Move Frames", a.pFrames || 45);
+        addSlider(L, "HAMDY PATH Delay Frames", a.pDelay || 0);
+        FX(L, ppi).property(1).expression = "// HAMDY PATH travel: edit Start % / End % / Move Frames / Delay Frames\n" +
+            "var s = effect(\"HAMDY PATH Start %\")(1), e = effect(\"HAMDY PATH End %\")(1), f = Math.max(1, effect(\"HAMDY PATH Move Frames\")(1)), dl = effect(\"HAMDY PATH Delay Frames\")(1);\n" +
+            "var k = clamp(((time - inPoint) / thisComp.frameDuration - dl) / f, 0, 1);\n" +
+            "k = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;\n" +
+            "s + (e - s) * k";
+    }
     function textPath(a) {
         var c = comp(), targets = [], j, i, fd = c.frameDuration;
         var geo = NABD_LINES.geo(a.kind, c.width, c.height);
@@ -4071,7 +4083,7 @@ var NABD = (function () {
             if (!a.text) { throw Err("NO_TEXT"); }
             var NL = makeText(c, a.text, a.size || 90, [1, 1, 1], "l", a.font, 0);
             NL.inPoint = snap(c, c.time);
-            NL.outPoint = Math.min(c.duration, NL.inPoint + Math.max(0.5, a.secs || 4));
+            NL.outPoint = a.flow === "travel" ? c.duration : Math.min(c.duration, NL.inPoint + Math.max(0.5, a.secs || 4));
             NL.property("ADBE Transform Group").property("ADBE Position").setValue([c.width / 2, c.height / 2]);
             targets.push(NL);
         } else {
@@ -4098,7 +4110,7 @@ var NABD = (function () {
             var po = L.property("ADBE Text Properties").property("ADBE Text Path Options");
             po.property("ADBE Text Path").setValue(mi);
             try { L.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Reverse Path").setValue(a.reverse ? 1 : 0); } catch (er) {}
-            var ppi = addSlider(L, "HAMDY PATH Progress", 50);
+            var ppi = addSlider(L, "HAMDY PATH Progress", a.flow === "static" ? (a.pStart || 0) : 50);
             addSlider(L, "HAMDY PATH Speed", a.speed || 160);
             addSlider(L, "HAMDY PATH Text Width", Math.round(r.width));
             var lenExpr = "var P = mask(\"HAMDY PATH\").maskPath, Lp = 0, q0 = P.pointOnPath(0), q1, i;\nfor (i = 1; i <= 48; i++) { q1 = P.pointOnPath(i / 48); Lp += length(q0, q1); q0 = q1; }\n";
@@ -4107,11 +4119,7 @@ var NABD = (function () {
                 fm.expression = "// HAMDY PATH loop\n" + lenExpr + "var v = (time - inPoint) * effect(\"HAMDY PATH Speed\")(1);\n((v % Lp) + Lp) % Lp";
             } else {
                 fm.expression = "// HAMDY PATH\n" + lenExpr + "effect(\"HAMDY PATH Progress\")(1) / 100 * Math.max(0, Lp - effect(\"HAMDY PATH Text Width\")(1))";
-                if (a.flow === "travel") {
-                    var pr = FX(L, ppi).property(1);
-                    pr.setValueAtTime(L.inPoint, 0); pr.setValueAtTime(L.outPoint, 100);
-                    setEase(pr, 1, 33, 45); setEase(pr, 2, 45, 33);
-                }
+                if (a.flow === "travel") { pathTravel(L, ppi, a); }
             }
             if (a.guide) {
                 var G = shapeLayer(c, "HAMDY STYLE PATHLINE | " + L.name, [0, 0]);
@@ -4933,7 +4941,7 @@ var NABD = (function () {
         var c = comp(), U = pickUserPath(c), fd = c.frameDuration;
         var T = makeText(c, a.text || "\u0627\u0643\u062a\u0628 \u0647\u0646\u0627", a.size || 80, [1, 1, 1], "l", a.font, 0);
         T.name = "HAMDY PATH TEXT | " + (a.text || "text");
-        T.inPoint = snap(c, c.time); T.outPoint = Math.min(c.duration, T.inPoint + Math.max(0.5, a.secs || 4));
+        T.inPoint = snap(c, c.time); T.outPoint = a.flow === "travel" ? c.duration : Math.min(c.duration, T.inPoint + Math.max(0.5, a.secs || 4));
         T.property("ADBE Transform Group").property("ADBE Anchor Point").setValue([0, 0]);
         T.property("ADBE Transform Group").property("ADBE Position").setValue([0, 0]);
         var tw = 300;
@@ -4945,7 +4953,7 @@ var NABD = (function () {
         try { M.maskMode = MaskMode.NONE; } catch (em) {}
         T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Path").setValue(1);
         try { T.property("ADBE Text Properties").property("ADBE Text Path Options").property("ADBE Text Reverse Path").setValue(a.reverse ? 1 : 0); } catch (erv) {}
-        var ppi = addSlider(T, "HAMDY PATH Progress", 50);
+        var ppi = addSlider(T, "HAMDY PATH Progress", a.flow === "static" ? (a.pStart || 0) : 50);
         addSlider(T, "HAMDY PATH Speed", a.speed || 160);
         addSlider(T, "HAMDY PATH Text Width", Math.round(tw));
         var lenExpr = "var P = mask(\"HAMDY PATH\").maskPath, Lp = 0, q0 = P.pointOnPath(0), q1, i;\nfor (i = 1; i <= 64; i++) { q1 = P.pointOnPath(i / 64); Lp += length(q0, q1); q0 = q1; }\n";
@@ -4953,7 +4961,7 @@ var NABD = (function () {
         if (a.flow === "loop") { fm.expression = "// HAMDY PATH loop\n" + lenExpr + "var v = (time - inPoint) * effect(\"HAMDY PATH Speed\")(1);\n((v % Lp) + Lp) % Lp"; }
         else {
             fm.expression = "// HAMDY PATH\n" + lenExpr + "effect(\"HAMDY PATH Progress\")(1) / 100 * Math.max(0, Lp - effect(\"HAMDY PATH Text Width\")(1))";
-            if (a.flow === "travel") { var pr = FX(T, ppi).property(1); pr.setValueAtTime(T.inPoint, 0); pr.setValueAtTime(T.outPoint, 100); setEase(pr, 1, 33, 45); setEase(pr, 2, 45, 33); }
+            if (a.flow === "travel") { pathTravel(T, ppi, a); }
         }
         T.moveBefore(U.L);
         return "OK";

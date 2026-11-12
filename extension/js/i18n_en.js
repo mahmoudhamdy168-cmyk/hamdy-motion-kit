@@ -1996,5 +1996,11 @@ var I18N_EN = {
 "المحرك اشتغل ✓":"Engine is running ✓",
 "لسه مش شغال. اقفل البانل وافتحها تاني من Window › Extensions، ولو فضل كده اقفل الأفتر وافتحه.":"Still not running. Close the panel and reopen it from Window › Extensions; if it stays like this, restart After Effects.",
 "المحرك اللي جوه الأفتر نسخة قديمة":"The engine inside After Effects is an old version",
-"محرك قديم":"Old engine"
+"محرك قديم":"Old engine",
+"مكانه على الخط %":"Position on path %",
+"يبدأ من %":"Starts at %",
+"يقف عند %":"Stops at %",
+"يوصل بعد (فريمات)":"Arrives after (frames)",
+"يستنى قبلها (فريمات)":"Delay (frames)",
+"0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. تقدر تغيّر الأرقام دي بعدين من Effect Controls (HAMDY PATH).":"0% is the start of the path and 100% its end. The word moves, then holds still; the layer runs to the end of the comp so you can trim it. You can change these numbers later in Effect Controls (HAMDY PATH)."
 };
