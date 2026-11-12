@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.13";
+    var VER = "1.9.14";
 
     // ================================================================ JSON
     function J(v) {
@@ -5150,9 +5150,9 @@ var NABD = (function () {
     var NO_UNDO = { ping: 1, inspect: 1, carPick: 1, trkInfo: 1, gfPhotoshop: 1, gfPSBack: 1, libPick: 1, libList: 1, libOpen: 1, capSource: 1, saveText: 1, openText: 1, aiContext: 1, aiFrame: 1, aiSetTime: 1, renderNow: 1, saveFramePng: 1, openFolder: 1, easeCopy: 1, keySave: 1 };
     var CMDS = {
         ping: function () {
-            var c = null;
-            try { c = (app.project.activeItem instanceof CompItem) ? app.project.activeItem.name : null; } catch (e) {}
-            return { ver: VER, ae: app.version, comp: c };
+            var c = null, w = 0, h = 0;
+            try { if (app.project.activeItem instanceof CompItem) { c = app.project.activeItem.name; w = app.project.activeItem.width; h = app.project.activeItem.height; } } catch (e) {}
+            return { ver: VER, ae: app.version, comp: c, w: w, h: h };
         },
         transition: transition, motion: motion, textCreate: textCreate, textApply: textApply,
         title: titleBuild, element: elBuild, ease: ease, expr: expr, keys: keysOp,

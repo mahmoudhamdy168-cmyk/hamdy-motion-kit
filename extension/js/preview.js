@@ -1030,11 +1030,15 @@ function lnD(p){
 }
 function LN_TEXT(){ return PL('حمدي','Hamdy'); }
 function mountLine(box, it, o){
-  var W = 160, H = 90, G = NABD_LINES, h = '<svg class="lnsvg" viewBox="-80 -45 160 90" preserveAspectRatio="xMidYMid slice">';
+  // big preview: same proportions as the active comp, so the line has exactly the shape it gets in After Effects
+  var W = 160, H = 90, G = NABD_LINES;
+  if(o.comp && o.comp.w && o.comp.h){ H = Math.round(W * o.comp.h / o.comp.w * 100) / 100; }
+  var h = '<svg class="lnsvg" viewBox="' + (-W/2) + ' ' + (-H/2) + ' ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid ' + (o.comp ? 'meet' : 'slice') + '">';
   h += '<defs><linearGradient id="lnA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a5a"/><stop offset="1" stop-color="#7a2a5a"/></linearGradient><linearGradient id="lnB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d2b55"/><stop offset="1" stop-color="#3f86b8"/></linearGradient></defs>';
   var el = {mode:it.mode, it:it, paths:[], o:o, uid:Math.random().toString(36).slice(2,8)};
-  if(it.mode==='cover') h += '<rect class="lnbg" x="-80" y="-45" width="160" height="90" fill="url(#lnA)"/>';
-  else h += '<rect x="-80" y="-45" width="160" height="90" fill="#141418"/>';
+  var rr = 'x="' + (-W/2) + '" y="' + (-H/2) + '" width="' + W + '" height="' + H + '"';
+  if(it.mode==='cover') h += '<rect class="lnbg" ' + rr + ' fill="url(#lnA)"/>';
+  else h += '<rect ' + rr + ' fill="#141418"/>';
   var paths = [];
   if(it.mode==='attach'){
     h += '<text x="0" y="9" text-anchor="middle" font-size="30" font-weight="700" fill="#fff" direction="' + PL('rtl','ltr') + '">' + LN_TEXT() + '</text>';
@@ -1050,7 +1054,8 @@ function mountLine(box, it, o){
     h += '<path id="lnp' + i + el.uid + '" d="' + lnD(p) + '" fill="none" stroke="' + col + '" stroke-width="' + w.toFixed(2) + '" stroke-linecap="round" stroke-linejoin="round"' + (p.dash ? '' : ' pathLength="100"') + dash + (p.op ? ' opacity="' + (p.op/100) + '"' : '') + (it.mode==='path' ? ' opacity=".55"' : '') + '/>';
   });
   if(it.mode==='path'){
-    h += '<text font-size="11" font-weight="700" fill="#fff" direction="ltr"><textPath href="#lnp0' + el.uid + '" startOffset="0">' + escX(o.text || PL('نص ماشي على خط','Text moving on a line')) + '</textPath></text>';
+    var tfs = o.comp ? Math.max(2, (o.size || 90) * W / o.comp.w) : 11; if(o.comp) el._fit = true;
+    h += '<text font-size="' + tfs.toFixed(2) + '" font-weight="700" fill="#fff" direction="ltr"><textPath href="#lnp0' + el.uid + '" startOffset="0">' + escX(o.text || PL('نص ماشي على خط','Text moving on a line')) + '</textPath></text>';
   }
   h += '</svg>';
   box.innerHTML = h;

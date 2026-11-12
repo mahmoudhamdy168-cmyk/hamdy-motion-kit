@@ -468,7 +468,9 @@ function mountThumb(box, it, big){
     case 'trim': o = {k:'trim', el:P.mountTrim(box, trimItem(it), {acc:S.acc})}; break;
     case 'tp': o = {k:'tpl', it:it, el:P.mountTpl(box, it, {zoom:/^(واجهات UI|ستايل شرح وكولاج|كول آوت وتوضيح|إنفوجرافيك|عروض وتسويق|تعليم وتقديم|عناوين)$/.test(it.g) && it.id!=='edBeforeAfter' && it.id!=='edVs' && it.id!=='tiLetterbox' ? (big ? 1.3 : 1.6) : 1})}; break;
     case 'dp': o = {k:'dp', el:P.mountDepth(box, it)}; break;
-    case 'ln': var lc = lnColors(); o = {k:'ln', el:P.mountLine(box, it.mine ? it.pv : it, {c1:lc[0], c2:lc[1], width:S.ln.width, speed:S.ln.speed, erase:S.ln.erase, flow:S.ln.flow, guide:S.ln.guide, pStart:S.ln.pStart, pEnd:S.ln.pEnd, pFrames:S.ln.pFrames, pDelay:S.ln.pDelay, text:big ? S.ln.text : 'نص على خط'})}; break;
+    case 'ln': var lc = lnColors();
+      if(big){ var car = COMP.w / COMP.h; box.style.aspectRatio = COMP.w + ' / ' + COMP.h; box.style.alignSelf = 'center'; box.style.maxWidth = '100%'; box.style.width = Math.min(276, Math.round(360 * car)) + 'px'; }
+      o = {k:'ln', el:P.mountLine(box, it.mine ? it.pv : it, {c1:lc[0], c2:lc[1], width:S.ln.width, comp:big ? COMP : null, size:S.ln.size, speed:S.ln.speed, erase:S.ln.erase, flow:S.ln.flow, guide:S.ln.guide, pStart:S.ln.pStart, pEnd:S.ln.pEnd, pFrames:S.ln.pFrames, pDelay:S.ln.pDelay, text:big ? S.ln.text : 'نص على خط'})}; break;
     case 'tl': box.classList.add('svgth'); box.innerHTML = it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id); break;
     case 'lib': box.innerHTML = libThumb(it.f, big) + '<span class="badge">' + TLABEL[it.f.type] + '</span>'; break;
   }
@@ -746,7 +748,7 @@ function toolControls(it){
 }
 
 function setPath(path, v){ var p = path.split('.'); S[p[0]][p[1]] = v; save(); }
-var LS_T = null;
+var LS_T = null, COMP = {w:1920, h:1080}; // size of the active comp (from the engine ping)
 function liveStage(){
   if(/^(tl|ed|ai|br)$/.test(S.tab)) return;
   clearTimeout(LS_T);
@@ -2215,6 +2217,7 @@ function setStatus(r){
   var st = $('status');
   if(!CEP){ st.className='chip mock'; st.innerHTML='<i></i><span>وضع المعاينة</span>'; return; }
   if(r && r.ok && r.data && r.data.ver && r.data.ver !== HMK.ver){ st.className='chip'; st.title = trText('المحرك اللي جوه الأفتر نسخة قديمة') + ' (' + r.data.ver + ' ≠ ' + HMK.ver + ')'; st.innerHTML='<i style="background:#e0a030"></i><span>' + trText('محرك قديم') + ' ' + esc(r.data.ver) + ' ⟳</span>'; return; }
+  if(r && r.ok && r.data && r.data.w && r.data.h && (r.data.w !== COMP.w || r.data.h !== COMP.h)){ COMP = {w:r.data.w, h:r.data.h}; if(S.tab === 'ln') liveStage(); }
   if(r && r.ok){ st.className='chip live'; st.innerHTML='<i></i><span>' + (r.data.comp ? esc(r.data.comp) : 'متصل') + '</span>'; }
   else if(r && r.code === 'TIMEOUT'){ st.className='chip'; st.title = trText('الأفتر مشغول بحاجة تانية (ريندر، بريفيو، أو نافذة مفتوحة). أول ما يفضى هيرجع لوحده.'); st.innerHTML='<i style="background:#e0a030"></i><span>' + trText('الأفتر مشغول…') + '</span>'; }
   else { st.className='chip'; st.title = trText('دوس هنا عشان أشغّله تاني'); st.innerHTML='<i style="background:var(--bad)"></i><span>' + trText('المحرك مش شغال') + ' ⟳</span>'; }
