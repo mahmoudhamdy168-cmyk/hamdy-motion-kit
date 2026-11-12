@@ -107,7 +107,7 @@ var DEF = {
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:'', tp:'uiSub'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
-  mp:{dir:'both', frames:23, at:'layer'},
+  mp:{dir:'both', frames:20, at:'layer'},
   tx:{text:'حركة النص', based:'auto', frames:20, size:110, secs:3, doIn:true, doOut:true, font:'', pattern:'normal', cps:14, cursor:true, typeSfx:true},
   cap:{provider:'local', q:'best', keys:{deepgram:'', groq:'', openai:''}, lang:'ar-EG', maxWords:3, maxChars:26, size:70, y:72, font:'', upper:false, stroke:false, shadow:true, box:false, boxOp:75, color:'#ffffff', words:[], caps:[], src:''},
   sfx:{key:'', prompt:'', dur:2, gen:[]},
@@ -137,7 +137,7 @@ function load(){
   if(!Array.isArray(s.lib.paths)) s.lib.paths = [];
   if(!s.cap.keys) s.cap.keys = {deepgram:'', groq:'', openai:''};
   if(!Array.isArray(s.sfx.gen)) s.sfx.gen = [];
-  if(!s.mp5){ if(s.mp && [10,14,18,24,30,40].indexOf(s.mp.frames) >= 0) s.mp.frames += 5; s.mp5 = 1; } // motion presets default +5 frames
+  if(!s.mp6){ if(s.mp && [5,10,15,20,25,30,45].indexOf(s.mp.frames) < 0) s.mp.frames = 20; s.mp6 = 1; } // motion preset durations: 5-frame steps
   if(!s.theme2){ if(s.acc === '#ff6b3d') s.acc = '#b0101c'; s.theme2 = 1; } // new brand colours: black + dark red
   return s;
 }
@@ -525,7 +525,7 @@ function renderSide(){
         h += '<div class="field"><span class="lbl">استخدمها كـ</span>' + seg('mp.dir', [['in','دخول'],['out','خروج'],['both','الاتنين']], S.mp.dir) + '</div>';
         h += '<div class="field"><span class="lbl">مكانها</span>' + seg('mp.at', [['layer','أول وآخر اللاير'],['playhead','عند البلاي هيد']], S.mp.at) + '</div>';
       }
-      if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[15,'15'],[19,'19'],[23,'23'],[29,'29'],[35,'35'],[45,'45']], S.mp.frames) + '</div>';
+      if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[5,'5'],[10,'10'],[15,'15'],[20,'20'],[25,'25'],[30,'30'],[45,'45']], S.mp.frames) + '</div>';
       h += '<button class="btn primary" id="go">طبّق على اللايرات المحددة</button>';
       h += '<button class="btn warn" id="clear">شيل حركات الكيت من المحدد</button>';
       h += '<div class="hint">بتشتغل على أي لاير: تكست، شيب، صورة أو فيديو. بتنزل كإفكت اسمه HAMDY في Effect Controls، فاللاير نفسه وكي فريمز بتوعك مبيتلمسوش. وفوق اللاير بيتحط ماركر HAMDY IN (آخر الدخول) وHAMDY OUT (أول الخروج): اسحبهم في التايملاين وطول الحركة يتغير.</div>';
