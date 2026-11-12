@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.17";
+    var VER = "1.9.18";
 
     // ================================================================ JSON
     function J(v) {
@@ -4089,6 +4089,7 @@ var NABD = (function () {
             "var s = effect(\"HAMDY PATH Start %\")(1), e = effect(\"HAMDY PATH End %\")(1), f1 = Math.max(1, effect(\"HAMDY PATH Move Frames\")(1)), dl = effect(\"HAMDY PATH Delay Frames\")(1);\n" +
             "var on = effect(\"HAMDY PATH Pause\")(1), m = effect(\"HAMDY PATH Pause At %\")(1), hd = Math.max(0, effect(\"HAMDY PATH Pause Frames\")(1)), f2 = Math.max(1, effect(\"HAMDY PATH Move 2 Frames\")(1));\n" +
             "var fd = thisComp.frameDuration;\n" +
+            "if (on >= 0.5) { e = 2 * m - s; } // with a pause it exits mirrored: same distance past the pause point, the other way\n" +
             "function ez(k) { k = clamp(k, 0, 1); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }\n" +
             "function mt(n, d) { try { return thisLayer.marker.key(n).time; } catch (err) { return d; } }\n" +
             "var t0 = mt(\"HAMDY PATH START\", inPoint + dl * fd);\n" +

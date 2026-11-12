@@ -781,6 +781,7 @@ function bindSide(){
       if(inp.dataset.k==='tx.size'){ /* no-op */ }
       if(/^ai\./.test(inp.dataset.k)) AI.onSet(inp.dataset.k);
       if(inp.dataset.k==='ln.pPause') renderSide();
+      if((inp.dataset.k==='ln.pMid' || inp.dataset.k==='ln.pStart') && $('lnMirror')){ var mb = $('lnMirror').querySelector('b'); if(mb) mb.textContent = (2*(+S.ln.pMid||0) - (+S.ln.pStart||0)) + '%'; }
       if(/^ln\.(erase|guide|speed|pStart|pEnd|pFrames|pDelay|pMid|pHold|pFrames2)$/.test(inp.dataset.k) && $('stage')) mountThumb($('stage'), cur(), true);
       if(/^car\./.test(inp.dataset.k)){ if(inp.dataset.k==='car.count') renderCarSlots(); renderGrid(); if($('stage')) mountThumb($('stage'), cur(), true); }
     });
@@ -1404,11 +1405,12 @@ var MY_PATH = [
 function travelCtl(){
   if(S.ln.flow === 'static') return '<div class="row">' + num('ln.pStart','مكانه على الخط %',S.ln.pStart) + '</div>';
   if(S.ln.flow !== 'travel') return '';
-  var h = '<div class="row">' + num('ln.pStart','يبدأ من %',S.ln.pStart) + num('ln.pEnd', S.ln.pPause ? 'آخر وقفة عند %' : 'يقف عند %',S.ln.pEnd) + '</div>' +
+  var h = '<div class="row">' + num('ln.pStart','يبدأ من %',S.ln.pStart) + (S.ln.pPause ? '' : num('ln.pEnd', 'يقف عند %',S.ln.pEnd)) + '</div>' +
     '<div class="row">' + num('ln.pFrames', S.ln.pPause ? 'يوصل للوقفة بعد (فريمات)' : 'يوصل بعد (فريمات)',S.ln.pFrames) + num('ln.pDelay','يستنى قبلها (فريمات)',S.ln.pDelay) + '</div>' +
     chk('ln.pPause', 'يقف في النص شوية وبعدين يكمّل', S.ln.pPause);
   if(S.ln.pPause) h += '<div class="row">' + num('ln.pMid','يقف عند %',S.ln.pMid) + num('ln.pHold','يفضل واقف (فريمات)',S.ln.pHold) + '</div>' +
-    '<div class="row">' + num('ln.pFrames2','يكمّل للآخر في (فريمات)',S.ln.pFrames2) + '</div>';
+    '<div class="row">' + num('ln.pFrames2','يكمّل ويخرج في (فريمات)',S.ln.pFrames2) + '</div>' +
+    '<div class="hint" id="lnMirror">' + trText('بيخرج من الناحية التانية بنفس المسافة: بيخلص عند') + ' <b>' + (2*(+S.ln.pMid||0) - (+S.ln.pStart||0)) + '%</b>. ' + trText('عشان يدخل ويخرج من برا الشاشة خلّي البداية بالسالب، مثلاً -40 والوقفة 50 → يخرج عند 140.') + '</div>';
   return h +
     '<div class="hint">0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. التوقيت بينزل ماركرز على اللاير (HAMDY PATH START / STOP / GO / END): اسحبهم في التايملاين والحركة تتظبط معاهم. والأماكن (%) تقدر تغيّرها من Effect Controls.</div>';
 }

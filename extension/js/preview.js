@@ -1109,6 +1109,7 @@ function drawLine(el, t){
       var mv = Math.max(1, +el.o.pFrames || 78)/30, dl = (+el.o.pDelay || 0)/30, pz = !!el.o.pPause, pm = +el.o.pMid || 0, hd = Math.max(0, +el.o.pHold || 0)/30, mv2 = Math.max(1, +el.o.pFrames2 || 30)/30;
       var cyc = dl + mv + (pz ? hd + mv2 : 0) + 1.2, tt = (t % cyc) - dl, pv;
       function ez(u){ u = clamp(u); return u<.5 ? 4*u*u*u : 1-Math.pow(-2*u+2,3)/2; }
+      if(pz) pe = 2*pm - ps;
       if(!pz) pv = ps + (pe - ps)*ez(tt/mv);
       else if(tt < mv) pv = ps + (pm - ps)*ez(tt/mv);
       else if(tt < mv + hd) pv = pm;

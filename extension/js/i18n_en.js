@@ -2008,5 +2008,8 @@ var I18N_EN = {
 "يقف في النص شوية وبعدين يكمّل":"Pause midway, then continue",
 "يفضل واقف (فريمات)":"Hold for (frames)",
 "يكمّل للآخر في (فريمات)":"Continue to the end in (frames)",
-"0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. التوقيت بينزل ماركرز على اللاير (HAMDY PATH START / STOP / GO / END): اسحبهم في التايملاين والحركة تتظبط معاهم. والأماكن (%) تقدر تغيّرها من Effect Controls.":"0% is the start of the path and 100% its end. The word moves, then holds; the layer runs to the end of the comp so you can trim it. The timing is placed as markers on the layer (HAMDY PATH START / STOP / GO / END): drag them on the timeline and the move follows. Change the positions (%) in Effect Controls."
+"0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. التوقيت بينزل ماركرز على اللاير (HAMDY PATH START / STOP / GO / END): اسحبهم في التايملاين والحركة تتظبط معاهم. والأماكن (%) تقدر تغيّرها من Effect Controls.":"0% is the start of the path and 100% its end. The word moves, then holds; the layer runs to the end of the comp so you can trim it. The timing is placed as markers on the layer (HAMDY PATH START / STOP / GO / END): drag them on the timeline and the move follows. Change the positions (%) in Effect Controls.",
+"يكمّل ويخرج في (فريمات)":"Continues and exits in (frames)",
+"بيخرج من الناحية التانية بنفس المسافة: بيخلص عند":"It exits the other way by the same distance: ends at",
+"عشان يدخل ويخرج من برا الشاشة خلّي البداية بالسالب، مثلاً -40 والوقفة 50 → يخرج عند 140.":"To enter and exit off-screen use a negative start, e.g. -40 with the pause at 50 → exits at 140."
 };
