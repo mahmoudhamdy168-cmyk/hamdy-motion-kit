@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.3";
+    var VER = "1.9.4";
 
     // ================================================================ JSON
     function J(v) {
@@ -2879,7 +2879,7 @@ var NABD = (function () {
             ex: 'var e = effect("HAMDY Bounce Elasticity")(1) / 100, g = effect("HAMDY Bounce Gravity")(1), nMax = 9, n = 0;\nif (numKeys > 0) { n = nearestKey(time).index; if (key(n).time > time) { n--; } }\nif (n > 0 && n == numKeys) {\n    var t = time - key(n).time, v = -velocityAtTime(key(n).time - .001) * e, vl = length(v), vu = (vl > 0) ? normalize(v) : (value instanceof Array ? value * 0 : 0);\n    var tCur = 0, segDur = 2 * vl / g, tNext = segDur, nb = 1;\n    while (tNext < t && nb <= nMax) { vl *= e; segDur *= e; tCur = tNext; tNext += segDur; nb++; }\n    if (nb <= nMax) { var d = t - tCur; value + vu * d * (vl - g * d / 2); } else { value; }\n} else { value; }' },
         spin: { props: ["ADBE Rotate Z"], sl: [["Speed", 90]], ex: 'value + (time - inPoint) * effect("HAMDY Spin Speed")(1)' },
         orbit: { props: ["ADBE Position"], sl: [["Radius", 120], ["Speed", 60]], ex: 'var r = effect("HAMDY Orbit Radius")(1), a = degreesToRadians((time - inPoint) * effect("HAMDY Orbit Speed")(1));\nvalue + [Math.cos(a) * r, Math.sin(a) * r].concat(value.length > 2 ? [0] : [])' },
-        float: { props: ["ADBE Position"], sl: [["Height", 25], ["Speed", 1]], ex: 'value + [0, Math.sin((time - inPoint) * effect("HAMDY Float Speed")(1) * 2 * Math.PI) * effect("HAMDY Float Height")(1)].concat(value.length > 2 ? [0] : [])' },
+        "float": { props: ["ADBE Position"], sl: [["Height", 25], ["Speed", 1]], ex: 'value + [0, Math.sin((time - inPoint) * effect("HAMDY Float Speed")(1) * 2 * Math.PI) * effect("HAMDY Float Height")(1)].concat(value.length > 2 ? [0] : [])' },
         swing: { props: ["ADBE Rotate Z"], sl: [["Angle", 25], ["Speed", 1.2], ["Decay", 0]], ex: 'var t = time - inPoint;\nvalue + effect("HAMDY Swing Angle")(1) * Math.sin(t * effect("HAMDY Swing Speed")(1) * 2 * Math.PI) * Math.exp(-effect("HAMDY Swing Decay")(1) * t)' },
         pulse: { props: ["ADBE Scale"], sl: [["Amount", 8], ["Speed", 1.5]], ex: 'var s = 1 + Math.abs(Math.sin((time - inPoint) * effect("HAMDY Pulse Speed")(1) * Math.PI)) * effect("HAMDY Pulse Amount")(1) / 100;\nvalue * s' },
         blink: { props: ["ADBE Opacity"], sl: [["Rate", 4], ["Duty %", 50]], ex: 'var r = effect("HAMDY Blink Rate")(1), d = effect("HAMDY Blink Duty %")(1) / 100;\n(((time - inPoint) * r) % 1) < d ? value : 0' },
@@ -3264,7 +3264,7 @@ var NABD = (function () {
         return o;
     }
     function aiLayer(L, t, deep) {
-        var o = { i: L.index, name: L.name, type: aiType(L), in: aiR(L.inPoint, 3), out: aiR(L.outPoint, 3) };
+        var o = { i: L.index, name: L.name, type: aiType(L), "in": aiR(L.inPoint, 3), out: aiR(L.outPoint, 3) };
         try { if (L.parent) { o.parent = L.parent.index; } } catch (e0) {}
         try { if (L.threeDLayer) { o.is3D = true; } } catch (e1) {}
         try { if (!L.enabled) { o.hidden = true; } } catch (e2) {}

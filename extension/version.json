@@ -1,8 +1,8 @@
 {
- "version": "1.9.3",
+ "version": "1.9.4",
  "files": {
   ".debug": "de12956cec2b7cf024ba3667717487bc3a47ad45a328a9e80314e5a41187490b",
-  "CSXS/manifest.xml": "31e8d018c7eb2906bc3023c0a8558b1a4156b3adf82e0a279f4874d84342d92f",
+  "CSXS/manifest.xml": "9b2ba2a0c43f0b6854ef212c9fed33bcb8a288eec47c969402fec1e790453a47",
   "assets/brand/app_icon_512.png": "28b75098ecedf2484b7182cb045225fdd8a6cf99394a576b02bfbe4d32c3a78d",
   "assets/brand/app_icon_64.png": "d1c2f4b6ab1b3d96fe6fa5947519342444f227904df446917359cac28e522b20",
   "assets/brand/icon_dark.png": "8d65432d73effd4ff07e4317a9ee8b174b99c05dfef44134772d2a4bea9b05ad",
@@ -259,8 +259,8 @@
   "js/tpl_data2.js": "2478f6b4c117fbab816d0b569b0b34ded927fbbf057e3ba53753ea6d1fd6813c",
   "js/tpl_en.js": "5d224f3df5c13e782d2a5ecaa8175d60b7b628e56550e604bc36e3ef4555c46f",
   "js/updater.js": "f2e064ff6a0fbe69189493262153104ccba4dc811b1630f191f5c6d758e55e85",
-  "js/ver.js": "91821673bbce1b656fa9f1bc34a6a4c949d6cde3f1b0646f337743f10a2be6d6",
-  "jsx/host.jsx": "945498951db3a9b6db66db027ddf8e670e27c1d274694311f03e04fc2ed84d98",
+  "js/ver.js": "492aa901fbbbf53918097364d77b79c6cc0d4546456c0d4f1a381e42cc306bb9",
+  "jsx/host.jsx": "1aa2811e1994f11de2c3b643fb88e55c3526335c176f8fe69ae6c4c0918c5695",
   "mcp/hamdy-ae.mcpb": "4727dbca82a7cda896159d4f7d011144949c48e8b3209baa3fe6913762093d9d",
   "sfx/bass_hit.wav": "da065c656b5154722f80ee86820d6c52f915dab07e6443d7b97f2f66a9a7ee3e",
   "sfx/bell.wav": "ff58ce16585e6e6ff34bc13cafca7f3b6c706c4fd184212787eb26e4fc21839b",
