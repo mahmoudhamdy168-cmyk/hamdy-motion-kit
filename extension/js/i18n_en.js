@@ -2013,5 +2013,8 @@ var I18N_EN = {
 "بيخرج من الناحية التانية بنفس المسافة: بيخلص عند":"It exits the other way by the same distance: ends at",
 "عشان يدخل ويخرج من برا الشاشة خلّي البداية بالسالب، مثلاً -40 والوقفة 50 → يخرج عند 140.":"To enter and exit off-screen use a negative start, e.g. -40 with the pause at 50 → exits at 140.",
 "رجّع الإعدادات الأصلية":"Reset to defaults",
-"الإعدادات رجعت للأصل ✓":"Settings reset ✓"
+"الإعدادات رجعت للأصل ✓":"Settings reset ✓",
+"🕘 مؤخراً":"🕘 Recent",
+"＋ ضيفه في النهاية":"＋ Add at the end too",
+"＋ ضيفه في البداية":"＋ Add at the start too"
 };

@@ -335,6 +335,8 @@ function renderTabs(){
 function renderGrid(){
   var its = itemsOf(S.tab), q = $('q').value.trim().toLowerCase(), fl = S.filter[S.tab] || 'الكل';
   var groups = ['الكل'], favs = S.fav[S.tab] || [];
+  var recs = projRecent(S.tab);
+  if(recs.length) groups.push(RECENT_G);
   if(favs.length) groups.push('★');
   its.forEach(function(it){ if(groups.indexOf(it.g)<0) groups.push(it.g); });
   if(groups.indexOf(fl)<0) fl = 'الكل';
@@ -348,11 +350,14 @@ function renderGrid(){
   if(S.tab==='ai'){ $('filters').innerHTML=''; AI.renderChat(); return; }
   if(S.tab==='br'){ $('filters').innerHTML=''; STOCK.render(); return; }
   var shown = its.filter(function(it){
-    if(fl==='★'){ if(favs.indexOf(it.id)<0) return false; }
+    if(fl===RECENT_G){ if(recs.indexOf(it.id)<0) return false; }
+    else if(fl==='★'){ if(favs.indexOf(it.id)<0) return false; }
     else if(fl!=='الكل' && it.g!==fl) return false;
     if(q && (it.ar + ' ' + (it.en||'')).toLowerCase().indexOf(q)<0) return false;
     return true;
   });
+  if(fl===RECENT_G) shown.sort(function(a, b){ return recs.indexOf(a.id) - recs.indexOf(b.id); });
+
   if(!shown.length){
     grid.innerHTML = '<div class="empty">' + (S.tab==='lib' ? (S.lib.paths.length ? 'مفيش ملفات في الفولدرات دي. ضيف بريسيتس .ffx أو أوفرليز أو أصوات ودوس "تحديث".' : 'ضيف فولدر الريسورسز بتاعك من اللوحة اللي على اليمين (زي Add Folder).') : 'مفيش نتايج.') + '</div>';
     return;
@@ -770,7 +775,7 @@ function addResetBtn(side){
   b.onclick = function(){ resetTab(); renderSide(); renderGrid(); var t = $('toast'); if(t){ t.className = 'toast ok'; t.textContent = trText('الإعدادات رجعت للأصل ✓'); clearTimeout(t._t); t._t = setTimeout(function(){ t.className = 'toast'; }, 2500); } };
   h2.parentNode.insertBefore(b, h2.nextSibling);
 }
-var LS_T = null, COMP = {w:1920, h:1080}; // size of the active comp (from the engine ping)
+var PROJ = '', RECENT_G = '🕘 مؤخراً', LS_T = null, COMP = {w:1920, h:1080}; // size of the active comp (from the engine ping)
 function liveStage(){
   if(/^(tl|ed|ai|br)$/.test(S.tab)) return;
   clearTimeout(LS_T);
@@ -830,8 +835,8 @@ function bindSide(){
   Array.prototype.forEach.call(side.querySelectorAll('[data-nudge]'), function(b){ b.onclick = function(){ host('keys', {op:'nudge', frames:+b.dataset.nudge}).then(say); }; });
 }
 
-function txArgs(){
-  var tp = cur();
+function txArgs(tp){
+  tp = tp || cur();
   return {spec:txSpec(tp), based:tp.by || S.tx.based, frames:S.tx.frames, size:S.tx.size, secs:S.tx.secs, doIn:S.tx.doIn, doOut:S.tx.doOut, text:S.tx.text, font:S.tx.font,
           cps:S.tx.cps, cursor:S.tx.cursor, acc:hexRGB(S.acc), sfx:((tp.src||tp.tw) && S.tx.typeSfx) ? sfxPath({id:'typing'}) : null};
 }
@@ -1006,7 +1011,11 @@ function bindTp(){
   if($('tpBrand')) $('tpBrand').onclick = function(){ S.tp.c[it.id] = S.brand.cols.slice(); save(); renderSide(); };
 }
 /* ============================================================ quick search (Ctrl+K / Ctrl+Space) */
-function pushRecent(tab, id){ if(!id || tab==='ed' || tab==='ai' || tab==='br') return; var k = tab + ':' + id; S.recent = (S.recent||[]).filter(function(x){ return x!==k; }); S.recent.unshift(k); S.recent = S.recent.slice(0, 12); save(); }
+function projRecent(tab){ var P = (S.recP || {})[PROJ || '—']; return (P && P[tab]) || []; }
+function pushRecent(tab, id){ if(!id || tab==='ed' || tab==='ai' || tab==='br') return;
+  // per project (the open .aep), per tab: shown as the "recent" filter at the top of each tab
+  S.recP = S.recP || {}; var pk = PROJ || '—', P = S.recP[pk] = S.recP[pk] || {}, L = (P[tab] || []).filter(function(x){ return x !== id; }); L.unshift(id); P[tab] = L.slice(0, 30); P._t = Date.now();
+  var ks = Object.keys(S.recP); if(ks.length > 25){ ks.sort(function(a, b){ return (S.recP[a]._t||0) - (S.recP[b]._t||0); }); delete S.recP[ks[0]]; } var k = tab + ':' + id; S.recent = (S.recent||[]).filter(function(x){ return x!==k; }); S.recent.unshift(k); S.recent = S.recent.slice(0, 12); save(); }
 var QS = null;
 function qsIndex(){
   var out = [];
@@ -2079,7 +2088,7 @@ function renderEdit(){
   var h = '<div class="edwrap">';
   ED.groups.forEach(function(G, gi){
     h += '<div class="edcard" data-g="' + gi + '"><h3><span>' + esc(edTitle(G.g)) + ' <span class="tag">' + esc(G.g) + '</span></span><span class="acts">' +
-      '<button data-gact="off">إيقاف/تشغيل</button><button class="del" data-gact="del">' + (G.g==='LAYER' ? 'امسح اللاير' : 'امسح') + '</button></span></h3>';
+      edOtherEndBtn(G) + '<button data-gact="off">إيقاف/تشغيل</button><button class="del" data-gact="del">' + (G.g==='LAYER' ? 'امسح اللاير' : 'امسح') + '</button></span></h3>';
     if(G.fr) h += '<div class="edtime">يبدأ من فريم <input type="number" data-gt="t0" value="' + G.t0 + '"> المدة <input type="number" data-gt="fr" min="1" value="' + G.fr + '"> فريم <button class="btn" data-gact="retime" style="padding:2px 10px;width:auto">طبّق التوقيت</button></div>';
     G.items.forEach(function(it, ii){
       h += '<div class="edsub"><span>' + esc(it.n) + '</span><label><input type="checkbox" data-on="' + ii + '"' + (it.on?' checked':'') + '> on</label></div>';
@@ -2098,6 +2107,20 @@ function renderEdit(){
   h += '</div>';
   grid.innerHTML = h;
   bindEditGrid(grid);
+}
+/* a motion preset / text animation that is only on one end of the layer can be added to the other end too */
+function edOther(G){
+  var m = /^(?:HAMDY|NABD) (IN|OUT) ([A-Za-z0-9_]+)/.exec(G.g || ''); if(!m) return null;
+  var it = byId(D.MOTION, m[2]), src = 'mp';
+  if(!it){ it = byId(D.TEXTS, m[2]); src = 'tx'; }
+  if(!it || it.kind === 'loop' || it.kind === 'emph') return null;
+  var dir = m[1] === 'IN' ? 'out' : 'in', other = 'HAMDY ' + dir.toUpperCase() + ' ' + m[2];
+  if((ED.groups || []).some(function(x){ return x.g.indexOf(other) === 0 || x.g.indexOf('NABD ' + dir.toUpperCase() + ' ' + m[2]) === 0; })) return null;
+  return {it:it, src:src, dir:dir};
+}
+function edOtherEndBtn(G){
+  var o = edOther(G); if(!o) return '';
+  return '<button class="addo" data-gact="addOther">' + (o.dir === 'out' ? '＋ ضيفه في النهاية' : '＋ ضيفه في البداية') + '</button>';
 }
 function edSend(cmd, args){ args = args || {}; args.idx = ED.layer.idx; return host(cmd, args).then(function(r){ if(!r.ok) say(r); return r; }); }
 function bindEditGrid(grid){
@@ -2134,6 +2157,12 @@ function bindEditGrid(grid){
         } else if(act==='off'){
           var on = !G.items.every(function(it){ return !it.on; }) ? false : true, ps = G.items.map(function(it){ return edSend('toggleItem', {path:it.path, on:on}); });
           Promise.all(ps).then(function(){ edRefresh(true); });
+        } else if(act==='addOther'){
+          var o = edOther(G); if(!o) return;
+          var nm = (S.lang === 'en' ? (o.it.en || o.it.ar) : (o.it.ar || o.it.en)) || '';
+          var pr = o.src === 'mp' ? edSend('motion', {spec:mpSpec(o.it), dir:o.dir, frames:G.fr || S.mp.frames, at:'layer', mkName:nm})
+                                  : edSend('textApply', Object.assign(txArgs(o.it), {doIn:o.dir === 'in', doOut:o.dir === 'out', frames:G.fr || S.tx.frames, mkName:nm}));
+          pr.then(function(r){ if(r.ok){ say(r); edRefresh(true); } });
         } else if(act==='retime'){
           var t0 = +card.querySelector('[data-gt=t0]').value, fr = +card.querySelector('[data-gt=fr]').value;
           edSend('retime', {g:G.g, t0:t0, fr:Math.max(1, fr)}).then(function(r){ if(r.ok){ say(r); edRefresh(true); } });
@@ -2247,6 +2276,7 @@ function setStatus(r){
   if(!CEP){ st.className='chip mock'; st.innerHTML='<i></i><span>وضع المعاينة</span>'; return; }
   if(r && r.ok && r.data && r.data.ver && r.data.ver !== HMK.ver){ st.className='chip'; st.title = trText('المحرك اللي جوه الأفتر نسخة قديمة') + ' (' + r.data.ver + ' ≠ ' + HMK.ver + ')'; st.innerHTML='<i style="background:#e0a030"></i><span>' + trText('محرك قديم') + ' ' + esc(r.data.ver) + ' ⟳</span>'; return; }
   if(r && r.ok && r.data && r.data.w && r.data.h && (r.data.w !== COMP.w || r.data.h !== COMP.h)){ COMP = {w:r.data.w, h:r.data.h}; if(S.tab === 'ln') liveStage(); }
+  if(r && r.ok && r.data && r.data.proj !== undefined && r.data.proj !== PROJ){ PROJ = r.data.proj; if(S.filter[S.tab] === RECENT_G) renderGrid(); }
   if(r && r.ok){ st.className='chip live'; st.innerHTML='<i></i><span>' + (r.data.comp ? esc(r.data.comp) : 'متصل') + '</span>'; }
   else if(r && r.code === 'TIMEOUT'){ st.className='chip'; st.title = trText('الأفتر مشغول بحاجة تانية (ريندر، بريفيو، أو نافذة مفتوحة). أول ما يفضى هيرجع لوحده.'); st.innerHTML='<i style="background:#e0a030"></i><span>' + trText('الأفتر مشغول…') + '</span>'; }
   else { st.className='chip'; st.title = trText('دوس هنا عشان أشغّله تاني'); st.innerHTML='<i style="background:var(--bad)"></i><span>' + trText('المحرك مش شغال') + ' ⟳</span>'; }

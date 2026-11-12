@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.20";
+    var VER = "1.9.21";
 
     // ================================================================ JSON
     function J(v) {
@@ -5187,7 +5187,9 @@ var NABD = (function () {
         ping: function () {
             var c = null, w = 0, h = 0;
             try { if (app.project.activeItem instanceof CompItem) { c = app.project.activeItem.name; w = app.project.activeItem.width; h = app.project.activeItem.height; } } catch (e) {}
-            return { ver: VER, ae: app.version, comp: c, w: w, h: h };
+            var pj = "";
+            try { pj = app.project.file ? app.project.file.fsName : ""; } catch (ep) {}
+            return { ver: VER, ae: app.version, comp: c, w: w, h: h, proj: pj };
         },
         transition: transition, motion: motion, textCreate: textCreate, textApply: textApply,
         title: titleBuild, element: elBuild, ease: ease, expr: expr, keys: keysOp,
