@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.10.1";
+    var VER = "1.10.2";
 
     // ================================================================ JSON
     function J(v) {
@@ -1376,6 +1376,7 @@ var NABD = (function () {
                 var an = sel[j].property("ADBE Text Properties").property("ADBE Text Animators");
                 for (i = an.numProperties; i >= 1; i--) { if (/^(?:NABD|HAMDY) /.test(an.property(i).name)) { an.property(i).remove(); n++; } }
             }
+            try { pruneMarkers(sel[j]); } catch (ep) {}
         }
         return n ? "OK" : "OK_NOTHING";
     }
@@ -4086,7 +4087,29 @@ var NABD = (function () {
             var kids = styleKids(c, L), q2;
             for (q2 = kids.length - 1; q2 >= 0; q2--) { kids[q2].remove(); }
         }
+        try { pruneMarkers(L); } catch (ep) {}
         return "OK";
+    }
+    // remove the kit's timing markers that no expression on the layer uses any more
+    var KIT_MK = /^(?:HAMDY |IN: |OUT: |\u062f\u062e\u0648\u0644: |\u062e\u0631\u0648\u062c: )| - (?:START|STOP|GO|END|\u0628\u062f\u0627\u064a\u0629|\u0648\u0642\u0641\u0629|\u064a\u0643\u0645\u0651\u0644|\u0646\u0647\u0627\u064a\u0629)$/;
+    function layerExprs(P, out) {
+        var i, pr;
+        for (i = 1; i <= P.numProperties; i++) {
+            pr = P.property(i);
+            if (pr.propertyType === PropertyType.PROPERTY) { try { if (pr.expression) { out.push(pr.expression); } } catch (e) {} }
+            else { try { layerExprs(pr, out); } catch (e2) {} }
+        }
+        return out;
+    }
+    function pruneMarkers(L) {
+        var all = [], k, M = L.property("ADBE Marker"), txt;
+        try { layerExprs(parade(L), all); } catch (e) {}
+        try { layerExprs(L.property("ADBE Text Properties").property("ADBE Text Animators"), all); } catch (e2) {}
+        try { layerExprs(L.property("ADBE Mask Parade"), all); } catch (e3) {}
+        txt = all.join("\n");
+        for (k = M.numKeys; k >= 1; k--) {
+            try { var cm = M.keyValue(k).comment; if (KIT_MK.test(cm) && txt.indexOf(cm) < 0) { M.removeKey(k); } } catch (e4) {}
+        }
     }
     function toggleItem(a) {
         var c = comp(), L = editLayer(c, a), e = byPath(L, a.path);
