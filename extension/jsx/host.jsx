@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.16";
+    var VER = "1.9.17";
 
     // ================================================================ JSON
     function J(v) {
@@ -4064,6 +4064,10 @@ var NABD = (function () {
 
     // ---------------------------------------------------------- text on a path
     // travel on a path: the word starts at "Start %", reaches "End %" after "Move Frames" (after "Delay Frames"), then holds
+    function clearPathMarkers(L) {
+        var M = L.property("ADBE Marker"), k;
+        for (k = M.numKeys; k >= 1; k--) { try { if (/^HAMDY PATH /.test(M.keyValue(k).comment)) { M.removeKey(k); } } catch (e) {} }
+    }
     function pathTravel(L, ppi, a) {
         addSlider(L, "HAMDY PATH Start %", a.pStart === undefined ? 0 : a.pStart);
         addSlider(L, "HAMDY PATH End %", a.pEnd === undefined ? 100 : a.pEnd);
@@ -4073,15 +4077,24 @@ var NABD = (function () {
         addSlider(L, "HAMDY PATH Pause At %", a.pMid === undefined ? 50 : a.pMid);
         addSlider(L, "HAMDY PATH Pause Frames", a.pHold === undefined ? 20 : a.pHold);
         addSlider(L, "HAMDY PATH Move 2 Frames", a.pFrames2 || 30);
-        FX(L, ppi).property(1).expression = "// HAMDY PATH travel: Start % -> (Pause At %, hold Pause Frames) -> End %, then holds\n" +
+        // timing lives on layer markers (like the motion presets): drag them on the timeline to retime the move
+        var fd = comp().frameDuration, t0 = L.inPoint + (a.pDelay || 0) * fd, f1 = a.pFrames || 45;
+        clearPathMarkers(L);
+        setMarker(L, "HAMDY PATH START", t0);
+        if (a.pPause) {
+            var tp = t0 + f1 * fd, tg = tp + (a.pHold === undefined ? 20 : a.pHold) * fd;
+            setMarker(L, "HAMDY PATH STOP", tp); setMarker(L, "HAMDY PATH GO", tg); setMarker(L, "HAMDY PATH END", tg + (a.pFrames2 || 30) * fd);
+        } else { setMarker(L, "HAMDY PATH END", t0 + f1 * fd); }
+        FX(L, ppi).property(1).expression = "// HAMDY PATH travel: drag the HAMDY PATH START / STOP / GO / END markers on the layer to retime it\n" +
             "var s = effect(\"HAMDY PATH Start %\")(1), e = effect(\"HAMDY PATH End %\")(1), f1 = Math.max(1, effect(\"HAMDY PATH Move Frames\")(1)), dl = effect(\"HAMDY PATH Delay Frames\")(1);\n" +
             "var on = effect(\"HAMDY PATH Pause\")(1), m = effect(\"HAMDY PATH Pause At %\")(1), hd = Math.max(0, effect(\"HAMDY PATH Pause Frames\")(1)), f2 = Math.max(1, effect(\"HAMDY PATH Move 2 Frames\")(1));\n" +
+            "var fd = thisComp.frameDuration;\n" +
             "function ez(k) { k = clamp(k, 0, 1); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }\n" +
-            "var t = (time - inPoint) / thisComp.frameDuration - dl;\n" +
-            "if (on < 0.5) { s + (e - s) * ez(t / f1); }\n" +
-            "else if (t < f1) { s + (m - s) * ez(t / f1); }\n" +
-            "else if (t < f1 + hd) { m; }\n" +
-            "else { m + (e - m) * ez((t - f1 - hd) / f2); }";
+            "function mt(n, d) { try { return thisLayer.marker.key(n).time; } catch (err) { return d; } }\n" +
+            "var t0 = mt(\"HAMDY PATH START\", inPoint + dl * fd);\n" +
+            "if (on < 0.5) { var t1 = mt(\"HAMDY PATH END\", t0 + f1 * fd); s + (e - s) * ez((time - t0) / Math.max(fd, t1 - t0)); }\n" +
+            "else { var tp = mt(\"HAMDY PATH STOP\", t0 + f1 * fd), tg = mt(\"HAMDY PATH GO\", tp + hd * fd), te = mt(\"HAMDY PATH END\", tg + f2 * fd);\n" +
+            "  if (time < tp) { s + (m - s) * ez((time - t0) / Math.max(fd, tp - t0)); } else if (time < tg) { m; } else { m + (e - m) * ez((time - tg) / Math.max(fd, te - tg)); } }";
     }
     function textPath(a) {
         var c = comp(), targets = [], j, i, fd = c.frameDuration;

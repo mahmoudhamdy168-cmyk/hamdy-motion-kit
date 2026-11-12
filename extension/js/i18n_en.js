@@ -2007,5 +2007,6 @@ var I18N_EN = {
 "يوصل للوقفة بعد (فريمات)":"Reaches the pause after (frames)",
 "يقف في النص شوية وبعدين يكمّل":"Pause midway, then continue",
 "يفضل واقف (فريمات)":"Hold for (frames)",
-"يكمّل للآخر في (فريمات)":"Continue to the end in (frames)"
+"يكمّل للآخر في (فريمات)":"Continue to the end in (frames)",
+"0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. التوقيت بينزل ماركرز على اللاير (HAMDY PATH START / STOP / GO / END): اسحبهم في التايملاين والحركة تتظبط معاهم. والأماكن (%) تقدر تغيّرها من Effect Controls.":"0% is the start of the path and 100% its end. The word moves, then holds; the layer runs to the end of the comp so you can trim it. The timing is placed as markers on the layer (HAMDY PATH START / STOP / GO / END): drag them on the timeline and the move follows. Change the positions (%) in Effect Controls."
 };

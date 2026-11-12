@@ -1410,7 +1410,7 @@ function travelCtl(){
   if(S.ln.pPause) h += '<div class="row">' + num('ln.pMid','يقف عند %',S.ln.pMid) + num('ln.pHold','يفضل واقف (فريمات)',S.ln.pHold) + '</div>' +
     '<div class="row">' + num('ln.pFrames2','يكمّل للآخر في (فريمات)',S.ln.pFrames2) + '</div>';
   return h +
-    '<div class="hint">0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. تقدر تغيّر الأرقام دي بعدين من Effect Controls (HAMDY PATH).</div>';
+    '<div class="hint">0% أول الخط و100% آخره. الكلمة بتمشي وبعدين تقف ثابتة، واللاير بيكمّل لآخر الكومب وانت اقطعه زي ما تحب. التوقيت بينزل ماركرز على اللاير (HAMDY PATH START / STOP / GO / END): اسحبهم في التايملاين والحركة تتظبط معاهم. والأماكن (%) تقدر تغيّرها من Effect Controls.</div>';
 }
 function mineSide(it){
   var h = '<div class="stage" id="stage"></div>' + head(it, it.g);
