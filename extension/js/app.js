@@ -469,7 +469,8 @@ function mountThumb(box, it, big){
     case 'tp': o = {k:'tpl', it:it, el:P.mountTpl(box, it, {zoom:/^(واجهات UI|ستايل شرح وكولاج|كول آوت وتوضيح|إنفوجرافيك|عروض وتسويق|تعليم وتقديم|عناوين)$/.test(it.g) && it.id!=='edBeforeAfter' && it.id!=='edVs' && it.id!=='tiLetterbox' ? (big ? 1.3 : 1.6) : 1})}; break;
     case 'dp': o = {k:'dp', el:P.mountDepth(box, it)}; break;
     case 'ln': var lc = lnColors();
-      if(big){ var car = COMP.w / COMP.h; box.style.aspectRatio = COMP.w + ' / ' + COMP.h; box.style.alignSelf = 'center'; box.style.maxWidth = '100%'; box.style.width = Math.min(276, Math.round(360 * car)) + 'px'; }
+      if(big){ var car = COMP.w / COMP.h; box.style.aspectRatio = COMP.w + ' / ' + COMP.h; box.style.alignSelf = 'center'; box.style.maxWidth = '100%';
+        if(car >= 1.3){ box.style.width = '100%'; box.style.height = 'auto'; } else { box.style.height = 'min(28vh, 210px)'; box.style.width = 'auto'; box.style.minHeight = '120px'; } }
       o = {k:'ln', el:P.mountLine(box, it.mine ? it.pv : it, {c1:lc[0], c2:lc[1], width:S.ln.width, comp:big ? COMP : null, size:S.ln.size, speed:S.ln.speed, erase:S.ln.erase, flow:S.ln.flow, guide:S.ln.guide, pStart:S.ln.pStart, pEnd:S.ln.pEnd, pFrames:S.ln.pFrames, pDelay:S.ln.pDelay, text:big ? S.ln.text : 'نص على خط'})}; break;
     case 'tl': box.classList.add('svgth'); box.innerHTML = it.id==='guides' ? guideSVG(byId(D.GUIDES, S.tl.plat), S.tl) : toolSVG(it.id); break;
     case 'lib': box.innerHTML = libThumb(it.f, big) + '<span class="badge">' + TLABEL[it.f.type] + '</span>'; break;
