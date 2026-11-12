@@ -61,6 +61,8 @@ nav button.on{background:var(--card2);color:var(--tx);box-shadow:inset 0 -2px 0 
 
 /* side pane */
 .stage{position:relative;aspect-ratio:16/10;border-radius:var(--r);overflow:hidden;background:#0d0d10;border:1px solid var(--line)}
+/* the big preview stays pinned at the top of the side pane while the settings scroll under it */
+.side > .stage{position:sticky;top:-12px;z-index:6;flex:none;box-shadow:0 -12px 0 0 var(--panel),0 12px 14px -6px rgba(0,0,0,.75)}
 .side h2{margin:0;font-size:16px}
 .side .desc{color:var(--mut);margin:-4px 0 0}
 .field{display:flex;flex-direction:column;gap:5px}

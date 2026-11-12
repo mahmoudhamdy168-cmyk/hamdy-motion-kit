@@ -746,7 +746,15 @@ function toolControls(it){
 }
 
 function setPath(path, v){ var p = path.split('.'); S[p[0]][p[1]] = v; save(); }
+var LS_T = null;
+function liveStage(){
+  if(/^(tl|ed|ai|br)$/.test(S.tab)) return;
+  clearTimeout(LS_T);
+  LS_T = setTimeout(function(){ var st = $('stage'), it = cur(); if(st && it){ try{ mountThumb(st, it, true); }catch(e){} } }, 140);
+}
 function bindSide(){
+  var sd = $('side');
+  if(sd && !sd._live){ sd._live = true; sd.addEventListener('input', liveStage); sd.addEventListener('change', liveStage); sd.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('.seg button')) liveStage(); }); }
   var side = $('side');
   Array.prototype.forEach.call(side.querySelectorAll('[data-seg]'), function(g){
     Array.prototype.forEach.call(g.children, function(b){
