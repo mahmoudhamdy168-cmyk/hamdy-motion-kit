@@ -154,7 +154,9 @@ function rawEval(script, ms){
   });
 }
 function host(cmd, args, ms){
-  var payload = {cmd:cmd, tuck:S.hide !== false}; for(var k in (args||{})) payload[k]=args[k];
+  var payload = {cmd:cmd, tuck:S.hide !== false, mkLang:S.lang}; for(var k in (args||{})) payload[k]=args[k];
+  // name of the applied effect, written on the layer markers instead of "HAMDY IN"
+  if(payload.mkName === undefined){ try{ var ci = cur(); if(ci) payload.mkName = (S.lang === 'en' ? (ci.en || ci.ar) : (ci.ar || ci.en)) || ''; }catch(e){} }
   if(!CEP) return new Promise(function(res){ setTimeout(function(){ res(mock(payload)); }, 120); });
   return rawEval('NABD.run(' + JSON.stringify(asciiJSON(payload)) + ')', ms).then(function(r){
     try{ return JSON.parse(r); }catch(e){ return {ok:false, code:'NO_ENGINE', msg:String(r)}; }

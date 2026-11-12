@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.19";
+    var VER = "1.9.20";
 
     // ================================================================ JSON
     function J(v) {
@@ -372,7 +372,19 @@ var NABD = (function () {
     }
     // text & shape layers are NOT "instanceof AVLayer" in ExtendScript, so go by matchName
     // helper layers (sounds, style copies, mattes, guide lines) are tucked away as "shy"
-    var TUCK = true, TIMING = true;
+    var TUCK = true, TIMING = true, MKN = "", MKAR = true;
+    // marker labels show the name of the effect that was applied (in the panel's language)
+    function mkLabel(dir) {
+        if (!MKN) { return dir === "in" ? "HAMDY IN" : "HAMDY OUT"; }
+        return (dir === "in" ? (MKAR ? "\u062f\u062e\u0648\u0644: " : "IN: ") : (MKAR ? "\u062e\u0631\u0648\u062c: " : "OUT: ")) + MKN;
+    }
+    var MK_DIR_RE = { "in": /^(?:HAMDY IN$|IN: |\u062f\u062e\u0648\u0644: )/, "out": /^(?:HAMDY OUT$|OUT: |\u062e\u0631\u0648\u062c: )/ };
+    function clearMarkers(L, re) {
+        var M = L.property("ADBE Marker"), k;
+        for (k = M.numKeys; k >= 1; k--) { try { if (re.test(M.keyValue(k).comment)) { M.removeKey(k); } } catch (e) {} }
+    }
+    var PATH_STAGES = { start: ["START", "\u0628\u062f\u0627\u064a\u0629"], stop: ["STOP", "\u0648\u0642\u0641\u0629"], go: ["GO", "\u064a\u0643\u0645\u0651\u0644"], end: ["END", "\u0646\u0647\u0627\u064a\u0629"] };
+    function pathLabel(st) { return MKN ? MKN + " - " + PATH_STAGES[st][MKAR ? 1 : 0] : "HAMDY PATH " + PATH_STAGES[st][0]; }
     function tuck(c, L) {
         if (!TUCK) { return; }
         try { L.shy = true; c.hideShyLayers = true; } catch (e) {}
@@ -1077,42 +1089,42 @@ var NABD = (function () {
         for (k = M.numKeys; k >= 1; k--) { try { if (M.keyValue(k).comment === label) { M.removeKey(k); } } catch (e) {} }
         try { M.setValueAtTime(t, new MarkerValue(label)); } catch (e2) {}
     }
-    function timingHead(dir, ref) {
+    function timingHead(dir, ref, lab) {
         if (dir === "in") {
-            return "// HAMDY TIMING: drag the \"HAMDY IN\" marker on the layer to change where the animation ends\n" +
-                "var mL = " + ref + ", T = time, mk = null;\ntry { mk = mL.marker.key(\"HAMDY IN\"); } catch (err) { mk = null; }\n" +
+            return "// HAMDY TIMING: drag the in-marker on the layer to change where the animation ends\n" +
+                "var mL = " + ref + ", T = time, mk = null;\ntry { mk = mL.marker.key(" + q2(lab || "HAMDY IN") + "); } catch (err) { mk = null; }\n" +
                 "if (mk && numKeys > 1) { var ka = key(1).time, kb = key(numKeys).time, me = Math.max(ka + thisComp.frameDuration, mk.time);\n" +
                 "  if (time > ka) { T = (time < me) ? ka + (time - ka) * (kb - ka) / (me - ka) : kb + (time - me); } }\n";
         }
-        return "// HAMDY TIMING: drag the \"HAMDY OUT\" marker on the layer to change where the animation starts\n" +
-            "var mL = " + ref + ", T = time, mk = null;\ntry { mk = mL.marker.key(\"HAMDY OUT\"); } catch (err) { mk = null; }\n" +
+        return "// HAMDY TIMING: drag the out-marker on the layer to change where the animation starts\n" +
+            "var mL = " + ref + ", T = time, mk = null;\ntry { mk = mL.marker.key(" + q2(lab || "HAMDY OUT") + "); } catch (err) { mk = null; }\n" +
             "if (mk && numKeys > 1) { var ka = key(1).time, kb = key(numKeys).time, ms = Math.min(mk.time, mL.outPoint - thisComp.frameDuration), oe = Math.max(ms + thisComp.frameDuration, mL.outPoint);\n" +
             "  T = (time < ms) ? ka - (ms - time) : ka + (time - ms) * (kb - ka) / (oe - ms); }\n";
     }
-    function timingWrap(pr, dir, ref) {
+    function timingWrap(pr, dir, ref, lab) {
         var old = "";
         try { old = pr.expression || ""; } catch (e) {}
         if (/HAMDY TIMING/.test(old)) { return; }
         var body = old ? "var vT = valueAtTime(T);\n" + old.replace(/\.time\b/g, ".__KT__").replace(/\btime\b/g, "T").replace(/\.__KT__/g, ".time").replace(/\.value\b/g, ".__KV__").replace(/\bvalue\b/g, "vT").replace(/\.__KV__/g, ".value") : "valueAtTime(T)";
-        try { pr.expression = timingHead(dir, ref) + body; } catch (e2) {}
+        try { pr.expression = timingHead(dir, ref, lab) + body; } catch (e2) {}
     }
-    function timingWalk(P, dir, ref) {
+    function timingWalk(P, dir, ref, lab) {
         var i, pr;
         for (i = 1; i <= P.numProperties; i++) {
             pr = P.property(i);
-            if (pr.propertyType === PropertyType.PROPERTY) { try { if (pr.numKeys > 1 && pr.canSetExpression) { timingWrap(pr, dir, ref); } } catch (e) {} }
-            else { timingWalk(pr, dir, ref); }
+            if (pr.propertyType === PropertyType.PROPERTY) { try { if (pr.numKeys > 1 && pr.canSetExpression) { timingWrap(pr, dir, ref, lab); } } catch (e) {} }
+            else { timingWalk(pr, dir, ref, lab); }
         }
     }
     function markTiming(L, tag, dir, t0, t1, kid) {
         if (!TIMING) { return; }
-        var ref = kid ? "parent" : "thisLayer", p = parade(L), i;
-        for (i = 1; i <= p.numProperties; i++) { if (p.property(i).name.indexOf(tag) === 0) { timingWalk(p.property(i), dir, ref); } }
+        var ref = kid ? "parent" : "thisLayer", p = parade(L), i, lab = mkLabel(dir);
+        for (i = 1; i <= p.numProperties; i++) { if (p.property(i).name.indexOf(tag) === 0) { timingWalk(p.property(i), dir, ref, lab); } }
         try {
             var an = L.property("ADBE Text Properties").property("ADBE Text Animators");
-            for (i = 1; i <= an.numProperties; i++) { if (an.property(i).name.indexOf(tag) === 0) { timingWalk(an.property(i), dir, ref); } }
+            for (i = 1; i <= an.numProperties; i++) { if (an.property(i).name.indexOf(tag) === 0) { timingWalk(an.property(i), dir, ref, lab); } }
         } catch (e) {}
-        if (!kid) { setMarker(L, dir === "in" ? "HAMDY IN" : "HAMDY OUT", dir === "in" ? t1 : t0); }
+        if (!kid) { clearMarkers(L, MK_DIR_RE[dir]); setMarker(L, lab, dir === "in" ? t1 : t0); }
     }
 
     function mpApply(c, L, sp, dir, t0, t1, kid) {
@@ -4066,7 +4078,7 @@ var NABD = (function () {
     // travel on a path: the word starts at "Start %", reaches "End %" after "Move Frames" (after "Delay Frames"), then holds
     function clearPathMarkers(L) {
         var M = L.property("ADBE Marker"), k;
-        for (k = M.numKeys; k >= 1; k--) { try { if (/^HAMDY PATH /.test(M.keyValue(k).comment)) { M.removeKey(k); } } catch (e) {} }
+        for (k = M.numKeys; k >= 1; k--) { try { if (/^HAMDY PATH | - (?:START|STOP|GO|END|\u0628\u062f\u0627\u064a\u0629|\u0648\u0642\u0641\u0629|\u064a\u0643\u0645\u0651\u0644|\u0646\u0647\u0627\u064a\u0629)$/.test(M.keyValue(k).comment)) { M.removeKey(k); } } catch (e) {} }
     }
     function pathTravel(L, ppi, a) {
         addSlider(L, "HAMDY PATH Start %", a.pStart === undefined ? 0 : a.pStart);
@@ -4080,11 +4092,12 @@ var NABD = (function () {
         // timing lives on layer markers (like the motion presets): drag them on the timeline to retime the move
         var fd = comp().frameDuration, t0 = L.inPoint + (a.pDelay || 0) * fd, f1 = a.pFrames || 45;
         clearPathMarkers(L);
-        setMarker(L, "HAMDY PATH START", t0);
+        var LS = pathLabel("start"), LP = pathLabel("stop"), LG = pathLabel("go"), LE = pathLabel("end");
+        setMarker(L, LS, t0);
         if (a.pPause) {
             var tp = t0 + f1 * fd, tg = tp + (a.pHold === undefined ? 20 : a.pHold) * fd;
-            setMarker(L, "HAMDY PATH STOP", tp); setMarker(L, "HAMDY PATH GO", tg); setMarker(L, "HAMDY PATH END", tg + (a.pFrames2 || 30) * fd);
-        } else { setMarker(L, "HAMDY PATH END", t0 + f1 * fd); }
+            setMarker(L, LP, tp); setMarker(L, LG, tg); setMarker(L, LE, tg + (a.pFrames2 || 30) * fd);
+        } else { setMarker(L, LE, t0 + f1 * fd); }
         FX(L, ppi).property(1).expression = "// HAMDY PATH travel: drag the HAMDY PATH START / STOP / GO / END markers on the layer to retime it\n" +
             "var s = effect(\"HAMDY PATH Start %\")(1), e = effect(\"HAMDY PATH End %\")(1), f1 = Math.max(1, effect(\"HAMDY PATH Move Frames\")(1)), dl = effect(\"HAMDY PATH Delay Frames\")(1);\n" +
             "var on = effect(\"HAMDY PATH Pause\")(1), m = effect(\"HAMDY PATH Pause At %\")(1), hd = Math.max(0, effect(\"HAMDY PATH Pause Frames\")(1)), f2 = Math.max(1, effect(\"HAMDY PATH Move 2 Frames\")(1));\n" +
@@ -4092,9 +4105,9 @@ var NABD = (function () {
             "if (on >= 0.5) { e = 2 * m - s; } // with a pause it exits mirrored: same distance past the pause point, the other way\n" +
             "function ez(k) { k = clamp(k, 0, 1); return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2; }\n" +
             "function mt(n, d) { try { return thisLayer.marker.key(n).time; } catch (err) { return d; } }\n" +
-            "var t0 = mt(\"HAMDY PATH START\", inPoint + dl * fd);\n" +
-            "if (on < 0.5) { var t1 = mt(\"HAMDY PATH END\", t0 + f1 * fd); s + (e - s) * ez((time - t0) / Math.max(fd, t1 - t0)); }\n" +
-            "else { var tp = mt(\"HAMDY PATH STOP\", t0 + f1 * fd), tg = mt(\"HAMDY PATH GO\", tp + hd * fd), te = mt(\"HAMDY PATH END\", tg + f2 * fd);\n" +
+            "var t0 = mt(" + q2(LS) + ", inPoint + dl * fd);\n" +
+            "if (on < 0.5) { var t1 = mt(" + q2(LE) + ", t0 + f1 * fd); s + (e - s) * ez((time - t0) / Math.max(fd, t1 - t0)); }\n" +
+            "else { var tp = mt(" + q2(LP) + ", t0 + f1 * fd), tg = mt(" + q2(LG) + ", tp + hd * fd), te = mt(" + q2(LE) + ", tg + f2 * fd);\n" +
             "  if (time < tp) { s + (m - s) * ez((time - t0) / Math.max(fd, tp - t0)); } else if (time < tg) { m; } else { m + (e - m) * ez((time - tg) / Math.max(fd, te - tg)); } }";
     }
     function textPath(a) {
@@ -5199,6 +5212,7 @@ var NABD = (function () {
             if (!CMDS[a.cmd]) { return J({ ok: false, code: "UNKNOWN" }); }
             TUCK = a.tuck !== false;
             TIMING = a.timing !== false;
+            MKN = a.mkName ? String(a.mkName) : ""; MKAR = a.mkLang !== "en";
             if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("Hamdy: " + a.cmd); undo = true; }
             res = CMDS[a.cmd](a);
             if (undo) { app.endUndoGroup(); }
