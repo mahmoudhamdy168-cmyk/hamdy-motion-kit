@@ -2020,5 +2020,8 @@ var I18N_EN = {
 "اعكس الحركة (جوه ↔ برا)":"Reverse the move (in ↔ out)",
 "الحركة بتبدأ من (الأنكر)":"Animate from (anchor)",
 "نص العنصر":"Element center",
-"نص الكومب":"Comp center"
+"نص الكومب":"Comp center",
+"ارتداد في آخر الحركة":"Bounce at the end",
+"عدد الارتدادات":"Number of bounces",
+"قوة الارتداد":"Bounce strength"
 };

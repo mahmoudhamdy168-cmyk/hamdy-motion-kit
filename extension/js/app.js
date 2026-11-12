@@ -107,7 +107,7 @@ var DEF = {
   sel:{tr:'zoomIn', mp:'overBottom', tx:'fadeUp', ti:'cine1', el:'burst', cap:'karaoke', sfx:'whoosh_soft', ts:'sticker', fx:'tealOrange', ez:'expo', lib:null, tl:'anchor', ed:null, ln:'trZig', car:'car0', trk:'tPoint', trim:'mDraw', gf:'gCAF', dp:'dPush', ai:'', br:'', tp:'uiSub'},
   filter:{},
   tr:{frames:12, snappy:true, sfx:true, flip:false, mframes:20, oframes:30, ocolor:'orig', oblend:'screen', oamount:100},
-  mp:{dir:'both', frames:20, at:'layer', side:'def', rev:false, pivot:'el'},
+  mp:{dir:'both', frames:20, at:'layer', side:'def', rev:false, pivot:'el', bnc:false, bncN:2, bncAmt:50},
   tx:{text:'حركة النص', based:'auto', frames:20, size:110, secs:3, doIn:true, doOut:true, font:'', pattern:'normal', cps:14, cursor:true, typeSfx:true},
   cap:{provider:'local', q:'best', keys:{deepgram:'', groq:'', openai:''}, lang:'ar-EG', maxWords:3, maxChars:26, size:70, y:72, font:'', upper:false, stroke:false, shadow:true, box:false, boxOp:75, color:'#ffffff', words:[], caps:[], src:''},
   sfx:{key:'', prompt:'', dur:2, gen:[]},
@@ -557,6 +557,11 @@ function renderSide(){
       }
       if(it.kind!=='loop' && it.kind!=='emph') h += '<div class="field"><span class="lbl">الاتجاه</span>' + seg('mp.side', [['def','الأصلي'],['right','يمين'],['left','شمال'],['top','فوق'],['bottom','تحت']], S.mp.side || 'def') + '</div>' +
         chk('mp.rev', 'اعكس الحركة (جوه ↔ برا)', !!S.mp.rev);
+      if(it.kind!=='loop' && it.kind!=='emph'){
+        h += chk('mp.bnc', 'ارتداد في آخر الحركة', !!S.mp.bnc);
+        if(S.mp.bnc) h += '<div class="field"><span class="lbl">عدد الارتدادات</span>' + seg('mp.bncN', [[1,'1'],[2,'2'],[3,'3'],[4,'4'],[5,'5']], S.mp.bncN || 2) + '</div>' +
+          '<div class="field"><span class="lbl">قوة الارتداد</span>' + seg('mp.bncAmt', [[20,'خفيف'],[50,'عادي'],[80,'قوي'],[110,'قوي جداً']], S.mp.bncAmt || 50) + '</div>';
+      }
       h += '<div class="field"><span class="lbl">الحركة بتبدأ من (الأنكر)</span>' + seg('mp.pivot', [['el','نص العنصر'],['comp','نص الكومب'],['top','فوق'],['bottom','تحت'],['right','يمين'],['left','شمال']], S.mp.pivot || 'el') + '</div>';
       if(it.kind!=='loop') h += '<div class="field"><span class="lbl">المدة (فريمات)</span>' + seg('mp.frames', [[5,'5'],[10,'10'],[15,'15'],[20,'20'],[25,'25'],[30,'30'],[45,'45']], S.mp.frames) + '</div>';
       h += '<button class="btn primary" id="go">طبّق على اللايرات المحددة</button>';
@@ -817,7 +822,7 @@ function bindSide(){
         var k = g.dataset.seg;
         if(k==='cap.maxWords' && S.cap.words.length) rechunk();
         if(/^(ln|car|trim|trk|gf|dp)\./.test(k) || k==='tx.based' || k==='tx.cps' || k==='ti.side' || k==='tl.plat' || k==='tx.pattern' || /^(cap|fx)\./.test(k)){ renderSide(); renderGrid(); }
-        else if(k==='tr.frames' || k==='tr.snappy' || k==='mp.dir' || k==='mp.frames' || k==='mp.side' || k==='mp.pivot'){ /* previews read state live */ }
+        else if(k==='tr.frames' || k==='tr.snappy' || k==='mp.dir' || k==='mp.frames' || k==='mp.side' || k==='mp.pivot' || k==='mp.bncN' || k==='mp.bncAmt'){ /* previews read state live */ }
       };
     });
   });
@@ -829,7 +834,7 @@ function bindSide(){
       if(/^tl\.(zones|safe|thirds|center)$/.test(inp.dataset.k)){ $('stage').innerHTML = guideSVG(byId(D.GUIDES, S.tl.plat), S.tl); renderGrid(); }
       if(inp.dataset.k==='tx.size'){ /* no-op */ }
       if(/^ai\./.test(inp.dataset.k)) AI.onSet(inp.dataset.k);
-      if(inp.dataset.k==='ln.pPause') renderSide();
+      if(inp.dataset.k==='ln.pPause' || inp.dataset.k==='mp.bnc') renderSide();
       if((inp.dataset.k==='ln.pMid' || inp.dataset.k==='ln.pStart') && $('lnMirror')){ var mb = $('lnMirror').querySelector('b'); if(mb) mb.textContent = (2*(+S.ln.pMid||0) - (+S.ln.pStart||0)) + '%'; }
       if(/^ln\.(erase|guide|speed|pStart|pEnd|pFrames|pDelay|pMid|pHold|pFrames2)$/.test(inp.dataset.k) && $('stage')) mountThumb($('stage'), cur(), true);
       if(/^car\./.test(inp.dataset.k)){ if(inp.dataset.k==='car.count') renderCarSlots(); renderGrid(); if($('stage')) mountThumb($('stage'), cur(), true); }
@@ -872,7 +877,7 @@ function apply(){
       if(it.otr){ p = host('otrApply', otrArgs(it)); break; }
       if(it.matte){ p = host('matteTr', {file:assetPath(it.matte.file), frames:S.tr.mframes, flip:S.tr.flip, sfx:S.tr.sfx ? sfxPath({id:'whoosh_soft'}) : null}); break; }
       p = host('transition', {type:it.id, frames:S.tr.frames, snappy:S.tr.snappy, sfx:S.tr.sfx, libPaths:S.lib.paths, acc:acc}); break;
-    case 'mp': p = host('motion', {pivot:S.mp.pivot || 'el', spec:mpSpec(mpSided(it)), dir:S.mp.dir, frames:S.mp.frames, at:S.mp.at}); break;
+    case 'mp': p = host('motion', {bounce:{on:!!S.mp.bnc, amt:S.mp.bncAmt || 50, n:S.mp.bncN || 2}, pivot:S.mp.pivot || 'el', spec:mpSpec(mpSided(it)), dir:S.mp.dir, frames:S.mp.frames, at:S.mp.at}); break;
     case 'tx': if(S.tab==='tx' && S.sel.tx){ p = host('textCreate', txArgs()); } break;
     case 'ti': p = host('title', titleArgs(it)); break;
     case 'el':
@@ -2267,7 +2272,7 @@ function step(o, now){
   var t = (now - o.t0)/1000;
   switch(o.k){
     case 'tr': P.drawTr(o.el, o.it.id, t, S.tr.frames, S.tr.snappy, S.acc); break;
-    case 'mp': P.drawMp(o.el, mpSided(o.it), t, {dir:S.mp.dir, frames:S.mp.frames, pivot:S.mp.pivot}); break;
+    case 'mp': P.drawMp(o.el, mpSided(o.it), t, {dir:S.mp.dir, frames:S.mp.frames, pivot:S.mp.pivot, bnc:S.mp.bnc ? {n:S.mp.bncN || 2, amt:S.mp.bncAmt || 50} : null}); break;
     case 'tx': P.drawTx(o.el, o.it, t, (o.it.tw ? S.tx.doIn : true), o.it.loop ? false : S.tx.doOut, S.acc, (o.it.random||o.it.overshoot) ? 'normal' : S.tx.pattern, S.tx.cps); break;
     case 'spr': P.drawSprite(o.el, t); break;
     case 'ln': P.drawLine(o.el, t); break;

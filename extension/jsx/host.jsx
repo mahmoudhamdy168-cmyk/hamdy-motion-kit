@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.9.24";
+    var VER = "1.9.25";
 
     // ================================================================ JSON
     function J(v) {
@@ -1153,13 +1153,32 @@ var NABD = (function () {
         if (!kid) { clearMarkers(L, MK_DIR_RE[dir]); setMarker(L, lab, dir === "in" ? t1 : t0); }
     }
 
+    // optional bounce at the end of any in-animation; strength / count live on layer sliders so they stay editable
+    var BNC = null;
+    function bncCtl(L) {
+        var p = parade(L), i, has1 = false, has2 = false;
+        for (i = 1; i <= p.numProperties; i++) { if (p.property(i).name === "HAMDY Bounce Strength") { has1 = true; } if (p.property(i).name === "HAMDY Bounce Count") { has2 = true; } }
+        if (!has1) { addSlider(L, "HAMDY Bounce Strength", BNC.amt); }
+        if (!has2) { addSlider(L, "HAMDY Bounce Count", BNC.n); }
+    }
+    function bncExpr() {
+        return "// HAMDY bounce: change HAMDY Bounce Strength / Count in Effect Controls\n" +
+            "var L = thisLayer, amp = 0.15, nb = 2;\ntry { amp = L.effect(\"HAMDY Bounce Strength\")(1) / 100 * 0.3; nb = Math.max(1, L.effect(\"HAMDY Bounce Count\")(1)); } catch (err) {}\n" +
+            "var freq = 2.6, decay = 3 * freq / nb, n = 0;\n" +
+            "if (numKeys > 0) { n = nearestKey(time).index; if (key(n).time > time) n--; }\n" +
+            "var t = (n == 0) ? 0 : time - key(n).time;\n" +
+            "if (n > 1 && t < nb / freq + 1) { var v = velocityAtTime(key(n).time - thisComp.frameDuration / 10);\n" +
+            "  value + v * amp * Math.sin(freq * t * 2 * Math.PI) / Math.exp(decay * t); } else { value; }";
+    }
     function mpApply(c, L, sp, dir, t0, t1, kid) {
+        if (BNC && dir === "in") { try { bncCtl((kid && L.parent) ? L : L); } catch (eb) {} }
         var CR = (kid && L.parent) ? L.parent : L;
         var K = c.height / 1080, ls = layerScale(CR), tr = sp.tr || {}, ez = sp.ease || "cubic";
         var tag = "HAMDY " + (dir === "in" ? "IN " : "OUT ") + sp.id;
         var center = fxPt(L, pivotPoint(CR, dir === "in" ? t1 : t0));
-        function pair(prop, from, rest) {
+        function pair(prop, from, rest, mov) {
             if (dir === "in") {
+                if (BNC && mov) { keyPair(prop, t0, from, t1, rest, ez, "in"); linIn(prop, prop.nearestKeyIndex(t1)); prop.expression = bncExpr(); return; }
                 keyPair(prop, t0, from, t1, rest, ez, "in");
                 if (ez === "back") { prop.expression = overExpr(0.1, 2, 6); }
                 else if (ez === "elastic") { prop.expression = overExpr(0.14, 3, 4.5); }
@@ -1179,13 +1198,13 @@ var NABD = (function () {
             if (has(tr, "sx") || has(tr, "sy")) { FX(L, i).property(3).setValue(0); }
             if (has(tr, "op") && !has(tr, "flick")) { pair(FX(L, i).property(9), tr.op, 100); }
             if (has(tr, "x") || has(tr, "y")) {
-                pair(FX(L, i).property(2), [center[0] + (tr.x || 0) * K / ls[0], center[1] + (tr.y || 0) * K / ls[1]], center);
+                pair(FX(L, i).property(2), [center[0] + (tr.x || 0) * K / ls[0], center[1] + (tr.y || 0) * K / ls[1]], center, true);
             }
-            if (has(tr, "s")) { pair(FX(L, i).property(4), tr.s, 100); }
-            if (has(tr, "sx")) { pair(FX(L, i).property(5), tr.sx, 100); }
-            if (has(tr, "sy")) { pair(FX(L, i).property(4), tr.sy, 100); }
-            if (has(tr, "r")) { pair(FX(L, i).property(8), tr.r, 0); }
-            if (has(tr, "sk")) { pair(FX(L, i).property(6), tr.sk, 0); }
+            if (has(tr, "s")) { pair(FX(L, i).property(4), tr.s, 100, true); }
+            if (has(tr, "sx")) { pair(FX(L, i).property(5), tr.sx, 100, true); }
+            if (has(tr, "sy")) { pair(FX(L, i).property(4), tr.sy, 100, true); }
+            if (has(tr, "r")) { pair(FX(L, i).property(8), tr.r, 0, true); }
+            if (has(tr, "sk")) { pair(FX(L, i).property(6), tr.sk, 0, true); }
             if (has(tr, "flick")) {
                 var fr = [0, 0.15, 0.3, 0.45, 0.6, 0.75, 1], fv = [0, 100, 0, 100, 30, 100, 100], q, tt, vv;
                 for (q = 0; q < fr.length; q++) {
@@ -1218,8 +1237,8 @@ var NABD = (function () {
         if ((has(tr, "rx") || has(tr, "ry")) && !kid) {
             try { L.threeDLayer = true; } catch (x3d) {}
             var tgx = L.property("ADBE Transform Group");
-            if (has(tr, "rx")) { var rxp = tgx.property("ADBE Rotate X"), rxv = rxp.value; pair(rxp, rxv + tr.rx, rxv); }
-            if (has(tr, "ry")) { var ryp = L.property("ADBE Transform Group").property("ADBE Rotate Y"), ryv = ryp.value; pair(ryp, ryv + tr.ry, ryv); }
+            if (has(tr, "rx")) { var rxp = tgx.property("ADBE Rotate X"), rxv = rxp.value; pair(rxp, rxv + tr.rx, rxv, true); }
+            if (has(tr, "ry")) { var ryp = L.property("ADBE Transform Group").property("ADBE Rotate Y"), ryv = ryp.value; pair(ryp, ryv + tr.ry, ryv, true); }
         }
         if (has(tr, "cc") && sp.cc) {
             i = addEffect(L, sp.cc, tag + " Wipe").propertyIndex;
@@ -1284,6 +1303,7 @@ var NABD = (function () {
     function motion(a) {
         var c = comp(), sel = needSel(c), sp = a.spec, d = Math.max(2, a.frames || 18) * c.frameDuration, n = 0, j, L, t;
         PIVOT = a.pivot || "el";
+        BNC = (a.bounce && a.bounce.on) ? { amt: a.bounce.amt === undefined ? 50 : a.bounce.amt, n: a.bounce.n || 2 } : null;
         t = snap(c, c.time);
         for (j = 0; j < sel.length; j++) {
             L = sel[j];
@@ -5242,6 +5262,7 @@ var NABD = (function () {
             TUCK = a.tuck !== false;
             TIMING = a.timing !== false;
             MKN = a.mkName ? String(a.mkName) : ""; MKAR = a.mkLang !== "en";
+            BNC = null; PIVOT = "el";
             if (!NO_UNDO[a.cmd]) { app.beginUndoGroup("Hamdy: " + a.cmd); undo = true; }
             res = CMDS[a.cmd](a);
             if (undo) { app.endUndoGroup(); }

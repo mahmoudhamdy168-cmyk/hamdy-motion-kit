@@ -54,7 +54,7 @@ function chanOut(from, rest, ez, t, dur){
 var REST = {op:100, x:0, y:0, s:100, sx:100, sy:100, r:0, sk:0, bl:0, db:0, wipe:0, rwipe:0, blinds:0, rx:0, ry:0, cc:0, block:0, luma:0};
 
 // state of an "in" preset: phase 'in' with t since start, or 'out' with t since out start
-function mpState(sp, phase, t, dur){
+function mpState(sp, phase, t, dur, bnc){
   var st = {}, tr = sp.tr || {}, k;
   for(k in REST) st[k] = REST[k];
   if(tr.flick){
@@ -66,6 +66,10 @@ function mpState(sp, phase, t, dur){
   for(k in tr){
     if(!(k in REST)) continue;
     st[k] = phase==='in' ? chanIn(tr[k], REST[k], sp.ease, t, dur) : chanOut(tr[k], REST[k], sp.ease, t, dur);
+    if(bnc && phase==='in' && t > dur && /^(x|y|s|sx|sy|r|sk)$/.test(k)){
+      var tb = Math.min(t - dur, 6), fq = 2.6, dc = 3*fq/Math.max(1, bnc.n), am = (bnc.amt||50)/100*0.3, v = (REST[k] - tr[k])/dur;
+      st[k] += v*am*Math.sin(fq*tb*2*Math.PI)/Math.exp(dc*tb);
+    }
   }
   return st;
 }
@@ -324,9 +328,9 @@ function drawMp(el, sp, t, opt){
   if(sp.kind==='loop'){ st = loopState(sp, t); }
   else if(sp.kind==='emph'){ var dE = Math.max(0.3,(opt.frames||18)/30)*1.4, cyc = dE + 0.9; var u = clamp(((t%cyc)-0.45)/dE); st = emphState(sp, u); }
   else {
-    var d = Math.max(0.3, (opt.frames||18)/30) * 1.25, hold = 0.55 + (sp.ease==='bounce'||OVER[sp.ease] ? 0.6 : 0), gap = 0.3;
+    var d = Math.max(0.3, (opt.frames||18)/30) * 1.25, hold = 0.55 + (sp.ease==='bounce'||OVER[sp.ease] ? 0.6 : 0) + (opt.bnc ? opt.bnc.n/2.6 : 0), gap = 0.3;
     var doIn = opt.dir!=='out', doOut = opt.dir!=='in', cyc2 = (doIn?d:0) + hold + (doOut?d:0) + gap, tt = t % cyc2;
-    if(doIn && tt < d + hold){ st = mpState(sp, 'in', tt, d); }
+    if(doIn && tt < d + hold){ st = mpState(sp, 'in', tt, d, opt.bnc); }
     else if(!doIn && tt < hold){ st = mpState(sp, 'in', 99, d); }
     else {
       var to = tt - (doIn ? d + hold : hold);
