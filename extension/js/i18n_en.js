@@ -1994,5 +1994,7 @@ var I18N_EN = {
 "الأفتر مشغول…":"AE is busy…",
 "دوس هنا عشان أشغّله تاني":"Click to restart it",
 "المحرك اشتغل ✓":"Engine is running ✓",
-"لسه مش شغال. اقفل البانل وافتحها تاني من Window › Extensions، ولو فضل كده اقفل الأفتر وافتحه.":"Still not running. Close the panel and reopen it from Window › Extensions; if it stays like this, restart After Effects."
+"لسه مش شغال. اقفل البانل وافتحها تاني من Window › Extensions، ولو فضل كده اقفل الأفتر وافتحه.":"Still not running. Close the panel and reopen it from Window › Extensions; if it stays like this, restart After Effects.",
+"المحرك اللي جوه الأفتر نسخة قديمة":"The engine inside After Effects is an old version",
+"محرك قديم":"Old engine"
 };

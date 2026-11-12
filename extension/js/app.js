@@ -175,7 +175,7 @@ function ensureEngine(force){
       if(String(o).indexOf('ERR:') === 0) err = String(o).slice(4);
       return host('ping');
     }).then(function(r2){
-      if(r2.ok || !NODE) return r2;
+      if((r2.ok && r2.data && r2.data.ver === HMK.ver) || !NODE) return r2;
       // 2) fallback: read the engine with Node and send it straight to After Effects (avoids path/encoding problems)
       var src = ''; try{ src = NODE('fs').readFileSync(f, 'utf8'); }catch(e){ err = err || ('read: ' + e.message); }
       if(!src) return {ok:false, code:'NO_ENGINE', msg:err};
@@ -2198,6 +2198,7 @@ $('pause').textContent = S.paused ? '▶' : '⏸';
 function setStatus(r){
   var st = $('status');
   if(!CEP){ st.className='chip mock'; st.innerHTML='<i></i><span>وضع المعاينة</span>'; return; }
+  if(r && r.ok && r.data && r.data.ver && r.data.ver !== HMK.ver){ st.className='chip'; st.title = trText('المحرك اللي جوه الأفتر نسخة قديمة') + ' (' + r.data.ver + ' ≠ ' + HMK.ver + ')'; st.innerHTML='<i style="background:#e0a030"></i><span>' + trText('محرك قديم') + ' ' + esc(r.data.ver) + ' ⟳</span>'; return; }
   if(r && r.ok){ st.className='chip live'; st.innerHTML='<i></i><span>' + (r.data.comp ? esc(r.data.comp) : 'متصل') + '</span>'; }
   else if(r && r.code === 'TIMEOUT'){ st.className='chip'; st.title = trText('الأفتر مشغول بحاجة تانية (ريندر، بريفيو، أو نافذة مفتوحة). أول ما يفضى هيرجع لوحده.'); st.innerHTML='<i style="background:#e0a030"></i><span>' + trText('الأفتر مشغول…') + '</span>'; }
   else { st.className='chip'; st.title = trText('دوس هنا عشان أشغّله تاني'); st.innerHTML='<i style="background:var(--bad)"></i><span>' + trText('المحرك مش شغال') + ' ⟳</span>'; }
@@ -2206,8 +2207,8 @@ var ENG_FAILS = 0;
 function engineRetry(manual){
   if(!CEP) return;
   PINGING = true;
-  ensureEngine().then(function(r){ PINGING = false; setStatus(r); ENG_FAILS = r && r.ok ? 0 : ENG_FAILS + 1;
-    if(manual){ var el = $('toast'); if(!el) return; var ok = r && r.ok; el.className = 'toast ' + (ok ? 'ok' : 'bad'); el.textContent = ok ? trText('المحرك اشتغل ✓') : trText('لسه مش شغال. اقفل البانل وافتحها تاني من Window › Extensions، ولو فضل كده اقفل الأفتر وافتحه.') + (r && r.msg ? ' (' + String(r.msg).slice(0, 120) + ')' : ''); clearTimeout(el._t); el._t = setTimeout(function(){ el.className = 'toast'; }, 9000); } });
+  ensureEngine(true).then(function(r){ PINGING = false; setStatus(r); ENG_FAILS = r && r.ok ? 0 : ENG_FAILS + 1;
+    if(manual){ var el = $('toast'); if(!el) return; var ok = r && r.ok && r.data && r.data.ver === HMK.ver; el.className = 'toast ' + (ok ? 'ok' : 'bad'); el.textContent = ok ? trText('المحرك اشتغل ✓') : trText('لسه مش شغال. اقفل البانل وافتحها تاني من Window › Extensions، ولو فضل كده اقفل الأفتر وافتحه.') + (r && r.msg ? ' (' + String(r.msg).slice(0, 120) + ')' : ''); clearTimeout(el._t); el._t = setTimeout(function(){ el.className = 'toast'; }, 9000); } });
 }
 var AI = HMK_MAKE_AI({S:S, host:host, save:save, say:say, $:$, esc:esc, NODE:NODE, CEP:CEP, apply:apply, itemsOf:itemsOf, byId:byId, trText:trText, seg:seg, chk:chk, openURL:openURL, extPath:extPath, rawEval:rawEval, MSG:MSG, dirty:function(){ ED_DIRTY = true; }});
 AI.init();
@@ -2227,6 +2228,6 @@ if($('updBtn')) $('updBtn').onclick = function(){ HMK_UPD.check(true); };
 try{ var up = localStorage.getItem('hmk_updated_to'); if(up){ localStorage.removeItem('hmk_updated_to'); setTimeout(function(){ say({ok:true, data:'OK_UPDATED'}); }, 600); } }catch(e){}
 setTimeout(function(){ HMK_UPD.check(false); }, 2500);
 var PINGING = false;
-if(CEP) setInterval(function(){ if(PINGING || document.hidden) return; PINGING = true; host('ping').then(function(r){ PINGING = false; if(r && !r.ok && r.code !== 'TIMEOUT' && ENG_FAILS < 3) return engineRetry(false); if(r && r.ok) ENG_FAILS = 0; setStatus(r); }); }, 5000);
+if(CEP) setInterval(function(){ if(PINGING || document.hidden) return; PINGING = true; host('ping').then(function(r){ PINGING = false; if(r && ((!r.ok && r.code !== 'TIMEOUT') || (r.ok && r.data && r.data.ver !== HMK.ver)) && ENG_FAILS < 3) return engineRetry(false); if(r && r.ok) ENG_FAILS = 0; setStatus(r); }); }, 5000);
 if($('status')) $('status').addEventListener('click', function(){ if(CEP && !this.classList.contains('live')) engineRetry(true); });
 })();
