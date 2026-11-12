@@ -263,7 +263,7 @@ var NABD_CAR_SRC = "function nabdCar(i, N, o) {\n    var PI = Math.PI, TAU = 2 *
 // CAR_CORE>>
 
 var NABD = (function () {
-    var VER = "1.10.2";
+    var VER = "1.10.3";
 
     // ================================================================ JSON
     function J(v) {
@@ -3903,6 +3903,7 @@ var NABD = (function () {
         if (d.c) { var i; for (i = 0; i < d.c.length; i++) { if (JSON_has(d.c[i], str)) { return true; } } }
         return false;
     }
+    var REB = { k: 0, p: 0, err: "" };
     function rebuild(P, d, shift, dOff, isGeo) {
         var i, j;
         if (!d) { return; }
@@ -3911,14 +3912,14 @@ var NABD = (function () {
                 var off = (isGeo && (P.propertyIndex === 1 || P.propertyIndex === 2) && dOff) ? dOff : null;
                 var fixV = function (v) { if (off && v instanceof Array && v.length >= 2) { var w = v.slice(0); w[0] += off[0]; w[1] += off[1]; return w; } return v; };
                 if (d.k && d.k.length) {
-                    for (i = 0; i < d.k.length; i++) { P.setValueAtTime(d.k[i].t + shift, fixV(d.k[i].v)); }
+                    for (i = 0; i < d.k.length; i++) { P.setValueAtTime(d.k[i].t + shift, fixV(d.k[i].v)); REB.k++; }
                     for (i = 0; i < d.k.length; i++) {
                         var ki = P.nearestKeyIndex(d.k[i].t + shift), K = d.k[i];
                         try { if (K.ie && K.oe) { var ie = [], oe = []; for (j = 0; j < K.ie.length; j++) { ie.push(new KeyframeEase(K.ie[j][0], K.ie[j][1])); } for (j = 0; j < K.oe.length; j++) { oe.push(new KeyframeEase(K.oe[j][0], K.oe[j][1])); } P.setTemporalEaseAtKey(ki, ie, oe); } } catch (e1) {}
                         try { if (K.ii) { P.setInterpolationTypeAtKey(ki, K.ii, K.oi); } } catch (e2) {}
                     }
-                } else if (d.v !== undefined) { P.setValue(fixV(d.v)); }
-            } catch (e3) {}
+                } else if (d.v !== undefined) { P.setValue(fixV(d.v)); REB.p++; }
+            } catch (e3) { if (!REB.err) { REB.err = d.nm + ": " + e3.message; } }
             try { if (d.ex) { P.expression = d.ex; } } catch (e4) {}
             return;
         }
@@ -3937,8 +3938,9 @@ var NABD = (function () {
         }
     }
     function fxPaste(a) {
-        var c = comp(), sel = needSel(c), D = a.data, n = 0, j, i, k;
+        var c = comp(), sel = needSel(c), D = a.data, n = 0, j, i, k, nfx = 0;
         if (!D || !D.items) { throw Err("UNKNOWN"); }
+        REB = { k: 0, p: 0, err: "" };
         for (j = 0; j < sel.length; j++) {
             var L = sel[j];
             if (!animatable(L)) { continue; }
@@ -3951,7 +3953,9 @@ var NABD = (function () {
                 var it = all[i], d = it.d, P = null;
                 if (it.kind === "fx") {
                     if (have[d.nm] && /^HAMDY (?:Bounce|LOOP Strength)/.test(d.nm)) { continue; }
-                    P = p.addProperty(d.mn); try { P.name = d.nm; } catch (en) {}
+                    try { P = p.addProperty(d.mn); } catch (ea) { if (!REB.err) { REB.err = "add " + d.mn + ": " + ea.message; } continue; }
+                    nfx++;
+                    try { P.name = d.nm; } catch (en) {}
                     P = p.property(p.numProperties);
                     if (d.mn === "ADBE Geometry2") { try { compShutterOn(P); } catch (eg) {} }
                     rebuild(P, d, shift, dOff, d.mn === "ADBE Geometry2");
@@ -3969,7 +3973,7 @@ var NABD = (function () {
             n++;
         }
         if (!n) { throw Err("NO_ANIM_LAYER"); }
-        return "OK";
+        return { layers: n, fx: nfx, keys: REB.k, props: REB.p, err: REB.err };
     }
     function inspect() {
         var c = comp(), sel = c.selectedLayers;

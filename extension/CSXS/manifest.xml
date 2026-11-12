@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="com.hamdy.motionkit" ExtensionBundleVersion="1.10.2" ExtensionBundleName="Hamdy Motion Kit" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.hamdy.motionkit" ExtensionBundleVersion="1.10.3" ExtensionBundleName="Hamdy Motion Kit" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.hamdy.motionkit.panel" Version="1.10.2"/>
+    <Extension Id="com.hamdy.motionkit.panel" Version="1.10.3"/>
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>

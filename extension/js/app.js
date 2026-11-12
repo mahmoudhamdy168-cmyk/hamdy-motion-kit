@@ -2186,7 +2186,22 @@ function edOther(G){
 var CLIP = null; // copied kit animation (one IN or OUT group), pasted onto other layers
 function edWhich(G){ var m = /^(?:HAMDY|NABD) (IN|OUT) /.exec(G.g || ''); return m ? m[1].toLowerCase() : (G.fr ? 'in' : null); }
 function clipPasteBtn(id){ return CLIP ? '<button class="btn primary" id="' + id + '">📥 ' + trText('الصق') + ' «' + esc(CLIP.label) + '» ' + trText(CLIP.which === 'out' ? '(خروج)' : '(دخول)') + ' ' + trText('على اللايرات المحددة') + '</button>' : ''; }
-function clipPaste(){ if(!CLIP) return; host('fxPaste', {data:CLIP.data}).then(function(r){ say(r); if(r.ok) edRefresh(true); }); }
+function clipPaste(){
+  if(!CLIP) return;
+  host('fxPaste', {data:CLIP.data}).then(function(r){
+    if(!r.ok){ say(r); return; }
+    var d = r.data || {}, t = $('toast');
+    // if nothing animatable came across, fall back to re-applying the same preset (same frames) on the selected layers
+    if(!d.keys && CLIP.pre){
+      var it = CLIP.pre.src === 'mp' ? byId(D.MOTION, CLIP.pre.id) : byId(D.TEXTS, CLIP.pre.id), p, nm = it ? ((S.lang === 'en' ? (it.en || it.ar) : (it.ar || it.en)) || '') : '';
+      if(it && CLIP.pre.src === 'mp') p = host('motion', {spec:mpSpec(it), dir:CLIP.which, frames:CLIP.pre.fr || S.mp.frames, at:'layer', mkName:nm});
+      else if(it) p = host('textApply', Object.assign(txArgs(it), {doIn:CLIP.which === 'in', doOut:CLIP.which === 'out', frames:CLIP.pre.fr || S.tx.frames, mkName:nm}));
+      if(p){ p.then(function(r2){ say(r2); if(r2.ok) edRefresh(true); }); return; }
+    }
+    if(t){ t.className = 'toast ' + (d.keys ? 'ok' : 'bad'); t.textContent = d.keys ? trText('اتلصق ✓') + ' (' + d.fx + ' fx · ' + d.keys + ' key)' : trText('الحركة ما اتلصقتش:') + ' ' + (d.err || ('fx ' + d.fx + ', keys 0')); clearTimeout(t._t); t._t = setTimeout(function(){ t.className = 'toast'; }, 7000); }
+    edRefresh(true);
+  });
+}
 function edOtherEndBtn(G){
   var o = edOther(G); if(!o) return '';
   return '<button class="addo" data-gact="addOther">' + (o.dir === 'out' ? '＋ ضيفه في النهاية' : '＋ ضيفه في البداية') + '</button>';
@@ -2230,7 +2245,9 @@ function bindEditGrid(grid){
           var w = edWhich(G);
           edSend('fxCopy', {which:w, items:G.items.map(function(x){ return {path:x.path, kind:x.kind}; })}).then(function(r){
             if(!r.ok) return;
-            CLIP = {data:r.data, label:edTitle(G.g), which:w};
+            var mm = /^(?:HAMDY|NABD) (?:IN|OUT) ([A-Za-z0-9_]+)/.exec(G.g || ''), pre = null;
+            if(mm){ if(byId(D.MOTION, mm[1])) pre = {src:'mp', id:mm[1], fr:G.fr}; else if(byId(D.TEXTS, mm[1])) pre = {src:'tx', id:mm[1], fr:G.fr}; }
+            CLIP = {data:r.data, label:edTitle(G.g), which:w, pre:pre};
             var t = $('toast'); if(t){ t.className = 'toast ok'; t.textContent = trText('اتنسخ ✓ حدد لاير تاني ودوس «الصق»'); clearTimeout(t._t); t._t = setTimeout(function(){ t.className = 'toast'; }, 3500); }
             renderEdit(); renderSide();
           });

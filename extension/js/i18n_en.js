@@ -2046,5 +2046,7 @@ var I18N_EN = {
 "على اللايرات المحددة":"onto the selected layers",
 "📋 نسخ ":"📋 Copy ",
 "الدخول":"in",
-"الخروج":"out"
+"الخروج":"out",
+"اتلصق ✓":"Pasted ✓",
+"الحركة ما اتلصقتش:":"The animation didn't paste:"
 };
